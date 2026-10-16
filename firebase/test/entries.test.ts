@@ -11,6 +11,7 @@ const addAsMember = (overrides: Record<string, unknown> = {}) => setDoc(entry(ME
 const editAsMember = (fields: Record<string, unknown>) =>
   updateDoc(existingEntry(MEMBER), { ...fields, ...editedBy(MEMBER) });
 const entriesOf = (as: string | null) => collection(firestoreAs(as), 'lists/L1/entries');
+const people = (count: number) => Array.from({ length: count }, (_, i) => ({ id: i + 1, name: `Diretora ${i + 1}` }));
 
 describe('entries: criação', () => {
   test('membro adiciona filme', () => allows(addAsMember()));
@@ -29,6 +30,31 @@ describe('entries: criação', () => {
   test('nota do IMDb 11', () => denies(addAsMember({ movie: { ...movieSnapshot, imdb: 11 } })));
   test('título do filme com 1 MB', () =>
     denies(addAsMember({ movie: { ...movieSnapshot, title: 'x'.repeat(1_000_000) } })));
+  test('filme com dois diretores', () =>
+    allows(
+      addAsMember({
+        movie: {
+          ...movieSnapshot,
+          directors: [
+            { id: 1, name: 'Lana Wachowski' },
+            { id: 2, name: 'Lilly Wachowski' },
+          ],
+        },
+      }),
+    ));
+  test('8 diretores válidos (o limite)', () =>
+    allows(addAsMember({ movie: { ...movieSnapshot, directors: people(8) } })));
+  test('cópia do filme sem directors', () => {
+    const { directors: _directors, ...withoutDirectors } = movieSnapshot;
+    return denies(addAsMember({ movie: withoutDirectors }));
+  });
+  test('9 diretores', () => denies(addAsMember({ movie: { ...movieSnapshot, directors: people(9) } })));
+  test('diretor sem nome válido na oitava posição', () =>
+    denies(addAsMember({ movie: { ...movieSnapshot, directors: [...people(7), { id: 8, name: 8 }] } })));
+  test('diretor com campo extra', () =>
+    denies(addAsMember({ movie: { ...movieSnapshot, directors: [{ id: 2710, name: 'James Cameron', hack: 1 }] } })));
+  test('diretor com nome de 1 MB', () =>
+    denies(addAsMember({ movie: { ...movieSnapshot, directors: [{ id: 2710, name: 'x'.repeat(1_000_000) }] } })));
   test('createdAt no passado', () => denies(addAsMember({ createdAt: PAST })));
   test('campo extra', () => denies(addAsMember({ extraData: 'x' })));
   test('lista que não existe', () =>

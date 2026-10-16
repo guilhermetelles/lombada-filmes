@@ -38,10 +38,12 @@ rules_version = '2';
 //   updatedAt       timestamp: hora do servidor a cada gravação
 //   movie           map, imutável pelo app: cópia resumida de movies/{tmdbId} (o backend atualiza)
 //                   { title 1–300, year int 1870–2100 | null, posterPath 0–200 | null,
-//                     imdb 0–10 | null, letterboxd 0–5 | null }
+//                     imdb 0–10 | null, letterboxd 0–5 | null,
+//                     directors: até 8 × { id int > 0, name 1–200 } }
 //
 // invites/{code}                    só o backend
-// movies/{tmdbId}, usage/{dia}      logados leem; só o backend grava
+// movies/{tmdbId}, usage/{dia},     logados leem; só o backend grava
+// people/{tmdbPersonId}
 //
 // O backend usa o Firebase Admin SDK, que não passa por estas regras.
 // ===============================================================
@@ -114,6 +116,28 @@ service cloud.firestore {
                ids.toSet().size() == ids.size()));
     }
 
+    // Pessoa citada num filme: { id, name }, sem outros campos.
+    function isPersonRef(person) {
+      return person is map &&
+             hasFields(person, ['id', 'name'], []) &&
+             person.id is int && person.id > 0 &&
+             isText(person.name, 1, 200);
+    }
+
+    function isPersonRefAt(people, index) {
+      return people.size() <= index || isPersonRef(people[index]);
+    }
+
+    // Lista de até 8 pessoas. As regras não têm laço, então cada posição é conferida uma a uma. Com
+    // 9 ou mais, a validação da entrada inteira passa do limite de expressões das regras e a
+    // gravação é negada mesmo com dados válidos; o backend corta a cópia resumida em 8.
+    function isPersonRefList(people) {
+      return people is list && people.size() <= 8 &&
+             isPersonRefAt(people, 0) && isPersonRefAt(people, 1) && isPersonRefAt(people, 2) &&
+             isPersonRefAt(people, 3) && isPersonRefAt(people, 4) && isPersonRefAt(people, 5) &&
+             isPersonRefAt(people, 6) && isPersonRefAt(people, 7);
+    }
+
     // Data sem hora, AAAA-MM-DD. Confere o formato, não o calendário (aceitaria 2026-02-31).
     function isDate(value) {
       return value is string && value.matches('^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$');
@@ -161,12 +185,13 @@ service cloud.firestore {
 
     function isValidMovieSnapshot(movie) {
       return movie is map &&
-             hasFields(movie, ['title', 'year', 'posterPath', 'imdb', 'letterboxd'], []) &&
+             hasFields(movie, ['title', 'year', 'posterPath', 'imdb', 'letterboxd', 'directors'], []) &&
              isText(movie.title, 1, 300) &&
              (movie.year == null || (movie.year is int && movie.year >= 1870 && movie.year <= 2100)) &&
              isTextOrNull(movie.posterPath, 0, 200) &&
              isNumberOrNull(movie.imdb, 0, 10) &&
-             isNumberOrNull(movie.letterboxd, 0, 5);
+             isNumberOrNull(movie.letterboxd, 0, 5) &&
+             isPersonRefList(movie.directors);
     }
 
     function isValidEntry(data) {
@@ -234,6 +259,11 @@ service cloud.firestore {
     }
 
     match /movies/{tmdbId} {
+      allow read: if isSignedIn();
+      allow write: if false;
+    }
+
+    match /people/{personId} {
       allow read: if isSignedIn();
       allow write: if false;
     }

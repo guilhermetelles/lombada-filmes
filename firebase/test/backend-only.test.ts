@@ -18,6 +18,12 @@ describe('movies: logados leem, só o backend grava', () => {
   test('logado grava um filme', () => denies(setDoc(doc(firestoreAs(MEMBER), 'movies/2756'), { title: 'x' })));
 });
 
+describe('people: logados leem, só o backend grava', () => {
+  test('logado lê uma pessoa', () => allows(getDoc(doc(firestoreAs(OUTSIDER), 'people/2710'))));
+  test('sem login lê uma pessoa', () => denies(getDoc(doc(firestoreAs(null), 'people/2710'))));
+  test('logado grava uma pessoa', () => denies(setDoc(doc(firestoreAs(MEMBER), 'people/2710'), { name: 'x' })));
+});
+
 describe('usage: logados leem, só o backend grava', () => {
   test('logado lê o consumo', () => allows(getDoc(doc(firestoreAs(MEMBER), 'usage/2026-10-16'))));
   test('logado grava o consumo', () =>

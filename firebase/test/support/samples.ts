@@ -9,7 +9,14 @@ export const PAST = Timestamp.fromDate(new Date('2020-01-01'));
 
 type Fields = Record<string, unknown>;
 
-export const movieSnapshot = { title: 'The Abyss', year: 1989, posterPath: '/kRP5.jpg', imdb: 7.5, letterboxd: 3.72 };
+export const movieSnapshot = {
+  title: 'The Abyss',
+  year: 1989,
+  posterPath: '/kRP5.jpg',
+  imdb: 7.5,
+  letterboxd: 3.72,
+  directors: [{ id: 2710, name: 'James Cameron' }],
+};
 
 /** Valor que o Firestore troca pela hora do servidor ao gravar. */
 const serverTime = (): FieldValue => serverTimestamp();

@@ -58,6 +58,7 @@ async function seed(db: Firestore): Promise<void> {
   await setDoc(doc(db, 'lists/L1/entries/e1'), storedEntry(OWNER));
   await setDoc(doc(db, 'invites/7Q4KMX'), { listId: 'L1', createdBy: OWNER, expiresAt: PAST, usedBy: [] });
   await setDoc(doc(db, 'movies/2756'), { title: 'The Abyss' });
+  await setDoc(doc(db, 'people/2710'), { name: 'James Cameron' });
   await setDoc(doc(db, 'usage/2026-10-16'), { omdb: { calls: 97 } });
 }
 
