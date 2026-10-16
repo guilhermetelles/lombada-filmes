@@ -11,4 +11,5 @@ export type Dependencies = {
   auth: Auth;
   sources: SourceClients;
   now: () => Date;
+  cronSecret: string;
 };

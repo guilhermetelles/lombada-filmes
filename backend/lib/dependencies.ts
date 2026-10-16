@@ -32,5 +32,6 @@ function createProductionDependencies(): Dependencies {
     auth: getAuth(app),
     sources: createSourceClients({ tmdbToken: env.TMDB_TOKEN, omdbKey: env.OMDB_KEY }, fetch),
     now: () => new Date(),
+    cronSecret: env.CRON_SECRET,
   };
 }

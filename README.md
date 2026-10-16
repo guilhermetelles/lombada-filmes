@@ -14,7 +14,7 @@ O app lê e grava a lista direto no Firestore, protegido pelas regras. O backend
 
 ## API do backend
 
-Todas as rotas exigem `Authorization: Bearer <ID token do Firebase Auth>`. Erros vêm como `{ error: { code, message } }`.
+As rotas do app exigem `Authorization: Bearer <ID token do Firebase Auth>`. Erros vêm como `{ error: { code, message } }`.
 
 | Rota | O que faz |
 |---|---|
@@ -27,6 +27,7 @@ Todas as rotas exigem `Authorization: Bearer <ID token do Firebase Auth>`. Erros
 | `POST /api/lists/{listId}/invites` | Gera um código de convite novo (7 dias) |
 | `POST /api/lists/{listId}/leave` | Sai da lista; a última pessoa a sair apaga a lista |
 | `DELETE /api/lists/{listId}` | A dona apaga a lista, as entradas e os convites |
+| `GET /api/cron/daily` | Rotina diária da Vercel (6h de Brasília): atualiza notas e diretores vencidos e apaga convites vencidos. Exige `Authorization: Bearer <CRON_SECRET>` em vez do ID token |
 
 Para chamar as rotas na mão, `cd backend && npm run login-page` abre em http://localhost:5173 uma página de login com Google que mostra o uid e um ID token.
 
@@ -38,6 +39,8 @@ Os segredos ficam num `.env` na raiz (fora do git) e, em produção, nas variáv
 FIREBASE_SERVICE_ACCOUNT=<JSON da conta de serviço do lombada-db, em uma linha>
 TMDB_TOKEN=<token de leitura do TMDb>
 OMDB_KEY=<chave da OMDb>
+CRON_SECRET=<texto aleatório, 16+ caracteres; a Vercel manda nas chamadas do cron>
+OWNER_UID=<uid da dona da lista original; só a carga usa>
 ```
 
 Os emuladores do Firebase precisam de Java 11+ no `PATH`. O Firebase CLI roda com `npx -y firebase-tools`, sem instalação global.

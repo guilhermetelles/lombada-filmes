@@ -31,4 +31,34 @@ function isStale(movie: Movie | undefined, source: SourceName, now: Date): boole
   return now.getTime() - fetchedAt.getTime() >= FRESHNESS_MS;
 }
 
-export { FRESHNESS_MS, isStale };
+/**
+ * Diz se algum dado do filme venceu, com a mesma regra da busca: a OMDb só conta quando o filme
+ * tem id do IMDb, porque sem ele não há o que pedir.
+ *
+ * @param movie - Documento guardado.
+ * @param now - Momento de referência.
+ * @returns true se o TMDb, o Letterboxd ou (com id do IMDb) a OMDb estiverem vencidos.
+ */
+function needsRefresh(movie: Movie, now: Date): boolean {
+  return (
+    isStale(movie, 'tmdb', now) ||
+    isStale(movie, 'letterboxd', now) ||
+    (movie.ids.imdb !== null && isStale(movie, 'omdb', now))
+  );
+}
+
+/**
+ * Data mais antiga entre as fontes do filme, para atualizar primeiro o que está há mais tempo sem
+ * busca.
+ *
+ * @param movie - Documento guardado.
+ * @returns A menor data de busca entre TMDb, Letterboxd e OMDb (as que existirem).
+ */
+function oldestFetch(movie: Movie): Date {
+  const dates = Object.values(LAST_FETCHED_AT)
+    .map((lastFetchedAt) => lastFetchedAt(movie))
+    .filter((date): date is Date => date !== undefined);
+  return new Date(Math.min(...dates.map((date) => date.getTime())));
+}
+
+export { FRESHNESS_MS, isStale, needsRefresh, oldestFetch };

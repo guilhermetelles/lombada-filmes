@@ -1,0 +1,18 @@
+import { getProductionDependencies } from '../../lib/dependencies.js';
+import { cronRoute } from '../../lib/http/cron-route.js';
+import { logger } from '../../lib/logging/logger.js';
+import { runDailyMaintenance } from '../../lib/maintenance/run-daily-maintenance.js';
+
+/**
+ * GET /api/cron/daily: rotina diária agendada em vercel.json (6h de Brasília). Atualiza até 100
+ * filmes com nota vencida e até 50 diretores vencidos, e apaga os códigos de convite vencidos.
+ *
+ * Responde 200 com o relatório, ou 401 sem o `Authorization: Bearer <CRON_SECRET>` que a Vercel manda.
+ */
+export const dailyCronRoute = cronRoute(async ({ dependencies, usage }) => {
+  const report = await runDailyMaintenance(dependencies, usage);
+  logger.info('rotina diária concluída', { report });
+  return Response.json(report);
+});
+
+export const GET = dailyCronRoute(getProductionDependencies);

@@ -4,6 +4,7 @@ import type { Env, ServiceAccount } from '../types/env.js';
 export const EnvSchema: z.ZodType<Env> = z
   .object({
     TMDB_TOKEN: z.string().min(1),
+    CRON_SECRET: z.string().min(16, 'deve ter pelo menos 16 caracteres'),
     OMDB_KEY: z.string().min(1),
     FIREBASE_SERVICE_ACCOUNT: z.string().min(1).optional(),
     FIRESTORE_EMULATOR_HOST: z.string().min(1).optional(),

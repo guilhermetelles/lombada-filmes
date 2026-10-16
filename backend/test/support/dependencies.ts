@@ -8,6 +8,9 @@ import { emulatorProject, firestoreEmulatorHost } from './emulators.js';
 
 const TEST_CREDENTIALS = { tmdbToken: 'token-de-teste', omdbKey: 'chave-de-teste' };
 
+/** Segredo do cron nos testes. */
+export const TEST_CRON_SECRET = 'segredo-do-cron-de-teste';
+
 /**
  * Monta dependências reais (Admin SDK nos emuladores e os clientes de verdade), trocando só o fetch
  * e o relógio.
@@ -23,6 +26,7 @@ function createTestDependencies(fetch: Fetch, now: () => Date = () => new Date()
     auth: getAuth(app),
     sources: createSourceClients(TEST_CREDENTIALS, fetch),
     now,
+    cronSecret: TEST_CRON_SECRET,
   };
 }
 
