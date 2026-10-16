@@ -12,10 +12,13 @@
     "record:fixtures": "node --import tsx scripts/record-fixtures.ts",
     "lint": "biome check",
     "format": "biome check --write",
-    "login-page": "python3 -m http.server 5173 --bind 127.0.0.1 --directory scripts/google-login"
+    "login-page": "python3 -m http.server 5173 --bind 127.0.0.1 --directory scripts/google-login",
+    "seed:original-list": "node --import tsx scripts/seed-original-list.ts",
+    "seed:original-list:emulator": "npx -y firebase-tools@15.32.1 emulators:exec --config ../firebase/firebase.json --only firestore --project demo-lombada \"node --import tsx scripts/seed-original-list.ts\""
   },
   "dependencies": {
     "firebase-admin": "13.10.0",
+    "fractional-indexing": "4.0.0",
     "zod": "4.6.5"
   },
   "devDependencies": {

@@ -58,7 +58,12 @@ Só no backend:
 ```bash
 npm run check:firestore   # lê o lombada-db de verdade com a conta de serviço do .env
 npm run record:fixtures   # regrava as respostas das APIs usadas nos testes
+npm run login-page        # página local de login com Google (uid e ID token)
+npm run seed:original-list:emulator   # ensaio da carga da lista original no emulador
+npm run seed:original-list            # carga da lista original no lombada-db (já feita; pode rodar de novo sem duplicar)
 ```
+
+A carga lê o mock (`mock/index.html` e `mock/data/real.json`, fora do git) e o `OWNER_UID` do `.env`.
 
 Só no firebase:
 
