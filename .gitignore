@@ -1,0 +1,52 @@
+# Segredos
+.env
+.env.*
+*service-account*.json
+.vercel/
+
+# Dependências e build
+node_modules/
+dist/
+*.tsbuildinfo
+
+# Android
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+*.keystore
+*.jks
+.kotlin/
+
+# Logs do Firebase e dos emuladores
+*-debug.log
+firebase-debug.log*
+.firebase/
+
+# Cache baixado de novo pelo mock/scripts/update_real_data.py (dump do IMDb, 8 MB)
+mock/data/cache/
+
+# Arquivos de agentes/IA
+CLAUDE.md
+CLAUDE.local.md
+DESIGN.md
+PRODUCT.md
+.claude/
+.agents/
+.impeccable/
+skills-lock.json
+AGENTS.md
+GEMINI.md
+.cursor/
+.cursorrules
+.windsurfrules
+.github/copilot-instructions.md
+
+# Sistema e editores
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+__pycache__/
+*.pyc

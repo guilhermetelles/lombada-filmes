@@ -1,0 +1,21 @@
+{
+  "name": "lombada-backend",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": "24.x"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "npx -y firebase-tools emulators:exec --config ../firebase/firebase.json --only auth,firestore --project demo-lombada \"node --import tsx --test --test-concurrency=1 test/*.test.ts\"",
+    "check:firestore": "node --import tsx scripts/check-firestore.ts"
+  },
+  "dependencies": {
+    "firebase-admin": "^13.5.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "tsx": "^4.20.0",
+    "typescript": "^5.9.0"
+  }
+}
