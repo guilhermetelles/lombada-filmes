@@ -1,11 +1,8 @@
-import { Timestamp } from 'firebase-admin/firestore';
 import * as z from 'zod';
 import type { Movie, MovieSnapshot } from '../types/movie.js';
+import { firestoreDate } from './firestore.js';
 
-/** No banco as datas são Timestamp; no código, Date (o Admin SDK converte Date ao gravar). */
-const date = z.union([z.instanceof(Timestamp).transform((timestamp) => timestamp.toDate()), z.date()]);
-
-const rating = { value: z.number().nullable(), fetchedAt: date };
+const rating = { value: z.number().nullable(), fetchedAt: firestoreDate };
 
 /** movies/{tmdbId}, validado ao ler. A anotação garante que o schema produz exatamente o tipo Movie. */
 export const MovieSchema: z.ZodType<Movie> = z.object({
@@ -23,7 +20,7 @@ export const MovieSchema: z.ZodType<Movie> = z.object({
     rottenTomatoes: z.object({ ...rating, url: z.string().nullable() }).optional(),
     metacritic: z.object(rating).optional(),
   }),
-  tmdbFetchedAt: date,
+  tmdbFetchedAt: firestoreDate,
 });
 
 /** Cópia resumida como está gravada em lists/{listId}/entries/{entryId}.movie. */

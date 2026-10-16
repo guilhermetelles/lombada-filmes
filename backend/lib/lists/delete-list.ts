@@ -1,0 +1,20 @@
+import type { Firestore } from 'firebase-admin/firestore';
+import { deleteListData } from './delete-list-data.js';
+import { requireOwner } from './list-access.js';
+import { listDocument } from './list-repository.js';
+
+/**
+ * Apaga uma lista, as entradas e os códigos de convite. Só a dona pode.
+ *
+ * @param db - Firestore.
+ * @param uid - Quem pede a exclusão.
+ * @param listId - Lista a apagar.
+ * @throws {NotFoundError} Se a lista não existir.
+ * @throws {ForbiddenError} Se a pessoa não for a dona.
+ */
+async function deleteList(db: Firestore, uid: string, listId: string): Promise<void> {
+  requireOwner((await listDocument(db, listId).get()).data(), uid);
+  await deleteListData(db, listId);
+}
+
+export { deleteList };

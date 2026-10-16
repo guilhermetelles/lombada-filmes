@@ -12,6 +12,23 @@ App Android pessoal, que mantém um ranking compartilhado dos filmes que um grup
 
 O app lê e grava a lista direto no Firestore, protegido pelas regras. O backend cuida do que precisa de segredo ou de privilégio: falar com TMDb, OMDb e Letterboxd, criar listas e validar códigos de convite.
 
+## API do backend
+
+Todas as rotas exigem `Authorization: Bearer <ID token do Firebase Auth>`. Erros vêm como `{ error: { code, message } }`.
+
+| Rota | O que faz |
+|---|---|
+| `GET /api/me` | Devolve o uid de quem chamou |
+| `GET /api/search?q=` | Busca filmes no TMDb (pt-BR) |
+| `GET /api/movies/{tmdbId}` | Filme com as quatro notas, buscando de novo só o que tem mais de 7 dias |
+| `POST /api/lists` | Cria uma lista e o primeiro código de convite |
+| `POST /api/lists/join` | Entra numa lista com um código (`{ code }`) |
+| `POST /api/lists/{listId}/invites` | Gera um código de convite novo (7 dias) |
+| `POST /api/lists/{listId}/leave` | Sai da lista; a última pessoa a sair apaga a lista |
+| `DELETE /api/lists/{listId}` | A dona apaga a lista, as entradas e os convites |
+
+Para chamar as rotas na mão, `cd backend && npm run login-page` abre em http://localhost:5173 uma página de login com Google que mostra o uid e um ID token.
+
 ## Configuração
 
 Os segredos ficam num `.env` na raiz (fora do git) e, em produção, nas variáveis de ambiente da Vercel:

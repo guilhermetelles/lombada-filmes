@@ -13,7 +13,14 @@ export type RouteContext = {
 };
 
 /** Códigos de erro que o app pode receber. */
-export type ErrorCode = 'invalid_input' | 'unauthenticated' | 'not_found' | 'source_unavailable' | 'internal';
+export type ErrorCode =
+  | 'invalid_input'
+  | 'unauthenticated'
+  | 'forbidden'
+  | 'not_found'
+  | 'invite_expired'
+  | 'source_unavailable'
+  | 'internal';
 
 /** Corpo de toda resposta de erro. */
 export type ErrorBody = {

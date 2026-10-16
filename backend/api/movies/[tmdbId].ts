@@ -1,6 +1,7 @@
 import { getProductionDependencies } from '../../lib/dependencies.js';
 import { authenticatedRoute } from '../../lib/http/authenticated-route.js';
 import { parseInput } from '../../lib/http/parse-input.js';
+import { readPathParam } from '../../lib/http/path-param.js';
 import { getFreshMovie } from '../../lib/movies/get-fresh-movie.js';
 import { MovieParams } from '../../lib/schemas/route-inputs.js';
 
@@ -12,20 +13,9 @@ import { MovieParams } from '../../lib/schemas/route-inputs.js';
  * tiver o filme e 502 se o TMDb falhar na primeira busca.
  */
 export const movieRoute = authenticatedRoute(async ({ request, dependencies, usage }) => {
-  const { tmdbId } = parseInput(MovieParams, { tmdbId: readTmdbId(new URL(request.url)) });
+  const { tmdbId } = parseInput(MovieParams, { tmdbId: readPathParam(new URL(request.url), 'tmdbId', 2) });
   const movie = await getFreshMovie(tmdbId, dependencies, usage);
   return Response.json({ tmdbId, ...movie });
 });
 
 export const GET = movieRoute(getProductionDependencies);
-
-/**
- * Lê o tmdbId do pedido. A Vercel passa o segmento [tmdbId] como query; o fim do caminho fica de
- * reserva.
- *
- * @param url - Endereço do pedido.
- * @returns O tmdbId como texto, ainda sem validar.
- */
-function readTmdbId(url: URL): string {
-  return url.searchParams.get('tmdbId') ?? url.pathname.split('/').at(-1) ?? '';
-}

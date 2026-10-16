@@ -22,6 +22,20 @@ export function withBearer(idToken: string): RequestInit {
 }
 
 /**
+ * Monta um pedido com corpo JSON (POST por padrão).
+ *
+ * @param path - Caminho da rota.
+ * @param body - Corpo, enviado como JSON.
+ * @param idToken - Token de quem chama; sem token, o pedido vai sem Authorization.
+ * @returns O pedido.
+ */
+export function jsonRequest(path: string, body: unknown, idToken?: string): Request {
+  const headers: Record<string, string> = { 'content-type': 'application/json' };
+  if (idToken) headers.authorization = `Bearer ${idToken}`;
+  return new Request(`http://localhost${path}`, { method: 'POST', headers, body: JSON.stringify(body) });
+}
+
+/**
  * Lê o código de uma resposta de erro.
  *
  * @param response - Resposta da rota.

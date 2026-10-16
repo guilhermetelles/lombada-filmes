@@ -46,6 +46,18 @@ export class NotFoundError extends AppError {
   readonly code = 'not_found';
 }
 
+/** A pessoa está logada, mas não pode fazer isso, como apagar uma lista de que não é dona (403). */
+export class ForbiddenError extends AppError {
+  readonly status = 403;
+  readonly code = 'forbidden';
+}
+
+/** O código de convite existe, mas passou dos 7 dias (410). */
+export class InviteExpiredError extends AppError {
+  readonly status = 410;
+  readonly code = 'invite_expired';
+}
+
 /** Uma fonte externa falhou: rede, status inesperado ou resposta fora do formato (502). */
 export class SourceUnavailableError extends AppError {
   readonly status = 502;
