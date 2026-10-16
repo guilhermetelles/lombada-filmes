@@ -9,3 +9,8 @@ export const TmdbDetailsToRecord = z.looseObject({
 });
 
 export const TmdbSearchToRecord = z.looseObject({ results: z.array(z.unknown()) });
+
+export const TmdbPersonToRecord = z.looseObject({
+  movie_credits: z.looseObject({ crew: z.array(z.looseObject({ job: z.string() })) }),
+  translations: z.looseObject({ translations: z.array(z.looseObject({ iso_639_1: z.string() })) }),
+});

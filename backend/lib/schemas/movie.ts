@@ -4,11 +4,14 @@ import { firestoreDate } from './firestore.js';
 
 const rating = { value: z.number().nullable(), fetchedAt: firestoreDate };
 
+/** Referência a uma pessoa do TMDb dentro de um filme. */
+export const PersonRefSchema = z.object({ id: z.number().int(), name: z.string() });
+
 /** movies/{tmdbId}, validado ao ler. A anotação garante que o schema produz exatamente o tipo Movie. */
 export const MovieSchema: z.ZodType<Movie> = z.object({
   title: z.string(),
   year: z.number().int().nullable(),
-  directors: z.array(z.string()),
+  directors: z.array(PersonRefSchema),
   runtime: z.number().nullable(),
   genres: z.array(z.string()),
   synopsis: z.object({ pt: z.string().nullable(), en: z.string().nullable() }),
@@ -30,4 +33,5 @@ export const MovieSnapshotSchema: z.ZodType<MovieSnapshot> = z.object({
   posterPath: z.string().nullable(),
   imdb: z.number().nullable(),
   letterboxd: z.number().nullable(),
+  directors: z.array(PersonRefSchema),
 });

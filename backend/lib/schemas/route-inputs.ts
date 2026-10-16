@@ -33,3 +33,11 @@ export const MovieParams = z.object({
     .regex(/^[1-9]\d{0,7}$/, 'tmdbId deve ser um número inteiro positivo')
     .transform(Number),
 });
+
+/** GET /api/people/{personId} */
+export const PersonParams = z.object({
+  personId: z
+    .string()
+    .regex(/^[1-9]\d{0,8}$/, 'personId deve ser um número inteiro positivo')
+    .transform(Number),
+});

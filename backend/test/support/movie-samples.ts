@@ -5,7 +5,7 @@ import type { LetterboxdRating, OmdbRatings, TmdbMovie } from '../../lib/types/s
 export const tmdbAbyss: TmdbMovie = {
   title: 'The Abyss',
   year: 1989,
-  directors: ['James Cameron'],
+  directors: [{ id: 2710, name: 'James Cameron' }],
   runtime: 138,
   genres: ['Aventura'],
   synopsis: { pt: 'Um submarino…', en: 'A civilian oil rig crew…' },

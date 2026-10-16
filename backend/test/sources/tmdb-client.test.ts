@@ -14,7 +14,7 @@ describe('TMDb: getMovie', () => {
     assert.equal(movie.title, 'The Abyss');
     assert.equal(movie.year, 1989);
     assert.equal(movie.runtime, 138);
-    assert.deepEqual(movie.directors, ['James Cameron']);
+    assert.deepEqual(movie.directors, [{ id: 2710, name: 'James Cameron' }]);
     assert.deepEqual(movie.genres, ['Aventura', 'Thriller', 'Ficção científica']);
     assert.equal(movie.imdbId, 'tt0096754');
     assert.match(movie.posterPath ?? '', /^\/.+\.jpg$/);
@@ -66,5 +66,41 @@ describe('TMDb: search', () => {
 
     assert.equal(result?.overview?.length, 200);
     assert.ok(result?.overview?.endsWith('…'));
+  });
+});
+
+describe('TMDb: getPerson', () => {
+  test('James Cameron: biografia em português, nascimento, foto e filmes que dirigiu', async () => {
+    const person = await tmdbClient().getPerson(2710);
+
+    assert.equal(person.name, 'James Cameron');
+    assert.equal(person.birthday, '1954-08-16');
+    assert.equal(person.deathday, null);
+    assert.equal(person.placeOfBirth, 'Kapuskasing, Ontario, Canada');
+    assert.equal(person.bioLang, 'pt');
+    assert.match(person.biography ?? '', /\S/);
+    assert.match(person.profilePath ?? '', /^\/.+\.jpg$/);
+    assert.equal(person.imdbId, 'nm0000116');
+  });
+
+  test('filmes dirigidos: só o cargo Director, sem repetição, os 12 mais populares em inglês', async () => {
+    const person = await tmdbClient().getPerson(2710);
+
+    assert.equal(person.directedCount, 21);
+    assert.equal(person.directed.length, 12);
+    assert.deepEqual(person.directed[0], { tmdbId: 83533, title: 'Avatar: Fire and Ash', year: 2025 });
+    assert.ok(person.directed.some((movie) => movie.title === 'The Terminator' && movie.year === 1984));
+  });
+
+  test('sem biografia em português, usa a inglesa; sem nenhuma, fica null', async () => {
+    const english = await tmdbClient(respondWith({ id: 1, name: 'Fulana', biography: 'Born in…' })).getPerson(1);
+    assert.deepEqual([english.biography, english.bioLang], ['Born in…', 'en']);
+
+    const none = await tmdbClient(respondWith({ id: 1, name: 'Fulana', biography: '' })).getPerson(1);
+    assert.deepEqual([none.biography, none.bioLang, none.directedCount], [null, null, 0]);
+  });
+
+  test('pessoa inexistente: NotFoundError', async () => {
+    await assert.rejects(tmdbClient().getPerson(99999999), NotFoundError);
   });
 });

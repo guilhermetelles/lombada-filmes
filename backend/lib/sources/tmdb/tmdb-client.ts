@@ -1,8 +1,9 @@
 import type * as z from 'zod';
-import { TmdbMovieResponse, TmdbSearchResponse } from '../../schemas/sources/tmdb.js';
+import { TmdbMovieResponse, TmdbPersonResponse, TmdbSearchResponse } from '../../schemas/sources/tmdb.js';
 import type { Fetch, TmdbClient } from '../../types/sources.js';
 import { fetchJson } from '../shared/fetch-json.js';
 import { toTmdbMovie, toTmdbSearchResults } from './tmdb-mappers.js';
+import { toTmdbPerson } from './tmdb-person-mapper.js';
 
 const BASE_URL = 'https://api.themoviedb.org/3';
 
@@ -10,7 +11,7 @@ const BASE_URL = 'https://api.themoviedb.org/3';
  * Cria o cliente do TMDb.
  *
  * @param options - Token de leitura do TMDb e o fetch a usar.
- * @returns Cliente com detalhes de filme e busca.
+ * @returns Cliente com detalhes de filme, busca e detalhes de pessoa.
  */
 function createTmdbClient({ token, fetch }: { token: string; fetch: Fetch }): TmdbClient {
   const getFromTmdb = <Schema extends z.ZodType>(path: string, schema: Schema) =>
@@ -43,6 +44,20 @@ function createTmdbClient({ token, fetch }: { token: string; fetch: Fetch }): Tm
     async search(query) {
       const params = new URLSearchParams({ query, language: 'pt-BR', include_adult: 'false' });
       return toTmdbSearchResults(await getFromTmdb(`/search/movie?${params}`, TmdbSearchResponse));
+    },
+
+    /**
+     * Busca uma pessoa numa chamada só: dados em inglês (títulos dos filmes como no resto do app),
+     * filmes em que trabalhou, ids externos e as traduções, de onde sai a biografia em português.
+     *
+     * @param personId - Id de pessoa no TMDb.
+     * @returns A pessoa com biografia, nascimento, foto e os filmes que dirigiu.
+     * @throws {NotFoundError} Se o TMDb não tiver a pessoa.
+     * @throws {SourceUnavailableError} Se o TMDb falhar ou responder fora do formato.
+     */
+    async getPerson(personId) {
+      const path = `/person/${personId}?language=en-US&append_to_response=movie_credits,external_ids,translations`;
+      return toTmdbPerson(await getFromTmdb(path, TmdbPersonResponse));
     },
   };
 }

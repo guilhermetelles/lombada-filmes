@@ -1,3 +1,4 @@
+import type { PersonRef } from './person.js';
 import type { LetterboxdRating, OmdbRatings, Synopsis, TmdbMovie } from './sources.js';
 
 // Documento movies/{tmdbId}: catálogo do filme e as quatro notas, cada uma com a data da busca.
@@ -17,7 +18,7 @@ export type MovieRatings = {
 export type Movie = {
   title: string;
   year: number | null;
-  directors: string[];
+  directors: PersonRef[];
   runtime: number | null;
   genres: string[];
   synopsis: Synopsis;
@@ -37,6 +38,7 @@ export type MovieSnapshot = {
   posterPath: string | null;
   imdb: number | null;
   letterboxd: number | null;
+  directors: PersonRef[]; // até 8; para a tela do diretor achar os filmes dele na lista
 };
 
 /** O que cada fonte trouxe num pedido. Fica ausente quando a fonte estava fresca ou falhou. */

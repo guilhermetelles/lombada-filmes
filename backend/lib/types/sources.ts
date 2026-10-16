@@ -1,6 +1,8 @@
 // Fontes externas de dados de filmes e o que cada uma devolve, já no formato do app.
 // Quando a fonte não tem o filme, as notas vêm null: é uma resposta válida, que também vale 7 dias.
 
+import type { Person, PersonRef } from './person.js';
+
 export type SourceName = 'tmdb' | 'omdb' | 'letterboxd';
 
 export type Fetch = typeof globalThis.fetch;
@@ -10,7 +12,7 @@ export type Synopsis = { pt: string | null; en: string | null };
 export type TmdbMovie = {
   title: string; // em inglês, como no Letterboxd e na lista original
   year: number | null;
-  directors: string[];
+  directors: PersonRef[];
   runtime: number | null; // minutos
   genres: string[]; // em português
   synopsis: Synopsis;
@@ -27,6 +29,9 @@ export type TmdbSearchResult = {
   overview: string | null; // trecho de até 200 caracteres
 };
 
+/** Pessoa como o TMDb descreve, já no formato de people/{id} (sem a data da busca). */
+export type TmdbPerson = Omit<Person, 'fetchedAt'>;
+
 export type OmdbRatings = {
   imdb: { value: number | null; votes: number | null };
   rottenTomatoes: { value: number | null; url: string | null };
@@ -42,6 +47,7 @@ export type LetterboxdRating = {
 export type TmdbClient = {
   getMovie(tmdbId: number): Promise<TmdbMovie>;
   search(query: string): Promise<TmdbSearchResult[]>;
+  getPerson(personId: number): Promise<TmdbPerson>;
 };
 
 export type OmdbClient = {

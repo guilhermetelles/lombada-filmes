@@ -1,4 +1,5 @@
 import type { TmdbMovieResponse, TmdbSearchResponse } from '../../schemas/sources/tmdb.js';
+import type { PersonRef } from '../../types/person.js';
 import type { TmdbMovie, TmdbSearchResult } from '../../types/sources.js';
 
 const OVERVIEW_EXCERPT_LENGTH = 200;
@@ -59,11 +60,12 @@ function findEnglishTranslation(response: TmdbMovieResponse) {
  * Lista quem dirigiu o filme, a partir da equipe técnica.
  *
  * @param response - Resposta de detalhes do TMDb.
- * @returns Nomes de quem tem o cargo Director.
+ * @returns Id e nome de quem tem o cargo Director, na ordem do TMDb e sem repetição.
  */
-function findDirectors(response: TmdbMovieResponse): string[] {
+function findDirectors(response: TmdbMovieResponse): PersonRef[] {
   const crew = response.credits?.crew ?? [];
-  return crew.filter((person) => person.job === 'Director').map((person) => person.name);
+  const directors = crew.filter((person) => person.job === 'Director');
+  return uniqueBy(directors, (person) => person.id).map(({ id, name }) => ({ id, name }));
 }
 
 /**
@@ -76,4 +78,21 @@ function findDirectors(response: TmdbMovieResponse): string[] {
 function excerpt(text: string | null, maxLength: number): string | null {
   if (!text || text.length <= maxLength) return text;
   return `${text.slice(0, maxLength - 1).trimEnd()}…`;
+}
+
+/**
+ * Tira itens repetidos, mantendo a primeira ocorrência.
+ *
+ * @param items - Itens na ordem original.
+ * @param keyOf - Chave que identifica um item.
+ * @returns Os itens sem repetição de chave.
+ */
+function uniqueBy<T, Key>(items: T[], keyOf: (item: T) => Key): T[] {
+  const seen = new Set<Key>();
+  return items.filter((item) => {
+    const key = keyOf(item);
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 }

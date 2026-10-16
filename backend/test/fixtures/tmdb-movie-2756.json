@@ -1,4 +1,38 @@
 {
+ "credits": {
+  "crew": [
+   {
+    "job": "Director",
+    "adult": false,
+    "gender": 2,
+    "id": 2710,
+    "known_for_department": "Directing",
+    "name": "James Cameron",
+    "original_name": "James Cameron",
+    "popularity": 4.3296,
+    "profile_path": "/9NAZnTjBQ9WcXAQEzZpKy4vdQto.jpg",
+    "credit_id": "52fe436ac3a36847f80528c5",
+    "department": "Directing"
+   }
+  ]
+ },
+ "translations": {
+  "translations": [
+   {
+    "iso_639_1": "en",
+    "iso_3166_1": "US",
+    "name": "English",
+    "english_name": "English",
+    "data": {
+     "homepage": "",
+     "overview": "A civilian oil rig crew is recruited to conduct a search and rescue effort when a nuclear submarine mysteriously sinks. One diver soon finds himself on a spectacular odyssey 25,000 feet below the ocean's surface where he confronts a mysterious force that has the power to change the world or destroy it.",
+     "runtime": 140,
+     "tagline": "When you get there, you will understand.",
+     "title": ""
+    }
+   }
+  ]
+ },
  "adult": false,
  "backdrop_path": "/mW6XzxelLY8T2oW2NjciG9LpZT5.jpg",
  "belongs_to_collection": null,
@@ -65,45 +99,11 @@
  "video": false,
  "vote_average": 7.364,
  "vote_count": 3631,
- "credits": {
-  "crew": [
-   {
-    "adult": false,
-    "gender": 2,
-    "id": 2710,
-    "known_for_department": "Directing",
-    "name": "James Cameron",
-    "original_name": "James Cameron",
-    "popularity": 4.3296,
-    "profile_path": "/9NAZnTjBQ9WcXAQEzZpKy4vdQto.jpg",
-    "credit_id": "52fe436ac3a36847f80528c5",
-    "department": "Directing",
-    "job": "Director"
-   }
-  ]
- },
  "external_ids": {
   "imdb_id": "tt0096754",
   "wikidata_id": "Q336517",
   "facebook_id": null,
   "instagram_id": null,
   "twitter_id": null
- },
- "translations": {
-  "translations": [
-   {
-    "iso_3166_1": "US",
-    "iso_639_1": "en",
-    "name": "English",
-    "english_name": "English",
-    "data": {
-     "homepage": "",
-     "overview": "A civilian oil rig crew is recruited to conduct a search and rescue effort when a nuclear submarine mysteriously sinks. One diver soon finds himself on a spectacular odyssey 25,000 feet below the ocean's surface where he confronts a mysterious force that has the power to change the world or destroy it.",
-     "runtime": 140,
-     "tagline": "When you get there, you will understand.",
-     "title": ""
-    }
-   }
-  ]
  }
 }

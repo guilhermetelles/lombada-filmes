@@ -21,6 +21,7 @@ Todas as rotas exigem `Authorization: Bearer <ID token do Firebase Auth>`. Erros
 | `GET /api/me` | Devolve o uid de quem chamou |
 | `GET /api/search?q=` | Busca filmes no TMDb (pt-BR) |
 | `GET /api/movies/{tmdbId}` | Filme com as quatro notas, buscando de novo só o que tem mais de 7 dias |
+| `GET /api/people/{personId}` | Diretor (biografia, nascimento, foto, filmes dirigidos), buscando de novo depois de 30 dias |
 | `POST /api/lists` | Cria uma lista e o primeiro código de convite |
 | `POST /api/lists/join` | Entra numa lista com um código (`{ code }`) |
 | `POST /api/lists/{listId}/invites` | Gera um código de convite novo (7 dias) |

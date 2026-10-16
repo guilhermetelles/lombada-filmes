@@ -48,6 +48,9 @@ export function fakeSources(): FakeSources {
  */
 function recordedResponse(source: SourceName, url: URL): Response {
   if (source === 'tmdb' && url.pathname === '/3/movie/2756') return fixture('tmdb-movie-2756.json', 'application/json');
+  if (source === 'tmdb' && url.pathname === '/3/person/2710') {
+    return fixture('tmdb-person-2710.json', 'application/json');
+  }
   if (source === 'tmdb' && url.pathname === '/3/search/movie') {
     return fixture('tmdb-search-abismo.json', 'application/json');
   }

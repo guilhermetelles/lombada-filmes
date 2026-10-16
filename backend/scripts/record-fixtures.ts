@@ -4,7 +4,7 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import type * as z from 'zod';
 import { readEnv } from '../lib/config/env.js';
-import { TmdbDetailsToRecord, TmdbSearchToRecord } from '../lib/schemas/fixtures.js';
+import { TmdbDetailsToRecord, TmdbPersonToRecord, TmdbSearchToRecord } from '../lib/schemas/fixtures.js';
 import { LETTERBOXD_USER_AGENT } from '../lib/sources/letterboxd/letterboxd-client.js';
 
 process.loadEnvFile(new URL('../../.env', import.meta.url));
@@ -35,6 +35,23 @@ save('tmdb-movie-2756.json', {
 
 const search = await tmdb('/search/movie?query=abismo&language=pt-BR&include_adult=false', TmdbSearchToRecord);
 save('tmdb-search-abismo.json', { ...search, results: search.results.slice(0, 3) });
+
+// James Cameron: os créditos de direção, mais um crédito de outro cargo para testar o filtro.
+const person = await tmdb(
+  '/person/2710?language=en-US&append_to_response=movie_credits,external_ids,translations',
+  TmdbPersonToRecord,
+);
+const directing = person.movie_credits.crew.filter((credit) => credit.job === 'Director');
+const otherJob = person.movie_credits.crew.find((credit) => credit.job !== 'Director');
+save('tmdb-person-2710.json', {
+  ...person,
+  movie_credits: { crew: otherJob ? [...directing, otherJob] : directing },
+  translations: {
+    translations: person.translations.translations.filter((translation) =>
+      ['pt', 'en'].includes(translation.iso_639_1),
+    ),
+  },
+});
 
 const omdb = await fetch(
   `https://www.omdbapi.com/?${new URLSearchParams({ i: 'tt0096754', tomatoes: 'true', apikey: env.OMDB_KEY })}`,

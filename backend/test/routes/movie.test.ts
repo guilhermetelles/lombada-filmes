@@ -194,8 +194,8 @@ describe('GET /api/movies/{tmdbId}: cópia resumida nas listas', () => {
 
     const updated = (await entry('lists/L1/entries/E1').get()).get('movie');
     assert.deepEqual(
-      { imdb: updated.imdb, letterboxd: updated.letterboxd, year: updated.year },
-      { imdb: 7.5, letterboxd: 3.72, year: 1989 },
+      { imdb: updated.imdb, letterboxd: updated.letterboxd, year: updated.year, directors: updated.directors },
+      { imdb: 7.5, letterboxd: 3.72, year: 1989, directors: [{ id: 2710, name: 'James Cameron' }] },
     );
     assert.deepEqual((await entry('lists/L2/entries/E2').get()).get('movie'), updated);
     assert.equal((await entry('lists/L1/entries/E3').get()).get('movie.title'), 'The Matrix');
