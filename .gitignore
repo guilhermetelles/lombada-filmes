@@ -50,3 +50,8 @@ Thumbs.db
 *.swp
 __pycache__/
 *.pyc
+
+# Mock
+data/
+docs/
+mock/

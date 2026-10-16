@@ -26,23 +26,27 @@ Os emuladores do Firebase precisam de Java 11+ no `PATH`. O Firebase CLI roda co
 
 ## Comandos
 
-Backend:
+`backend/` e `firebase/` são pacotes separados, com os mesmos scripts:
 
 ```bash
-cd backend
 npm install
 npm run typecheck
-npm test                  # sobe os emuladores de Auth e Firestore e roda test/*.test.ts
-npm run check:firestore   # lê o lombada-db de verdade com a conta de serviço do .env
+npm run lint        # Biome; npm run format corrige
+npm test            # sobe os emuladores do Firebase (precisa de Java 11+)
 ```
 
-Regras do Firestore:
+Só no backend:
 
 ```bash
-cd firebase
-npm i --no-save @firebase/rules-unit-testing@4 firebase@11
-npx -y firebase-tools emulators:exec --only firestore --project demo-lombada "node test/firestore.rules.test.mjs"
-npx -y firebase-tools deploy --only firestore   # só depois dos testes passarem
+npm run check:firestore   # lê o lombada-db de verdade com a conta de serviço do .env
+npm run record:fixtures   # regrava as respostas das APIs usadas nos testes
+```
+
+Só no firebase:
+
+```bash
+npm run deploy:rules      # roda os testes das regras e só publica se passarem
+npm run deploy:indexes
 ```
 
 Mock:
