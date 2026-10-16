@@ -1,6 +1,7 @@
 import type { Auth } from 'firebase-admin/auth';
 import { UnauthenticatedError } from '../errors/app-errors.js';
 
+/** Cabeçalho `Authorization: Bearer <token>`; o grupo 1 é o token. */
 const BEARER_TOKEN = /^Bearer (\S+)$/;
 
 /**

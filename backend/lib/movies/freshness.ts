@@ -1,3 +1,4 @@
+import { DAY_MS } from '../time/durations.js';
 import type { Movie } from '../types/movie.js';
 import type { SourceName } from '../types/sources.js';
 
@@ -5,7 +6,7 @@ import type { SourceName } from '../types/sources.js';
  * Cada fonte é buscada de novo só depois de 7 dias. Notas mudam pouco, e isso mantém a OMDb muito
  * abaixo da cota de 1.000 pedidos por dia.
  */
-const FRESHNESS_MS = 7 * 24 * 60 * 60 * 1000;
+const FRESHNESS_MS = 7 * DAY_MS;
 
 /**
  * Quando cada fonte foi buscada pela última vez. A OMDb traz IMDb, Rotten Tomatoes e Metacritic

@@ -3,6 +3,7 @@ import { getFreshPerson } from '../people/get-fresh-person.js';
 import { isPersonStale } from '../people/person-freshness.js';
 import { PersonSchema } from '../schemas/person.js';
 import type { Dependencies } from '../types/dependencies.js';
+import type { RefreshCount } from '../types/maintenance.js';
 import type { UsageRecorder } from '../types/usage.js';
 import { runInBatches } from './run-in-batches.js';
 
@@ -21,7 +22,7 @@ async function refreshStalePeople(
   dependencies: Dependencies,
   usage: UsageRecorder,
   limit: number,
-): Promise<{ refreshed: number; failed: number }> {
+): Promise<RefreshCount> {
   const now = dependencies.now();
   const people = await dependencies.db.collection('people').get();
   const stale = people.docs

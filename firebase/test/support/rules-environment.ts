@@ -4,6 +4,7 @@ import { initializeTestEnvironment, type RulesTestEnvironment } from '@firebase/
 import { doc, type Firestore, setDoc } from 'firebase/firestore';
 import { MEMBER, OWNER, PAST, storedEntry, storedUser } from './samples.js';
 
+/** Regras testadas: as mesmas publicadas no lombada-db. */
 const RULES_PATH = new URL('../../firestore.rules', import.meta.url);
 
 /**

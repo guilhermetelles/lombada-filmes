@@ -1,6 +1,9 @@
 import type { Dependencies } from './dependencies.js';
 import type { UsageRecorder } from './usage.js';
 
+/** Dá as dependências de uma rota: as de produção, ou as de teste. */
+export type GetDependencies = () => Dependencies;
+
 /** Assinatura que a Vercel chama para cada método exportado pela rota (GET, POST…). */
 export type RouteHandler = (request: Request) => Promise<Response>;
 
@@ -8,6 +11,12 @@ export type RouteHandler = (request: Request) => Promise<Response>;
 export type RouteContext = {
   request: Request;
   uid: string;
+  dependencies: Dependencies;
+  usage: UsageRecorder;
+};
+
+/** O que uma rota do Vercel Cron recebe (não há pessoa logada). */
+export type CronContext = {
   dependencies: Dependencies;
   usage: UsageRecorder;
 };

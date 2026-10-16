@@ -1,13 +1,15 @@
 import type { PersonRef } from './person.js';
 import type { LetterboxdRating, OmdbRatings, Synopsis, TmdbMovie } from './sources.js';
 
-// Documento movies/{tmdbId}: catálogo do filme e as quatro notas, cada uma com a data da busca.
+/** Documento movies/{tmdbId}: catálogo do filme e as quatro notas, cada uma com a data da busca. */
 
+/** Uma nota e a data em que foi buscada. */
 export type Rating = {
   value: number | null;
   fetchedAt: Date;
 };
 
+/** As quatro notas; cada uma fica ausente até a primeira busca da fonte. */
 export type MovieRatings = {
   letterboxd?: (Rating & { count: number | null }) | undefined;
   imdb?: (Rating & { votes: number | null }) | undefined;
@@ -15,6 +17,7 @@ export type MovieRatings = {
   metacritic?: Rating | undefined;
 };
 
+/** Documento movies/{tmdbId}. */
 export type Movie = {
   title: string;
   year: number | null;

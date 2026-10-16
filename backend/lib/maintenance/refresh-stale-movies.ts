@@ -3,6 +3,7 @@ import { needsRefresh, oldestFetch } from '../movies/freshness.js';
 import { getFreshMovie } from '../movies/get-fresh-movie.js';
 import { MovieSchema } from '../schemas/movie.js';
 import type { Dependencies } from '../types/dependencies.js';
+import type { RefreshCount } from '../types/maintenance.js';
 import type { UsageRecorder } from '../types/usage.js';
 import { runInBatches } from './run-in-batches.js';
 
@@ -22,7 +23,7 @@ async function refreshStaleMovies(
   dependencies: Dependencies,
   usage: UsageRecorder,
   limit: number,
-): Promise<{ refreshed: number; failed: number }> {
+): Promise<RefreshCount> {
   const now = dependencies.now();
   const movies = await dependencies.db.collection('movies').get();
   const stale = movies.docs

@@ -1,4 +1,4 @@
-// Acesso aos emuladores de Auth e Firestore que `npm test` sobe com `firebase emulators:exec`.
+/** Acesso aos emuladores de Auth e Firestore que `npm test` sobe com `firebase emulators:exec`. */
 
 /**
  * Lê uma variável que `firebase emulators:exec` define.
@@ -13,10 +13,14 @@ function requireEmulatorVariable(name: string): string {
   return value;
 }
 
+/** Projeto demo- dos emuladores (nada toca o lombada-db). */
 export const emulatorProject = process.env.GCLOUD_PROJECT ?? 'demo-lombada';
+/** Endereço do emulador do Firestore. */
 export const firestoreEmulatorHost = requireEmulatorVariable('FIRESTORE_EMULATOR_HOST');
+/** Endereço do emulador do Auth. */
 const authEmulatorHost = requireEmulatorVariable('FIREBASE_AUTH_EMULATOR_HOST');
 
+/** Conta criada no emulador: uid e um ID token válido. */
 type SignedUpUser = { uid: string; idToken: string };
 
 /**

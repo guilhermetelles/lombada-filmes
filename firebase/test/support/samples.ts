@@ -2,13 +2,18 @@ import { type FieldValue, serverTimestamp, Timestamp } from 'firebase/firestore'
 
 /** Pessoas dos testes: a dona da lista L1, uma integrante e alguém de fora. */
 export const OWNER = 'uidA';
+/** Integrante da lista L1. */
 export const MEMBER = 'uidB';
+/** Alguém de fora da lista L1. */
 export const OUTSIDER = 'uidC';
 
+/** Momento no passado, para documentos já gravados. */
 export const PAST = Timestamp.fromDate(new Date('2020-01-01'));
 
+/** Campos de um documento. */
 type Fields = Record<string, unknown>;
 
+/** Cópia resumida de The Abyss, como o app grava numa entrada. */
 export const movieSnapshot = {
   title: 'The Abyss',
   year: 1989,
@@ -21,7 +26,7 @@ export const movieSnapshot = {
 /** Valor que o Firestore troca pela hora do servidor ao gravar. */
 const serverTime = (): FieldValue => serverTimestamp();
 
-// Documentos como o app grava (createdAt e updatedAt com a hora do servidor).
+/** Documentos como o app grava (createdAt e updatedAt com a hora do servidor). */
 
 /**
  * Perfil como o app grava na criação.
@@ -82,7 +87,7 @@ export function newEntry(uid: string, overrides: Fields = {}): Fields {
   };
 }
 
-// Os mesmos documentos já gravados no passado, para os dados de partida.
+/** Os mesmos documentos já gravados no passado, para os dados de partida. */
 
 /**
  * Perfil já gravado no passado, para os dados de partida.

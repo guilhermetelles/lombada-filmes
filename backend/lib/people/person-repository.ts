@@ -8,6 +8,13 @@ const personConverter: FirestoreDataConverter<Person> = {
   fromFirestore: (snapshot) => PersonSchema.parse(snapshot.data()),
 };
 
+/**
+ * Referência a people/{personId}, com validação na leitura.
+ *
+ * @param db - Firestore.
+ * @param personId - Id de pessoa no TMDb.
+ * @returns A referência tipada.
+ */
 const personDocument = (db: Firestore, personId: number) => db.doc(`people/${personId}`).withConverter(personConverter);
 
 /**

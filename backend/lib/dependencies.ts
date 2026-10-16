@@ -5,6 +5,7 @@ import { getFirebaseApp } from './config/firebase-app.js';
 import { createSourceClients } from './sources/create-source-clients.js';
 import type { Dependencies } from './types/dependencies.js';
 
+/** Dependências de produção já montadas, reaproveitadas entre pedidos. */
 let production: Dependencies | undefined;
 
 /**

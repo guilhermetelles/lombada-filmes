@@ -1,6 +1,7 @@
 import * as z from 'zod';
+import { INVITE_CODE_LENGTH, normalizeInviteCode } from '../lists/invite-codes.js';
 
-// Entradas das rotas. As mensagens vão para o app na resposta 400.
+/** Entradas das rotas. As mensagens vão para o app na resposta 400. */
 
 /** GET /api/search?q= */
 export const SearchQuery = z.object({
@@ -22,8 +23,8 @@ export const CreateListBody = z.object({
 export const JoinListBody = z.object({
   code: z
     .string('code é obrigatório')
-    .transform((code) => code.toUpperCase().replace(/[^A-Z0-9]/g, ''))
-    .pipe(z.string().length(6, 'code deve ter 6 caracteres')),
+    .transform(normalizeInviteCode)
+    .pipe(z.string().length(INVITE_CODE_LENGTH, `code deve ter ${INVITE_CODE_LENGTH} caracteres`)),
 });
 
 /** GET /api/movies/{tmdbId} */

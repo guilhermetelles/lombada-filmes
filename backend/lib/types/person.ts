@@ -1,4 +1,4 @@
-// Pessoas do TMDb (por ora, quem dirige os filmes) e o documento people/{tmdbPersonId}.
+/** Pessoas do TMDb (por ora, quem dirige os filmes) e o documento people/{tmdbPersonId}. */
 
 /** Referência a uma pessoa dentro de um filme: id de pessoa do TMDb e nome. */
 export type PersonRef = {

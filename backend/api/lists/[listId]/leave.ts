@@ -1,7 +1,7 @@
 import { getProductionDependencies } from '../../../lib/dependencies.js';
 import { authenticatedRoute } from '../../../lib/http/authenticated-route.js';
 import { parseInput } from '../../../lib/http/parse-input.js';
-import { readPathParam } from '../../../lib/http/path-param.js';
+import { readPathParam } from '../../../lib/http/read-path-param.js';
 import { leaveList } from '../../../lib/lists/leave-list.js';
 import { ListParams } from '../../../lib/schemas/route-inputs.js';
 
@@ -13,8 +13,9 @@ import { ListParams } from '../../../lib/schemas/route-inputs.js';
  * não é integrante e 404 se a lista não existir.
  */
 export const leaveListRoute = authenticatedRoute(async ({ request, uid, dependencies }) => {
-  const { listId } = parseInput(ListParams, { listId: readPathParam(new URL(request.url), 'listId', 2) });
+  const { listId } = parseInput(ListParams, { listId: readPathParam(new URL(request.url), 'listId') });
   return Response.json(await leaveList(dependencies.db, uid, listId, dependencies.now()));
 });
 
+/** Handler que a Vercel chama em POST /api/lists/{listId}/leave. */
 export const POST = leaveListRoute(getProductionDependencies);

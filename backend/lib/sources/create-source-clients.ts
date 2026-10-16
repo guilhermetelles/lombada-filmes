@@ -3,6 +3,7 @@ import { createLetterboxdClient } from './letterboxd/letterboxd-client.js';
 import { createOmdbClient } from './omdb/omdb-client.js';
 import { createTmdbClient } from './tmdb/tmdb-client.js';
 
+/** Token do TMDb e chave da OMDb (o Letterboxd não pede credencial). */
 type SourceCredentials = { tmdbToken: string; omdbKey: string };
 
 /**

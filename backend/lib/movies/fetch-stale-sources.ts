@@ -4,6 +4,7 @@ import type { SourceClients, SourceName } from '../types/sources.js';
 import type { UsageRecorder } from '../types/usage.js';
 import { isStale } from './freshness.js';
 
+/** Filme, documento guardado, momento, clientes e medidor de consumo de uma busca. */
 type FetchContext = {
   tmdbId: number;
   stored: Movie | undefined;

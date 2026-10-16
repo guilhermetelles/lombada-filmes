@@ -1,11 +1,17 @@
 import { randomInt } from 'node:crypto';
 import type { Firestore, Transaction } from 'firebase-admin/firestore';
+import { DAY_MS } from '../time/durations.js';
+import type { Invite } from '../types/list.js';
 import { inviteDocument } from './list-repository.js';
 
 /** Sem 0/O e 1/I/L, para não confundir quem digita. */
 export const INVITE_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+
+/** Tamanho do código; o app mostra como "7Q4-KMX". */
 export const INVITE_CODE_LENGTH = 6;
-export const INVITE_LIFETIME_MS = 7 * 24 * 60 * 60 * 1000;
+
+/** Validade de um código de convite: 7 dias. */
+export const INVITE_LIFETIME_MS = 7 * DAY_MS;
 
 /** Com 31⁶ (quase 900 milhões) códigos possíveis, cinco colisões seguidas indicam outro problema. */
 const MAX_CODE_ATTEMPTS = 5;
@@ -21,13 +27,35 @@ export function generateInviteCode(pickIndex: (size: number) => number = randomI
 }
 
 /**
- * Data em que um convite criado agora deixa de valer.
+ * Normaliza um código digitado: maiúsculas, sem hífen, espaço ou outro separador.
  *
- * @param now - Momento da criação.
- * @returns now + 7 dias.
+ * @param typed - Código como a pessoa digitou ("7q4-kmx").
+ * @returns O código como fica no banco ("7Q4KMX").
  */
-export function inviteExpiration(now: Date): Date {
-  return new Date(now.getTime() + INVITE_LIFETIME_MS);
+export function normalizeInviteCode(typed: string): string {
+  return typed.toUpperCase().replace(/[^A-Z0-9]/g, '');
+}
+
+/**
+ * Formata um código para mostrar, com hífen no meio.
+ *
+ * @param code - Código como fica no banco ("7Q4KMX").
+ * @returns "7Q4-KMX".
+ */
+export function formatInviteCode(code: string): string {
+  return `${code.slice(0, INVITE_CODE_LENGTH / 2)}-${code.slice(INVITE_CODE_LENGTH / 2)}`;
+}
+
+/**
+ * Monta um convite novo, válido por 7 dias e ainda sem uso.
+ *
+ * @param listId - Lista do convite.
+ * @param createdBy - Quem gerou o código.
+ * @param now - Momento da criação.
+ * @returns O documento invites/{code}.
+ */
+export function newInvite(listId: string, createdBy: string, now: Date): Invite {
+  return { listId, createdBy, expiresAt: new Date(now.getTime() + INVITE_LIFETIME_MS), usedBy: [] };
 }
 
 /**
@@ -36,17 +64,12 @@ export function inviteExpiration(now: Date): Date {
  *
  * @param transaction - Transação em andamento.
  * @param db - Firestore.
- * @param pickIndex - Sorteio de posição do alfabeto (troca nos testes).
  * @returns Código livre.
  * @throws {Error} Se todas as tentativas colidirem.
  */
-export async function reserveInviteCode(
-  transaction: Transaction,
-  db: Firestore,
-  pickIndex?: (size: number) => number,
-): Promise<string> {
+export async function reserveInviteCode(transaction: Transaction, db: Firestore): Promise<string> {
   for (let attempt = 0; attempt < MAX_CODE_ATTEMPTS; attempt++) {
-    const code = generateInviteCode(pickIndex);
+    const code = generateInviteCode();
     const existing = await transaction.get(inviteDocument(db, code));
     if (!existing.exists) return code;
   }

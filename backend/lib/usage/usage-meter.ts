@@ -6,6 +6,7 @@ import { usageDay } from './usage-day.js';
 /** Cota diária documentada de cada fonte, gravada junto com o consumo para a tela de consumo. */
 const DAILY_LIMITS: Partial<Record<SourceName, number>> = { omdb: 1000 };
 
+/** Incrementos de uma fonte em usage/{dia}, com a cota diária quando houver. */
 type SourceIncrements = Partial<Record<UsageOutcome, FieldValue>> & { dailyLimit?: number };
 
 /** Conta o consumo das fontes durante um pedido e grava tudo no fim, numa gravação só. */

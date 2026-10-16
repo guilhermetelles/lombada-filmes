@@ -1,6 +1,8 @@
-// Grava respostas reais das fontes em test/fixtures/, para os testes rodarem sem rede.
-// Uso: npm run record:fixtures (lê TMDB_TOKEN e OMDB_KEY do .env da raiz).
-// As respostas são enxugadas ao que o código lê; nenhuma delas contém as chaves.
+/**
+ * Grava respostas reais das fontes em test/fixtures/, para os testes rodarem sem rede.
+ * Uso: npm run record:fixtures (lê TMDB_TOKEN e OMDB_KEY do .env da raiz).
+ * As respostas são enxugadas ao que o código lê; nenhuma delas contém as chaves.
+ */
 import { mkdirSync, writeFileSync } from 'node:fs';
 import type * as z from 'zod';
 import { readEnv } from '../lib/config/env.js';
@@ -36,7 +38,7 @@ save('tmdb-movie-2756.json', {
 const search = await tmdb('/search/movie?query=abismo&language=pt-BR&include_adult=false', TmdbSearchToRecord);
 save('tmdb-search-abismo.json', { ...search, results: search.results.slice(0, 3) });
 
-// James Cameron: os créditos de direção, mais um crédito de outro cargo para testar o filtro.
+/** James Cameron: os créditos de direção, mais um crédito de outro cargo para testar o filtro. */
 const person = await tmdb(
   '/person/2710?language=en-US&append_to_response=movie_credits,external_ids,translations',
   TmdbPersonToRecord,

@@ -1,7 +1,7 @@
 import { getProductionDependencies } from '../../lib/dependencies.js';
 import { authenticatedRoute } from '../../lib/http/authenticated-route.js';
 import { parseInput } from '../../lib/http/parse-input.js';
-import { readPathParam } from '../../lib/http/path-param.js';
+import { readPathParam } from '../../lib/http/read-path-param.js';
 import { getFreshPerson } from '../../lib/people/get-fresh-person.js';
 import { PersonParams } from '../../lib/schemas/route-inputs.js';
 
@@ -13,9 +13,10 @@ import { PersonParams } from '../../lib/schemas/route-inputs.js';
  * não tiver a pessoa e 502 se o TMDb falhar na primeira busca.
  */
 export const personRoute = authenticatedRoute(async ({ request, dependencies, usage }) => {
-  const { personId } = parseInput(PersonParams, { personId: readPathParam(new URL(request.url), 'personId', 2) });
+  const { personId } = parseInput(PersonParams, { personId: readPathParam(new URL(request.url), 'personId') });
   const person = await getFreshPerson(personId, dependencies, usage);
   return Response.json({ personId, ...person });
 });
 
+/** Handler que a Vercel chama em GET /api/people/{personId}. */
 export const GET = personRoute(getProductionDependencies);

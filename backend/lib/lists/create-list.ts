@@ -1,8 +1,9 @@
 import type { Firestore } from 'firebase-admin/firestore';
 import type { CreatedInvite } from '../types/list.js';
-import { inviteExpiration, reserveInviteCode } from './invite-codes.js';
+import { newInvite, reserveInviteCode } from './invite-codes.js';
 import { inviteDocument, newListDocument } from './list-repository.js';
 
+/** Nome e descrição de uma lista nova, já validados. */
 type NewList = { name: string; description: string };
 
 /**
@@ -14,6 +15,7 @@ type NewList = { name: string; description: string };
  * @param newList - Nome e descrição, já validados.
  * @param now - Momento da criação.
  * @returns O id da lista, o código de convite e quando ele vence.
+ * @throws {Error} Se não achar um código de convite livre (improvável; ver reserveInviteCode).
  */
 async function createList(
   db: Firestore,
@@ -25,11 +27,11 @@ async function createList(
 
   return db.runTransaction(async (transaction) => {
     const inviteCode = await reserveInviteCode(transaction, db);
-    const expiresAt = inviteExpiration(now);
+    const invite = newInvite(list.id, ownerUid, now);
 
     transaction.create(list, { name, description, ownerUid, memberUids: [ownerUid], createdAt: now, updatedAt: now });
-    transaction.create(inviteDocument(db, inviteCode), { listId: list.id, createdBy: ownerUid, expiresAt, usedBy: [] });
-    return { listId: list.id, inviteCode, expiresAt };
+    transaction.create(inviteDocument(db, inviteCode), invite);
+    return { listId: list.id, inviteCode, expiresAt: invite.expiresAt };
   });
 }
 

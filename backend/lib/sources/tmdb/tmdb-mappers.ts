@@ -2,6 +2,7 @@ import type { TmdbMovieResponse, TmdbSearchResponse } from '../../schemas/source
 import type { PersonRef } from '../../types/person.js';
 import type { TmdbMovie, TmdbSearchResult } from '../../types/sources.js';
 
+/** Tamanho do trecho de sinopse nos resultados de busca. */
 const OVERVIEW_EXCERPT_LENGTH = 200;
 
 /**

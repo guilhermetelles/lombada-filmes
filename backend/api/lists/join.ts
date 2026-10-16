@@ -16,4 +16,5 @@ export const joinListRoute = authenticatedRoute(async ({ request, uid, dependenc
   return Response.json(await joinList(dependencies.db, uid, code, dependencies.now()));
 });
 
+/** Handler que a Vercel chama em POST /api/lists/join. */
 export const POST = joinListRoute(getProductionDependencies);

@@ -1,6 +1,9 @@
 import * as z from 'zod';
-import type { Person } from '../types/person.js';
+import type { Person, PersonRef } from '../types/person.js';
 import { firestoreDate } from './firestore.js';
+
+/** Referência a uma pessoa do TMDb dentro de um filme (diretores). */
+export const PersonRefSchema: z.ZodType<PersonRef> = z.object({ id: z.number().int(), name: z.string() });
 
 /** people/{tmdbPersonId}, validado ao ler. */
 export const PersonSchema: z.ZodType<Person> = z.object({

@@ -1,11 +1,10 @@
 import * as z from 'zod';
 import type { Movie, MovieSnapshot } from '../types/movie.js';
 import { firestoreDate } from './firestore.js';
+import { PersonRefSchema } from './person.js';
 
+/** Campos comuns a toda nota: valor e data da busca. */
 const rating = { value: z.number().nullable(), fetchedAt: firestoreDate };
-
-/** Referência a uma pessoa do TMDb dentro de um filme. */
-export const PersonRefSchema = z.object({ id: z.number().int(), name: z.string() });
 
 /** movies/{tmdbId}, validado ao ler. A anotação garante que o schema produz exatamente o tipo Movie. */
 export const MovieSchema: z.ZodType<Movie> = z.object({

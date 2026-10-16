@@ -1,7 +1,7 @@
 import { getProductionDependencies } from '../../lib/dependencies.js';
 import { authenticatedRoute } from '../../lib/http/authenticated-route.js';
 import { parseInput } from '../../lib/http/parse-input.js';
-import { readPathParam } from '../../lib/http/path-param.js';
+import { readPathParam } from '../../lib/http/read-path-param.js';
 import { getFreshMovie } from '../../lib/movies/get-fresh-movie.js';
 import { MovieParams } from '../../lib/schemas/route-inputs.js';
 
@@ -13,9 +13,10 @@ import { MovieParams } from '../../lib/schemas/route-inputs.js';
  * tiver o filme e 502 se o TMDb falhar na primeira busca.
  */
 export const movieRoute = authenticatedRoute(async ({ request, dependencies, usage }) => {
-  const { tmdbId } = parseInput(MovieParams, { tmdbId: readPathParam(new URL(request.url), 'tmdbId', 2) });
+  const { tmdbId } = parseInput(MovieParams, { tmdbId: readPathParam(new URL(request.url), 'tmdbId') });
   const movie = await getFreshMovie(tmdbId, dependencies, usage);
   return Response.json({ tmdbId, ...movie });
 });
 
+/** Handler que a Vercel chama em GET /api/movies/{tmdbId}. */
 export const GET = movieRoute(getProductionDependencies);

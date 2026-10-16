@@ -1,9 +1,12 @@
-// Carga única da lista original (passo 6 do plano). Roda na sua máquina, com a conta de serviço
-// do .env da raiz, e pode rodar de novo sem duplicar se for interrompida no meio.
-// Não rode de novo depois que o app estiver em uso: entradas apagadas pelo app voltariam.
-// Uso: npm run seed:original-list            (grava no lombada-db)
-//      npm run seed:original-list:emulator   (ensaio no emulador, com as APIs reais)
+/**
+ * Carga única da lista original (passo 6 do plano). Roda na sua máquina, com a conta de serviço
+ * do .env da raiz, e pode rodar de novo sem duplicar se for interrompida no meio.
+ * Não rode de novo depois que o app estiver em uso: entradas apagadas pelo app voltariam.
+ * Uso: npm run seed:original-list            (grava no lombada-db)
+ *      npm run seed:original-list:emulator   (ensaio no emulador, com as APIs reais)
+ */
 import { getProductionDependencies } from '../lib/dependencies.js';
+import { formatInviteCode } from '../lib/lists/invite-codes.js';
 import { SeedEnvSchema } from '../lib/schemas/seed.js';
 import { checkAgainstExport } from '../lib/seed/check-against-export.js';
 import { readOriginalEntries, readOriginalListInfo } from '../lib/seed/read-mock-list.js';
@@ -34,10 +37,11 @@ try {
     entries,
     onProgress: (message) => console.log(`  ${message}`),
   });
-  const code = `${summary.inviteCode.slice(0, 3)}-${summary.inviteCode.slice(3)}`;
   console.log(`\nLista ${summary.listId}: ${summary.listCreated ? 'criada' : 'já existia'}.`);
   console.log(`Entradas: ${summary.entriesCreated} criadas, ${summary.entriesKept} já existiam.`);
-  console.log(`Código de convite: ${code} (vale até ${summary.inviteExpiresAt.toLocaleString('pt-BR')}).`);
+  console.log(
+    `Código de convite: ${formatInviteCode(summary.inviteCode)} (vale até ${summary.inviteExpiresAt.toLocaleString('pt-BR')}).`,
+  );
 } finally {
   await usage.save(dependencies.db, dependencies.now());
 }

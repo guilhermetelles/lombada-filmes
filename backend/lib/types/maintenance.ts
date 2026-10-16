@@ -4,9 +4,15 @@ export type MaintenanceLimits = {
   people: number;
 };
 
+/** Quantos documentos de um tipo a rotina atualizou e quantos falharam. */
+export type RefreshCount = {
+  refreshed: number;
+  failed: number;
+};
+
 /** O que a rotina diária fez, devolvido pela rota e registrado no log da Vercel. */
 export type MaintenanceReport = {
-  movies: { refreshed: number; failed: number };
-  people: { refreshed: number; failed: number };
+  movies: RefreshCount;
+  people: RefreshCount;
   invitesDeleted: number;
 };

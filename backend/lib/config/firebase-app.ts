@@ -2,6 +2,7 @@ import { type App, cert, getApps, initializeApp } from 'firebase-admin/app';
 import { ServiceAccountSchema } from '../schemas/env.js';
 import type { Env, ServiceAccount } from '../types/env.js';
 
+/** Variáveis que dizem onde o Admin SDK conecta. */
 type FirebaseEnv = Pick<Env, 'FIREBASE_SERVICE_ACCOUNT' | 'FIRESTORE_EMULATOR_HOST' | 'GCLOUD_PROJECT'>;
 
 /**

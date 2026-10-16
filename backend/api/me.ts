@@ -8,4 +8,5 @@ import { authenticatedRoute } from '../lib/http/authenticated-route.js';
  */
 export const meRoute = authenticatedRoute(async ({ uid }) => Response.json({ uid }));
 
+/** Handler que a Vercel chama em GET /api/me. */
 export const GET = meRoute(getProductionDependencies);

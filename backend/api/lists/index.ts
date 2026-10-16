@@ -16,4 +16,5 @@ export const createListRoute = authenticatedRoute(async ({ request, uid, depende
   return Response.json(created, { status: 201 });
 });
 
+/** Handler que a Vercel chama em POST /api/lists. */
 export const POST = createListRoute(getProductionDependencies);

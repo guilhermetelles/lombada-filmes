@@ -15,4 +15,5 @@ export const searchRoute = authenticatedRoute(async ({ request, dependencies, us
   return Response.json({ results });
 });
 
+/** Handler que a Vercel chama em GET /api/search. */
 export const GET = searchRoute(getProductionDependencies);

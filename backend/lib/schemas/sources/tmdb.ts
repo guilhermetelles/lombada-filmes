@@ -1,7 +1,7 @@
 import * as z from 'zod';
 import { optionalText } from './common.js';
 
-// Formato das respostas do TMDb, só com os campos que o app usa.
+/** Formato das respostas do TMDb, só com os campos que o app usa. */
 
 /** "1989-08-09" vira 1989; data ausente ou vazia vira null. */
 const releaseYear = z
@@ -9,6 +9,7 @@ const releaseYear = z
   .nullish()
   .transform((date) => (date && /^\d{4}/.test(date) ? Number(date.slice(0, 4)) : null));
 
+/** Tradução de filme no TMDb; só título e sinopse interessam. */
 const Translation = z.object({
   iso_639_1: z.string(), // idioma
   iso_3166_1: z.string(), // país
@@ -30,6 +31,7 @@ export const TmdbMovieResponse = z.object({
   translations: z.object({ translations: z.array(Translation) }).optional(),
 });
 
+/** Resposta de /movie/{id} já validada. */
 export type TmdbMovieResponse = z.output<typeof TmdbMovieResponse>;
 
 /** Resposta de /search/movie. */
@@ -46,8 +48,10 @@ export const TmdbSearchResponse = z.object({
   ),
 });
 
+/** Resposta de /search/movie já validada. */
 export type TmdbSearchResponse = z.output<typeof TmdbSearchResponse>;
 
+/** Tradução de pessoa no TMDb; só a biografia interessa. */
 const PersonTranslation = z.object({
   iso_639_1: z.string(), // idioma
   iso_3166_1: z.string(), // país
@@ -81,4 +85,5 @@ export const TmdbPersonResponse = z.object({
   translations: z.object({ translations: z.array(PersonTranslation) }).optional(),
 });
 
+/** Resposta de /person/{id} já validada. */
 export type TmdbPersonResponse = z.output<typeof TmdbPersonResponse>;

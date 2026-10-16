@@ -6,6 +6,7 @@ import type { Dependencies } from '../../lib/types/dependencies.js';
 import type { Fetch } from '../../lib/types/sources.js';
 import { emulatorProject, firestoreEmulatorHost } from './emulators.js';
 
+/** Credenciais falsas: o fetch falso não confere. */
 const TEST_CREDENTIALS = { tmdbToken: 'token-de-teste', omdbKey: 'chave-de-teste' };
 
 /** Segredo do cron nos testes. */

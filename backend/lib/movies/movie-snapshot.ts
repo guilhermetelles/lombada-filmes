@@ -68,7 +68,7 @@ export function isSameSnapshot(snapshot: MovieSnapshot, stored: unknown): boolea
     snapshot.posterPath === other.posterPath &&
     snapshot.imdb === other.imdb &&
     snapshot.letterboxd === other.letterboxd &&
-    isSamePeople(snapshot.directors, other.directors)
+    isSamePersonList(snapshot.directors, other.directors)
   );
 }
 
@@ -79,7 +79,7 @@ export function isSameSnapshot(snapshot: MovieSnapshot, stored: unknown): boolea
  * @param b - Segunda lista.
  * @returns true se tiverem as mesmas pessoas (id e nome) na mesma ordem.
  */
-function isSamePeople(a: PersonRef[], b: PersonRef[]): boolean {
+function isSamePersonList(a: PersonRef[], b: PersonRef[]): boolean {
   return (
     a.length === b.length && a.every((person, index) => person.id === b[index]?.id && person.name === b[index]?.name)
   );

@@ -1,12 +1,14 @@
 import { readFileSync } from 'node:fs';
 import type { Fetch, SourceName } from '../../lib/types/sources.js';
 
+/** Fonte de cada host que o fetch falso atende. */
 const SOURCE_BY_HOST: Record<string, SourceName> = {
   'api.themoviedb.org': 'tmdb',
   'www.omdbapi.com': 'omdb',
   'letterboxd.com': 'letterboxd',
 };
 
+/** O fetch falso e o que ele registra. */
 export type FakeSources = {
   fetch: Fetch;
   /** Pedidos recebidos por fonte. */

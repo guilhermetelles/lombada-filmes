@@ -9,7 +9,7 @@ import { resetEmulators, signUp } from '../support/emulators.js';
 import { type FakeSources, fakeSources } from '../support/fake-sources.js';
 import { getRequest, readErrorCode, withBearer } from '../support/requests.js';
 
-// Corpo da resposta como o app recebe (datas em texto ISO).
+/** Corpo da resposta como o app recebe (datas em texto ISO). */
 type RatingBody = { value: number | null; fetchedAt: string };
 type MovieBody = {
   tmdbId: number;

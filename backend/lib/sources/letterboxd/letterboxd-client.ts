@@ -7,6 +7,7 @@ import { readFilmJsonLd } from './film-json-ld.js';
 export const LETTERBOXD_USER_AGENT =
   'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36';
 
+/** Resposta para filme que o Letterboxd não tem: sem nota e sem página. */
 const NOT_ON_LETTERBOXD: LetterboxdRating = { value: null, count: null, url: null };
 
 /**

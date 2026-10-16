@@ -15,4 +15,5 @@ export const dailyCronRoute = cronRoute(async ({ dependencies, usage }) => {
   return Response.json(report);
 });
 
+/** Handler que a Vercel chama em GET /api/cron/daily. */
 export const GET = dailyCronRoute(getProductionDependencies);

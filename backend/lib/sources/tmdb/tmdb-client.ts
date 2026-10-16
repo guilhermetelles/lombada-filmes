@@ -5,6 +5,7 @@ import { fetchJson } from '../shared/fetch-json.js';
 import { toTmdbMovie, toTmdbSearchResults } from './tmdb-mappers.js';
 import { toTmdbPerson } from './tmdb-person-mapper.js';
 
+/** Endereço da API v3 do TMDb; o token vai no cabeçalho Authorization. */
 const BASE_URL = 'https://api.themoviedb.org/3';
 
 /**

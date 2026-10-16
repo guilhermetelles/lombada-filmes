@@ -1,10 +1,9 @@
 import type { Firestore } from 'firebase-admin/firestore';
 import { generateNKeysBetween } from 'fractional-indexing';
 import { createInvite } from '../lists/create-invite.js';
-import { listDocument } from '../lists/list-repository.js';
+import { invitesOfList, listDocument } from '../lists/list-repository.js';
 import { getFreshMovie } from '../movies/get-fresh-movie.js';
 import { toMovieSnapshot } from '../movies/movie-snapshot.js';
-import { InviteSchema } from '../schemas/list.js';
 import type { Dependencies } from '../types/dependencies.js';
 import type { Entry } from '../types/entry.js';
 import type { CreatedInvite } from '../types/list.js';
@@ -17,6 +16,7 @@ export const ORIGINAL_LIST_ID = 'competicao-de-filmes-terriveis';
 /** A lista no Letterboxd de onde veio o export. */
 export const ORIGINAL_LETTERBOXD_URL = 'https://boxd.it/Gsf3k';
 
+/** O que a carga recebe: dependências, medidor de consumo, dona, dados da lista e filmes. */
 type SeedInput = {
   dependencies: Dependencies;
   usage: UsageRecorder;
@@ -150,9 +150,9 @@ async function createEntryIfMissing(
  * @returns O código mais longe de vencer, ou undefined se não houver.
  */
 async function findValidInvite(db: Firestore, now: Date): Promise<CreatedInvite | undefined> {
-  const invites = await db.collection('invites').where('listId', '==', ORIGINAL_LIST_ID).get();
+  const invites = await invitesOfList(db, ORIGINAL_LIST_ID).get();
   return invites.docs
-    .map((doc) => ({ inviteCode: doc.id, expiresAt: InviteSchema.parse(doc.data()).expiresAt }))
+    .map((doc) => ({ inviteCode: doc.id, expiresAt: doc.data().expiresAt }))
     .filter((invite) => invite.expiresAt.getTime() > now.getTime())
     .sort((a, b) => b.expiresAt.getTime() - a.expiresAt.getTime())[0];
 }

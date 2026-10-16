@@ -9,6 +9,7 @@ const WATCHED_DATE = /(\d{2})\/(\d{2})\/(\d{2,4})/;
 /** Linha da descrição que traz a data (e às vezes uma observação, como "versão estendida"). */
 const DATE_LINE = /^\s*\d{2}\/\d{2}\/\d{2,4}\b.*$/;
 
+/** Filme como está no export do Letterboxd: posição, data e comentário. */
 type ExportedFilm = { position: number; watchedOn: string | null; comment: string };
 
 /**

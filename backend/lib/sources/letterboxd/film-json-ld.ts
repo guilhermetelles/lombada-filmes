@@ -2,6 +2,7 @@ import { SourceUnavailableError } from '../../errors/app-errors.js';
 import { FilmJsonLd } from '../../schemas/sources/letterboxd.js';
 import { parseSourceData } from '../shared/fetch-json.js';
 
+/** Bloco `<script type="application/ld+json">` da página; o grupo 1 é o conteúdo. */
 const JSON_LD_BLOCK = /<script type="application\/ld\+json">([\s\S]*?)<\/script>/;
 /** Comentários CDATA que envolvem o bloco e precisam sair antes do JSON.parse. */
 const CDATA_COMMENTS = /\/\*\s*<!\[CDATA\[\s*\*\/|\/\*\s*\]\]>\s*\*\//g;

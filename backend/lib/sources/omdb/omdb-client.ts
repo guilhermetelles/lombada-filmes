@@ -3,8 +3,10 @@ import { OmdbResponse, omdbNumber } from '../../schemas/sources/omdb.js';
 import type { Fetch, OmdbClient, OmdbRatings } from '../../types/sources.js';
 import { fetchJson } from '../shared/fetch-json.js';
 
+/** Endereço da OMDb; a chave vai na query. */
 const BASE_URL = 'https://www.omdbapi.com/';
 
+/** Resposta para filme que a OMDb não tem: as três notas vazias. */
 const NO_RATINGS: OmdbRatings = {
   imdb: { value: null, votes: null },
   rottenTomatoes: { value: null, url: null },

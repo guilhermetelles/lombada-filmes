@@ -11,4 +11,5 @@ export const FilmJsonLd = z.object({
     .optional(),
 });
 
+/** JSON-LD do filme já validado. */
 export type FilmJsonLd = z.output<typeof FilmJsonLd>;

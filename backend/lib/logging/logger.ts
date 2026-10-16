@@ -1,8 +1,11 @@
-// Log estruturado: uma linha JSON por evento, que o painel da Vercel indexa e filtra por campo.
+/** Log estruturado: uma linha JSON por evento, que o painel da Vercel indexa e filtra por campo. */
 
+/** Nível do evento no log. */
 type Level = 'info' | 'warn' | 'error';
+/** Campos extras de um evento. */
 type Fields = Record<string, unknown>;
 
+/** Saída de cada nível (a Vercel separa stdout de stderr). */
 const WRITERS: Record<Level, (line: string) => void> = {
   info: console.log,
   warn: console.warn,
@@ -32,6 +35,7 @@ function write(level: Level, message: string, fields: Fields): void {
   WRITERS[level](JSON.stringify({ level, message, ...fields }, serializeErrors));
 }
 
+/** Log estruturado do backend: `logger.warn(mensagem, { campos })`. */
 export const logger = {
   info: (message: string, fields: Fields = {}) => write('info', message, fields),
   warn: (message: string, fields: Fields = {}) => write('warn', message, fields),

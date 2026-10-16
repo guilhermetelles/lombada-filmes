@@ -1,6 +1,6 @@
 import type { Firestore } from 'firebase-admin/firestore';
 import type { CreatedInvite } from '../types/list.js';
-import { inviteExpiration, reserveInviteCode } from './invite-codes.js';
+import { newInvite, reserveInviteCode } from './invite-codes.js';
 import { requireMember } from './list-access.js';
 import { inviteDocument, listDocument } from './list-repository.js';
 
@@ -14,15 +14,16 @@ import { inviteDocument, listDocument } from './list-repository.js';
  * @returns O código e quando ele vence.
  * @throws {NotFoundError} Se a lista não existir.
  * @throws {ForbiddenError} Se a pessoa não for integrante.
+ * @throws {Error} Se não achar um código de convite livre (improvável; ver reserveInviteCode).
  */
 async function createInvite(db: Firestore, uid: string, listId: string, now: Date): Promise<CreatedInvite> {
   return db.runTransaction(async (transaction) => {
     requireMember((await transaction.get(listDocument(db, listId))).data(), uid);
     const inviteCode = await reserveInviteCode(transaction, db);
-    const expiresAt = inviteExpiration(now);
+    const invite = newInvite(listId, uid, now);
 
-    transaction.create(inviteDocument(db, inviteCode), { listId, createdBy: uid, expiresAt, usedBy: [] });
-    return { inviteCode, expiresAt };
+    transaction.create(inviteDocument(db, inviteCode), invite);
+    return { inviteCode, expiresAt: invite.expiresAt };
   });
 }
 

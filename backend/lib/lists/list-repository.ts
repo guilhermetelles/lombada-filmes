@@ -1,4 +1,10 @@
-import type { DocumentReference, Firestore, FirestoreDataConverter } from 'firebase-admin/firestore';
+import type {
+  CollectionReference,
+  DocumentReference,
+  Firestore,
+  FirestoreDataConverter,
+  Query,
+} from 'firebase-admin/firestore';
 import { InviteSchema, ListSchema } from '../schemas/list.js';
 import type { Invite, List } from '../types/list.js';
 
@@ -43,5 +49,26 @@ export function newListDocument(db: Firestore): DocumentReference<List> {
  * @returns A referência tipada.
  */
 export function inviteDocument(db: Firestore, code: string): DocumentReference<Invite> {
-  return db.collection('invites').doc(code).withConverter(inviteConverter);
+  return invitesCollection(db).doc(code);
+}
+
+/**
+ * Coleção invites/, com validação na leitura.
+ *
+ * @param db - Firestore.
+ * @returns A coleção tipada.
+ */
+export function invitesCollection(db: Firestore): CollectionReference<Invite> {
+  return db.collection('invites').withConverter(inviteConverter);
+}
+
+/**
+ * Consulta os códigos de convite de uma lista.
+ *
+ * @param db - Firestore.
+ * @param listId - Lista dos convites.
+ * @returns A consulta tipada.
+ */
+export function invitesOfList(db: Firestore, listId: string): Query<Invite> {
+  return invitesCollection(db).where('listId', '==', listId);
 }

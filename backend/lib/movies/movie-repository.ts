@@ -8,6 +8,13 @@ const movieConverter: FirestoreDataConverter<Movie> = {
   fromFirestore: (snapshot) => MovieSchema.parse(snapshot.data()),
 };
 
+/**
+ * Referência a movies/{tmdbId}, com validação na leitura.
+ *
+ * @param db - Firestore.
+ * @param tmdbId - Id do filme no TMDb.
+ * @returns A referência tipada.
+ */
 const movieDocument = (db: Firestore, tmdbId: number) => db.doc(`movies/${tmdbId}`).withConverter(movieConverter);
 
 /**

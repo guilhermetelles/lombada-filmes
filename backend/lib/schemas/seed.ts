@@ -1,4 +1,5 @@
 import * as z from 'zod';
+import type { OriginalListInfo } from '../types/seed.js';
 
 /** Item de state.list no mock (mock/index.html). */
 export const MockEntrySchema = z.object({
@@ -12,7 +13,7 @@ export const MockEntrySchema = z.object({
 export const MockListSchema = z.array(MockEntrySchema).min(1);
 
 /** Lista do mock (const LISTS), só o que a carga usa. */
-export const MockListInfoSchema = z.object({
+export const MockListInfoSchema: z.ZodType<OriginalListInfo> = z.object({
   name: z.string().min(1),
   description: z.string(),
 });

@@ -1,4 +1,4 @@
-// Monta pedidos para chamar as rotas direto, sem servidor.
+/** Monta pedidos para chamar as rotas direto, sem servidor. */
 
 /**
  * Monta um GET para chamar uma rota direto, sem servidor.
