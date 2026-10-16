@@ -1,59 +1,47 @@
 rules_version = '2';
 
 // ===============================================================
-// Lombada: regras de segurança do Firestore (protótipo, revisar antes de abrir o app)
+// Lombada: regras de segurança do Firestore
+// Protótipo: revisar antes de abrir o app para mais gente.
 // ===============================================================
 //
-// Modelo de dados assumido (ver docs/modelo-de-dados.md)
+// Modelo de dados (detalhes em docs/modelo-de-dados.md)
 //
-// Coleção: users
-// ID do documento: uid do Firebase Auth
-// Campos:
-//   - displayName: string (obrigatório, 1–80)
-//   - photoUrl: string | null (obrigatório, URL https, até 500)
-//   - recentListIds: string (obrigatório, 0–13000) - ids das listas visitadas, da mais recente
-//                    para a mais antiga, separados por vírgula ("L2,L1"); no máximo 200 ids.
-//                    É um texto, e não uma lista, porque as regras não conseguem conferir o tipo
-//                    de cada item de uma lista. As listas de que a pessoa participa vêm da consulta
-//                    lists where memberUids array-contains uid; este campo só guarda a ordem.
-//   - activeListId: string | null (obrigatório, 1–64) - lista que abre ao iniciar
-//   - createdAt: timestamp (obrigatório, = hora do servidor na criação, imutável)
-//   - updatedAt: timestamp (obrigatório, = hora do servidor a cada gravação)
-//   Só o próprio usuário lê e grava. Não há outra pessoa lendo este documento.
+// users/{uid}                       só a própria pessoa lê e grava
+//   displayName     string 1–80
+//   photoUrl        string https até 500 | null
+//   recentListIds   string: ids das listas visitadas, da mais recente para a mais antiga,
+//                   separados por vírgula ("L2,L1"), até 200, sem repetição. É texto, e não
+//                   lista, porque as regras não conseguem conferir o tipo de cada item de uma lista.
+//   activeListId    id 1–64 | null: lista que abre ao iniciar
+//   createdAt       timestamp: hora do servidor na criação, imutável
+//   updatedAt       timestamp: hora do servidor a cada gravação
 //
-// Coleção: lists
-// ID do documento: gerado pelo cliente ou pelo backend
-// Campos:
-//   - name: string (obrigatório, 1–80)
-//   - description: string (obrigatório, 0–280)
-//   - ownerUid: string (obrigatório, imutável) - quem criou
-//   - memberUids: list<string> (obrigatório) - quem pode ler e editar; o app só cria com [ownerUid]
-//                 e nunca altera: entrar e sair da lista passa pelo backend (código de convite)
-//   - source: map (opcional, só o backend grava) - origem num export do Letterboxd
-//   - createdAt: timestamp (obrigatório, imutável)
-//   - updatedAt: timestamp (obrigatório)
-//   Membros leem e editam só name, description e updatedAt. Excluir lista é tarefa do backend.
+// lists/{listId}                    membros leem; o app só edita nome e descrição
+//   name            string 1–80, não só espaços
+//   description     string 0–280
+//   ownerUid        string 1–128, imutável
+//   memberUids      list<string>: quem lê e edita. O app só cria com [ownerUid] e nunca altera;
+//                   entrar e sair passa pelo backend (código de convite).
+//   source          map, opcional, só o backend grava: origem num export do Letterboxd
+//   createdAt       timestamp, imutável
+//   updatedAt       timestamp: hora do servidor a cada gravação
 //
-// Subcoleção: lists/{listId}/entries
-// ID do documento: gerado pelo cliente
-// Campos:
-//   - tmdbId: int (obrigatório, > 0, imutável)
-//   - rankKey: string (obrigatório, 1–64, [0-9A-Za-z]) - chave de ordem fracionária
-//   - watchedOn: string 'AAAA-MM-DD' | null (obrigatório) - data assistida, pode faltar
-//   - comment: string (obrigatório, 0–5000)
-//   - addedBy: string (obrigatório, = uid de quem criou, imutável)
-//   - updatedBy: string (obrigatório, = uid de quem gravou por último)
-//   - createdAt: timestamp (obrigatório, imutável)
-//   - updatedAt: timestamp (obrigatório)
-//   - movie: map (obrigatório) - cópia resumida de movies/{tmdbId}; o app grava na criação,
-//            depois só o backend atualiza
-//       - title: string (1–300), year: int (1870–2100) | null, posterPath: string (0–200) | null,
-//         imdb: number (0–10) | null, letterboxd: number (0–5) | null
-//   Membros da lista leem, criam, editam e removem.
+// lists/{listId}/entries/{entryId}  membros da lista leem, criam, editam e removem
+//   tmdbId          int 1–99.999.999, imutável
+//   rankKey         string 1–64 [0-9A-Za-z]: chave de ordem fracionária
+//   watchedOn       'AAAA-MM-DD' | null
+//   comment         string 0–5000
+//   addedBy         uid de quem criou, imutável
+//   updatedBy       uid de quem gravou por último
+//   createdAt       timestamp, imutável
+//   updatedAt       timestamp: hora do servidor a cada gravação
+//   movie           map, imutável pelo app: cópia resumida de movies/{tmdbId} (o backend atualiza)
+//                   { title 1–300, year int 1870–2100 | null, posterPath 0–200 | null,
+//                     imdb 0–10 | null, letterboxd 0–5 | null }
 //
-// Coleção: invites      - só o backend (Admin SDK). Nenhum acesso do app.
-// Coleção: movies       - catálogo; leitura para usuários logados, escrita só do backend.
-// Coleção: usage        - consumo das APIs; leitura para usuários logados, escrita só do backend.
+// invites/{code}                    só o backend
+// movies/{tmdbId}, usage/{dia}      logados leem; só o backend grava
 //
 // O backend usa o Firebase Admin SDK, que não passa por estas regras.
 // ===============================================================
@@ -61,95 +49,111 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // ===============================================================
-    // Funções auxiliares
-    // ===============================================================
+    // ---------------------------------------------------------------
+    // Quem está pedindo
+    // ---------------------------------------------------------------
 
-    function isAuthenticated() {
+    function isSignedIn() {
       return request.auth != null;
     }
 
-    function isOwner(userId) {
-      return isAuthenticated() && request.auth.uid == userId;
+    function isUser(uid) {
+      return isSignedIn() && request.auth.uid == uid;
     }
 
-    function hasRequiredFields(fields) {
-      return request.resource.data.keys().hasAll(fields);
+    function isMemberOf(list) {
+      return isSignedIn() && request.auth.uid in list.memberUids;
     }
 
-    function hasOnlyAllowedFields(fields) {
-      return request.resource.data.keys().hasOnly(fields);
-    }
-
-    function areImmutableFieldsUnchanged(fields) {
-      return !request.resource.data.diff(resource.data).affectedKeys().hasAny(fields);
-    }
-
-    function isString(value, minLen, maxLen) {
-      return value is string && value.size() >= minLen && value.size() <= maxLen;
-    }
-
-    function isNullableString(value, minLen, maxLen) {
-      return value == null || isString(value, minLen, maxLen);
-    }
-
-    function isNullableNumber(value, minValue, maxValue) {
-      return value == null || (value is number && value >= minValue && value <= maxValue);
-    }
-
-    function isHttpsUrl(value) {
-      return isString(value, 9, 500) && value.matches('^https://.*');
-    }
-
-    function isId(value) {
-      return isString(value, 1, 64) && value.matches('^[A-Za-z0-9_-]+$');
-    }
-
-    // Data sem hora, AAAA-MM-DD. Confere só o formato, não o calendário (aceitaria 2026-02-31).
-    function isDateString(value) {
-      return value is string && value.matches('^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$');
-    }
-
-    // Texto com ids separados por vírgula: vazio, ou de 1 a maxCount ids de 1–64 caracteres
-    // [A-Za-z0-9_-], sem repetição.
-    function isIdCsv(value, maxCount) {
-      return value is string && value.size() <= maxCount * 65 &&
-             (value == '' ||
-              (value.matches('^[A-Za-z0-9_-]{1,64}(,[A-Za-z0-9_-]{1,64})*$') &&
-               value.split(',').size() <= maxCount &&
-               value.split(',').toSet().size() == value.split(',').size()));
-    }
-
-    function isMemberOf(listData) {
-      return isAuthenticated() && request.auth.uid in listData.memberUids;
-    }
-
-    // Busca a lista-mãe. Se ela não existir, o get falha e o acesso é negado.
+    // Lê a lista-mãe. Se ela não existir, o get falha e o acesso é negado.
     function isListMember(listId) {
       return isMemberOf(get(/databases/$(database)/documents/lists/$(listId)).data);
     }
 
-    // ===============================================================
-    // Validadores de domínio (usados em create E em update)
-    // ===============================================================
+    // ---------------------------------------------------------------
+    // Formato dos campos
+    // ---------------------------------------------------------------
+
+    // O documento tem todos os campos obrigatórios e nenhum fora da lista.
+    function hasFields(data, required, optional) {
+      return data.keys().hasAll(required) && data.keys().hasOnly(required.concat(optional));
+    }
+
+    function isText(value, minSize, maxSize) {
+      return value is string && value.size() >= minSize && value.size() <= maxSize;
+    }
+
+    function isTextOrNull(value, minSize, maxSize) {
+      return value == null || isText(value, minSize, maxSize);
+    }
+
+    function isNumberOrNull(value, min, max) {
+      return value == null || (value is number && value >= min && value <= max);
+    }
+
+    function isHttpsUrl(value) {
+      return isText(value, 9, 500) && value.matches('^https://.*');
+    }
+
+    function isId(value) {
+      return isText(value, 1, 64) && value.matches('^[A-Za-z0-9_-]+$');
+    }
+
+    function isUid(value) {
+      return isText(value, 1, 128);
+    }
+
+    // Texto com ids separados por vírgula: vazio, ou de 1 a maxCount ids sem repetição.
+    function isIdList(value, maxCount) {
+      let ids = value.split(',');
+      return value is string &&
+             value.size() <= maxCount * 65 &&
+             (value == '' ||
+              (value.matches('^[A-Za-z0-9_-]{1,64}(,[A-Za-z0-9_-]{1,64})*$') &&
+               ids.size() <= maxCount &&
+               ids.toSet().size() == ids.size()));
+    }
+
+    // Data sem hora, AAAA-MM-DD. Confere o formato, não o calendário (aceitaria 2026-02-31).
+    function isDate(value) {
+      return value is string && value.matches('^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$');
+    }
+
+    // ---------------------------------------------------------------
+    // Alterações (só em update)
+    // ---------------------------------------------------------------
+
+    function changedFields() {
+      return request.resource.data.diff(resource.data).affectedKeys();
+    }
+
+    function keepsFields(fields) {
+      return !changedFields().hasAny(fields);
+    }
+
+    function changesOnly(fields) {
+      return changedFields().hasOnly(fields);
+    }
+
+    // ---------------------------------------------------------------
+    // Validadores de documento (usados na criação e na edição)
+    // ---------------------------------------------------------------
 
     function isValidUser(data) {
-      return hasRequiredFields(['displayName', 'photoUrl', 'recentListIds', 'activeListId', 'createdAt', 'updatedAt']) &&
-             hasOnlyAllowedFields(['displayName', 'photoUrl', 'recentListIds', 'activeListId', 'createdAt', 'updatedAt']) &&
-             isString(data.displayName, 1, 80) &&
+      return hasFields(data, ['displayName', 'photoUrl', 'recentListIds', 'activeListId', 'createdAt', 'updatedAt'], []) &&
+             isText(data.displayName, 1, 80) &&
              (data.photoUrl == null || isHttpsUrl(data.photoUrl)) &&
-             isIdCsv(data.recentListIds, 200) &&
+             isIdList(data.recentListIds, 200) &&
              (data.activeListId == null || isId(data.activeListId)) &&
              data.createdAt is timestamp &&
              data.updatedAt == request.time;
     }
 
     function isValidList(data) {
-      return hasRequiredFields(['name', 'description', 'ownerUid', 'memberUids', 'createdAt', 'updatedAt']) &&
-             hasOnlyAllowedFields(['name', 'description', 'ownerUid', 'memberUids', 'source', 'createdAt', 'updatedAt']) &&
-             isString(data.name, 1, 80) && data.name.trim().size() >= 1 &&
-             isString(data.description, 0, 280) &&
-             isString(data.ownerUid, 1, 128) &&
+      return hasFields(data, ['name', 'description', 'ownerUid', 'memberUids', 'createdAt', 'updatedAt'], ['source']) &&
+             isText(data.name, 1, 80) && data.name.trim().size() >= 1 &&
+             isText(data.description, 0, 280) &&
+             isUid(data.ownerUid) &&
              data.memberUids is list &&
              data.createdAt is timestamp &&
              data.updatedAt == request.time;
@@ -157,100 +161,90 @@ service cloud.firestore {
 
     function isValidMovieSnapshot(movie) {
       return movie is map &&
-             movie.keys().hasAll(['title', 'year', 'posterPath', 'imdb', 'letterboxd']) &&
-             movie.keys().hasOnly(['title', 'year', 'posterPath', 'imdb', 'letterboxd']) &&
-             isString(movie.title, 1, 300) &&
+             hasFields(movie, ['title', 'year', 'posterPath', 'imdb', 'letterboxd'], []) &&
+             isText(movie.title, 1, 300) &&
              (movie.year == null || (movie.year is int && movie.year >= 1870 && movie.year <= 2100)) &&
-             isNullableString(movie.posterPath, 0, 200) &&
-             isNullableNumber(movie.imdb, 0, 10) &&
-             isNullableNumber(movie.letterboxd, 0, 5);
+             isTextOrNull(movie.posterPath, 0, 200) &&
+             isNumberOrNull(movie.imdb, 0, 10) &&
+             isNumberOrNull(movie.letterboxd, 0, 5);
     }
 
     function isValidEntry(data) {
-      return hasRequiredFields(['tmdbId', 'rankKey', 'watchedOn', 'comment', 'addedBy', 'updatedBy', 'createdAt', 'updatedAt', 'movie']) &&
-             hasOnlyAllowedFields(['tmdbId', 'rankKey', 'watchedOn', 'comment', 'addedBy', 'updatedBy', 'createdAt', 'updatedAt', 'movie']) &&
+      return hasFields(data, ['tmdbId', 'rankKey', 'watchedOn', 'comment', 'addedBy', 'updatedBy', 'createdAt', 'updatedAt', 'movie'], []) &&
              data.tmdbId is int && data.tmdbId > 0 && data.tmdbId < 100000000 &&
-             isString(data.rankKey, 1, 64) && data.rankKey.matches('^[0-9A-Za-z]+$') &&
-             (data.watchedOn == null || isDateString(data.watchedOn)) &&
-             isString(data.comment, 0, 5000) &&
-             isString(data.addedBy, 1, 128) &&
+             isText(data.rankKey, 1, 64) && data.rankKey.matches('^[0-9A-Za-z]+$') &&
+             (data.watchedOn == null || isDate(data.watchedOn)) &&
+             isText(data.comment, 0, 5000) &&
+             isUid(data.addedBy) &&
              data.updatedBy == request.auth.uid &&
              data.createdAt is timestamp &&
              data.updatedAt == request.time &&
              isValidMovieSnapshot(data.movie);
     }
 
-    // ===============================================================
-    // Regras
-    // ===============================================================
+    // ---------------------------------------------------------------
+    // Regras por coleção
+    // ---------------------------------------------------------------
 
-    // Perfil e listas visitadas: só o dono.
-    match /users/{userId} {
-      allow read: if isOwner(userId);
-      allow create: if isOwner(userId) &&
+    match /users/{uid} {
+      allow read, delete: if isUser(uid);
+      allow create: if isUser(uid) &&
                        isValidUser(request.resource.data) &&
                        request.resource.data.createdAt == request.time;
-      allow update: if isOwner(userId) &&
+      allow update: if isUser(uid) &&
                        isValidUser(request.resource.data) &&
-                       areImmutableFieldsUnchanged(['createdAt']);
-      allow delete: if isOwner(userId);
+                       keepsFields(['createdAt']);
     }
 
     match /lists/{listId} {
-      // Membros leem. A consulta do app precisa filtrar por memberUids array-contains uid,
-      // ou buscar por id as listas guardadas em users/{uid}.recentListIds.
+      // A consulta "minhas listas" precisa filtrar por memberUids array-contains uid.
       allow read: if isMemberOf(resource.data);
 
-      // Criar: a pessoa vira dona e única integrante; source fica para o backend.
-      allow create: if isAuthenticated() &&
+      // Quem cria vira dona e única integrante; source fica para o backend.
+      allow create: if isSignedIn() &&
                        isValidList(request.resource.data) &&
                        request.resource.data.ownerUid == request.auth.uid &&
                        request.resource.data.memberUids == [request.auth.uid] &&
                        !('source' in request.resource.data) &&
                        request.resource.data.createdAt == request.time;
 
-      // Editar: só nome e descrição (e a hora da edição). Dono, membros e origem não mudam pelo app.
+      // Membros editam só nome e descrição. Dono, membros e origem mudam só pelo backend.
       allow update: if isMemberOf(resource.data) &&
                        isValidList(request.resource.data) &&
-                       request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'description', 'updatedAt']);
+                       changesOnly(['name', 'description', 'updatedAt']);
 
-      // Excluir apaga também as entradas; fica com o backend.
+      // Excluir apaga também as entradas e os convites: fica com o backend.
       allow delete: if false;
 
       match /entries/{entryId} {
-        // A permissão vem da lista-mãe, então a consulta ordenada por rankKey ou watchedOn
-        // funciona para membros sem filtro extra.
-        allow read: if isListMember(listId);
+        // A permissão vem da lista-mãe, então as consultas ordenadas por rankKey ou watchedOn
+        // funcionam para membros sem filtro extra.
+        allow read, delete: if isListMember(listId);
 
         allow create: if isListMember(listId) &&
                          isValidEntry(request.resource.data) &&
                          request.resource.data.addedBy == request.auth.uid &&
                          request.resource.data.createdAt == request.time;
 
-        // Editar: posição, data e comentário. O filme, quem adicionou, a criação e a cópia
-        // resumida do filme não mudam pelo app.
+        // Membros mudam posição, data e comentário. O filme, quem adicionou, a criação e a
+        // cópia resumida do filme não mudam pelo app.
         allow update: if isListMember(listId) &&
                          isValidEntry(request.resource.data) &&
-                         areImmutableFieldsUnchanged(['tmdbId', 'addedBy', 'createdAt', 'movie']);
-
-        allow delete: if isListMember(listId);
+                         keepsFields(['tmdbId', 'addedBy', 'createdAt', 'movie']);
       }
     }
 
-    // Códigos de convite: só o backend.
     match /invites/{code} {
       allow read, write: if false;
     }
 
-    // Catálogo de filmes e notas: leitura para logados, escrita só do backend.
     match /movies/{tmdbId} {
-      allow read: if isAuthenticated();
+      allow read: if isSignedIn();
       allow write: if false;
     }
 
-    // Consumo das APIs: leitura para logados, escrita só do backend.
     match /usage/{day} {
-      allow read: if isAuthenticated();
+      allow read: if isSignedIn();
       allow write: if false;
     }
   }
