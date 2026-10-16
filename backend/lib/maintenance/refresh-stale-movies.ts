@@ -26,7 +26,14 @@ async function refreshStaleMovies(
   const now = dependencies.now();
   const movies = await dependencies.db.collection('movies').get();
   const stale = movies.docs
-    .map((doc) => ({ tmdbId: Number(doc.id), movie: MovieSchema.parse(doc.data()) }))
+    // Um documento fora do formato não pode derrubar a rotina inteira: fica de fora, registrado.
+    .flatMap((doc) => {
+      const tmdbId = Number(doc.id);
+      const parsed = MovieSchema.safeParse(doc.data());
+      if (parsed.success) return [{ tmdbId, movie: parsed.data }];
+      logger.warn('rotina diária: filme fora do formato, pulado', { tmdbId });
+      return [];
+    })
     .filter(({ movie }) => needsRefresh(movie, now))
     .sort((a, b) => oldestFetch(a.movie).getTime() - oldestFetch(b.movie).getTime())
     .slice(0, limit);

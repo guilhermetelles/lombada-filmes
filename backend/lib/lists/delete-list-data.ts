@@ -3,8 +3,8 @@ import type { Firestore } from 'firebase-admin/firestore';
 const FIRESTORE_BATCH_LIMIT = 500;
 
 /**
- * Apaga uma lista por inteiro: os códigos de convite dela, as entradas e o próprio documento.
- * Não confere permissão; quem chama já conferiu.
+ * Apaga uma lista por inteiro: os códigos de convite dela, as entradas e o próprio documento (se
+ * ainda existir). Não confere permissão; quem chama já conferiu.
  *
  * @param db - Firestore.
  * @param listId - Lista a apagar.

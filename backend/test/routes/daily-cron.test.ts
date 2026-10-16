@@ -107,6 +107,25 @@ describe('GET /api/cron/daily: pessoas e convites', () => {
     assert.equal(sources.calls.tmdb, 1);
   });
 
+  test('documento fora do formato é pulado sem derrubar a rotina', async () => {
+    await dependencies.db.doc('movies/999').set({ title: 'Quebrado' });
+    await dependencies.db.doc('people/999').set({ name: 'Quebrada' });
+    await dependencies.db
+      .collection('invites')
+      .doc('VENCID')
+      .set({
+        listId: 'L1',
+        createdBy: 'u',
+        expiresAt: new Date(clock.getTime() - 1),
+        usedBy: [],
+      });
+
+    const response = await runCron(`Bearer ${TEST_CRON_SECRET}`);
+
+    assert.equal(response.status, 200);
+    assert.equal(((await response.json()) as Report).invitesDeleted, 1);
+  });
+
   test('código vencido some; código válido fica', async () => {
     const invites = dependencies.db.collection('invites');
     await invites

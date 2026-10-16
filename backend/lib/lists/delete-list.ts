@@ -13,7 +13,13 @@ import { listDocument } from './list-repository.js';
  * @throws {ForbiddenError} Se a pessoa não for a dona.
  */
 async function deleteList(db: Firestore, uid: string, listId: string): Promise<void> {
-  requireOwner((await listDocument(db, listId).get()).data(), uid);
+  const list = listDocument(db, listId);
+  // Confere a dona e apaga a lista na mesma transação: quem tentar entrar ou gerar convite agora
+  // recebe 404. Entradas e convites vão depois, fora da transação (não cabem nela).
+  await db.runTransaction(async (transaction) => {
+    requireOwner((await transaction.get(list)).data(), uid);
+    transaction.delete(list);
+  });
   await deleteListData(db, listId);
 }
 

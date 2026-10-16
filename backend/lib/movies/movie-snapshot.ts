@@ -3,26 +3,51 @@ import type { Movie, MovieSnapshot } from '../types/movie.js';
 import type { PersonRef } from '../types/person.js';
 
 /**
- * Quantos diretores vão na cópia resumida. As regras do Firestore não conseguem validar mais que
- * isso numa entrada (passa do limite de expressões); o filme completo continua em movies/{tmdbId}.
+ * Limites que firestore.rules exige da cópia resumida (isValidMovieSnapshot). O app revalida a
+ * entrada inteira a cada edição, então uma cópia fora deles travaria as edições daquela entrada.
+ * Diretores: com mais de 8, a validação passa do limite de expressões das regras.
  */
-const SNAPSHOT_DIRECTORS_LIMIT = 8;
+const SNAPSHOT_LIMITS = {
+  titleLength: 300,
+  posterPathLength: 200,
+  years: { min: 1870, max: 2100 },
+  imdb: { min: 0, max: 10 },
+  letterboxd: { min: 0, max: 5 },
+  directors: 8,
+  directorNameLength: 200,
+};
 
 /**
- * Monta a cópia resumida do filme que vai nas entradas das listas.
+ * Monta a cópia resumida do filme que vai nas entradas das listas, já dentro dos limites das
+ * regras: o que não cabe é cortado ou fica null; o filme completo continua em movies/{tmdbId}.
  *
  * @param movie - Documento do filme.
  * @returns Título, ano, capa, as notas do IMDb e do Letterboxd e os primeiros 8 diretores.
  */
 export function toMovieSnapshot(movie: Movie): MovieSnapshot {
   return {
-    title: movie.title,
-    year: movie.year,
-    posterPath: movie.posterPath,
-    imdb: movie.ratings.imdb?.value ?? null,
-    letterboxd: movie.ratings.letterboxd?.value ?? null,
-    directors: movie.directors.slice(0, SNAPSHOT_DIRECTORS_LIMIT),
+    title: movie.title.slice(0, SNAPSHOT_LIMITS.titleLength),
+    year: withinRange(movie.year, SNAPSHOT_LIMITS.years),
+    posterPath:
+      movie.posterPath && movie.posterPath.length <= SNAPSHOT_LIMITS.posterPathLength ? movie.posterPath : null,
+    imdb: withinRange(movie.ratings.imdb?.value ?? null, SNAPSHOT_LIMITS.imdb),
+    letterboxd: withinRange(movie.ratings.letterboxd?.value ?? null, SNAPSHOT_LIMITS.letterboxd),
+    directors: movie.directors
+      .filter((director) => director.id > 0 && director.name.trim().length > 0)
+      .slice(0, SNAPSHOT_LIMITS.directors)
+      .map(({ id, name }) => ({ id, name: name.slice(0, SNAPSHOT_LIMITS.directorNameLength) })),
   };
+}
+
+/**
+ * Mantém um número só se estiver dentro do intervalo.
+ *
+ * @param value - Número, ou null.
+ * @param range - Mínimo e máximo aceitos, inclusive.
+ * @returns O número, ou null se faltar ou estiver fora do intervalo.
+ */
+function withinRange(value: number | null, { min, max }: { min: number; max: number }): number | null {
+  return value !== null && value >= min && value <= max ? value : null;
 }
 
 /**

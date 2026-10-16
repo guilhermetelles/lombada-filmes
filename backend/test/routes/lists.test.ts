@@ -155,6 +155,21 @@ describe('POST /api/lists/join', () => {
     assert.deepEqual((await listOf(listId))?.memberUids, [owner.uid]);
   });
 
+  test('quem já é integrante recebe a lista mesmo com o código vencido', async () => {
+    const { listId, inviteCode } = (await (await createList(owner)).json()) as CreatedList;
+    clock = new Date(clock.getTime() + INVITE_LIFETIME_MS);
+
+    const response = await join(owner, inviteCode);
+
+    assert.equal(response.status, 200);
+    assert.deepEqual(await response.json(), {
+      listId,
+      name: 'Maratona',
+      description: 'Filmes ruins',
+      alreadyMember: true,
+    });
+  });
+
   test('código malformado: 400', async () => {
     assert.equal((await join(friend, 'ABC')).status, 400);
   });
@@ -197,6 +212,15 @@ describe('POST /api/lists/{listId}/leave', () => {
 
     const list = await listOf(listId);
     assert.deepEqual([list?.ownerUid, list?.memberUids], [friend.uid, [friend.uid]]);
+  });
+
+  test('depois que a lista some, o código dela responde 404', async () => {
+    const { listId, inviteCode } = (await (await createList(owner)).json()) as CreatedList;
+    const second = (await (await newInvite(owner, listId)).json()) as CreatedList;
+    await leave(owner, listId);
+
+    assert.equal((await join(friend, inviteCode)).status, 404);
+    assert.equal((await join(friend, second.inviteCode)).status, 404);
   });
 
   test('última pessoa sai: a lista, as entradas e os convites são apagados', async () => {

@@ -33,6 +33,27 @@ describe('cópia resumida do filme', () => {
     );
   });
 
+  test('a cópia fica dentro dos limites das regras do Firestore', () => {
+    const outOfLimits = {
+      ...abyss,
+      title: 'T'.repeat(400),
+      year: 3000,
+      posterPath: `/${'p'.repeat(250)}.jpg`,
+      directors: [
+        { id: 0, name: 'Sem id' },
+        { id: 5, name: '   ' },
+        { id: 7, name: 'N'.repeat(250) },
+      ],
+    };
+
+    const snapshot = toMovieSnapshot(outOfLimits);
+
+    assert.equal(snapshot.title.length, 300);
+    assert.equal(snapshot.year, null);
+    assert.equal(snapshot.posterPath, null);
+    assert.deepEqual(snapshot.directors, [{ id: 7, name: 'N'.repeat(200) }]);
+  });
+
   test('isSameSnapshot compara os diretores pela ordem, por id e nome', () => {
     const snapshot = toMovieSnapshot(abyss);
     const coDirected = [...snapshot.directors, { id: 1, name: 'Outra Pessoa' }];

@@ -5,7 +5,8 @@ import { inviteDocument, listDocument } from './list-repository.js';
 
 /**
  * Entra numa lista com um código de convite: confere o código, adiciona a pessoa em memberUids e
- * registra o uso no convite, numa transação. Quem já é integrante só recebe a lista de volta.
+ * registra o uso no convite, numa transação. Quem já é integrante só recebe a lista de volta,
+ * mesmo com um código vencido.
  *
  * @param db - Firestore.
  * @param uid - Quem está entrando.
@@ -13,7 +14,7 @@ import { inviteDocument, listDocument } from './list-repository.js';
  * @param now - Momento do pedido, para conferir a validade.
  * @returns Id, nome e descrição da lista, e se a pessoa já era integrante.
  * @throws {NotFoundError} Se o código não existir ou a lista dele tiver sido apagada.
- * @throws {InviteExpiredError} Se o código tiver passado dos 7 dias.
+ * @throws {InviteExpiredError} Se o código tiver passado dos 7 dias e a pessoa ainda não for integrante.
  */
 async function joinList(
   db: Firestore,
@@ -25,18 +26,19 @@ async function joinList(
     const inviteRef = inviteDocument(db, code);
     const invite = (await transaction.get(inviteRef)).data();
     if (!invite) throw new NotFoundError('código de convite não encontrado');
-    if (invite.expiresAt.getTime() <= now.getTime()) throw new InviteExpiredError('código de convite vencido');
 
     const listRef = listDocument(db, invite.listId);
     const list = (await transaction.get(listRef)).data();
     if (!list) throw new NotFoundError('a lista deste convite não existe mais');
 
-    const alreadyMember = list.memberUids.includes(uid);
-    if (!alreadyMember) {
-      transaction.update(listRef, { memberUids: FieldValue.arrayUnion(uid), updatedAt: now });
-      transaction.update(inviteRef, { usedBy: FieldValue.arrayUnion(uid) });
-    }
-    return { listId: invite.listId, name: list.name, description: list.description, alreadyMember };
+    const summary = { listId: invite.listId, name: list.name, description: list.description };
+    // Quem já é integrante só recebe a lista, mesmo com um código vencido.
+    if (list.memberUids.includes(uid)) return { ...summary, alreadyMember: true };
+    if (invite.expiresAt.getTime() <= now.getTime()) throw new InviteExpiredError('código de convite vencido');
+
+    transaction.update(listRef, { memberUids: FieldValue.arrayUnion(uid), updatedAt: now });
+    transaction.update(inviteRef, { usedBy: FieldValue.arrayUnion(uid) });
+    return { ...summary, alreadyMember: false };
   });
 }
 

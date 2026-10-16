@@ -25,7 +25,14 @@ async function refreshStalePeople(
   const now = dependencies.now();
   const people = await dependencies.db.collection('people').get();
   const stale = people.docs
-    .map((doc) => ({ personId: Number(doc.id), person: PersonSchema.parse(doc.data()) }))
+    // Um documento fora do formato não pode derrubar a rotina inteira: fica de fora, registrado.
+    .flatMap((doc) => {
+      const personId = Number(doc.id);
+      const parsed = PersonSchema.safeParse(doc.data());
+      if (parsed.success) return [{ personId, person: parsed.data }];
+      logger.warn('rotina diária: pessoa fora do formato, pulado', { personId });
+      return [];
+    })
     .filter(({ person }) => isPersonStale(person, now))
     .sort((a, b) => a.person.fetchedAt.getTime() - b.person.fetchedAt.getTime())
     .slice(0, limit);

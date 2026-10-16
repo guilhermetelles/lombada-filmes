@@ -22,13 +22,18 @@ async function leaveList(db: Firestore, uid: string, listId: string, now: Date):
     const list = requireMember((await transaction.get(listRef)).data(), uid);
     const remaining = list.memberUids.filter((member) => member !== uid);
     const nextOwner = remaining.at(0);
-    if (nextOwner === undefined) return true;
+    if (nextOwner === undefined) {
+      // Apaga a lista já na transação: quem tentar entrar ou gerar convite agora recebe 404.
+      transaction.delete(listRef);
+      return true;
+    }
 
     const ownerUid = list.ownerUid === uid ? nextOwner : list.ownerUid;
     transaction.update(listRef, { memberUids: remaining, ownerUid, updatedAt: now });
     return false;
   });
 
+  // Entradas e convites vão depois, fora da transação (não cabem nela).
   if (isNowEmpty) await deleteListData(db, listId);
   return { listDeleted: isNowEmpty };
 }
