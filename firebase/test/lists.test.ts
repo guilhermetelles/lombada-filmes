@@ -22,7 +22,8 @@ const editAsMember = (fields: Record<string, unknown>) =>
   updateDoc(existingList(MEMBER), { ...fields, ...updatedNow() });
 
 describe('lists: criação', () => {
-  test('cria lista válida', () => allows(setDoc(newListDoc(OWNER), newList(OWNER))));
+  test('nem uma lista válida é criada pelo app (passa pelo backend)', () =>
+    denies(setDoc(newListDoc(OWNER), newList(OWNER))));
   test('cria lista já incluindo outra pessoa como membro', () =>
     denies(setDoc(newListDoc(OWNER), newList(OWNER, { memberUids: [OWNER, OUTSIDER] }))));
   test('cria lista em nome de outra pessoa', () =>

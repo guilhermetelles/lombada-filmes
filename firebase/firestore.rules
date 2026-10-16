@@ -17,12 +17,12 @@ rules_version = '2';
 //   createdAt       timestamp: hora do servidor na criação, imutável
 //   updatedAt       timestamp: hora do servidor a cada gravação
 //
-// lists/{listId}                    membros leem; o app só edita nome e descrição
+// lists/{listId}                    membros leem; o app só edita nome e descrição. Criar, entrar,
+//                                   sair e apagar passam pelo backend (POST /api/lists e afins).
 //   name            string 1–80, não só espaços
 //   description     string 0–280
 //   ownerUid        string 1–128, imutável
-//   memberUids      list<string>: quem lê e edita. O app só cria com [ownerUid] e nunca altera;
-//                   entrar e sair passa pelo backend (código de convite).
+//   memberUids      list<string>: quem lê e edita; só o backend altera (código de convite).
 //   source          map, opcional, só o backend grava: origem num export do Letterboxd
 //   createdAt       timestamp, imutável
 //   updatedAt       timestamp: hora do servidor a cada gravação
@@ -200,13 +200,8 @@ service cloud.firestore {
       // A consulta "minhas listas" precisa filtrar por memberUids array-contains uid.
       allow read: if isMemberOf(resource.data);
 
-      // Quem cria vira dona e única integrante; source fica para o backend.
-      allow create: if isSignedIn() &&
-                       isValidList(request.resource.data) &&
-                       request.resource.data.ownerUid == request.auth.uid &&
-                       request.resource.data.memberUids == [request.auth.uid] &&
-                       !('source' in request.resource.data) &&
-                       request.resource.data.createdAt == request.time;
+      // Criar passa pelo backend (POST /api/lists), que já gera o primeiro código de convite.
+      allow create: if false;
 
       // Membros editam só nome e descrição. Dono, membros e origem mudam só pelo backend.
       allow update: if isMemberOf(resource.data) &&
