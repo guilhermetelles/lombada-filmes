@@ -7,15 +7,20 @@
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "test": "npx -y firebase-tools emulators:exec --config ../firebase/firebase.json --only auth,firestore --project demo-lombada \"node --import tsx --test --test-concurrency=1 test/*.test.ts\"",
-    "check:firestore": "node --import tsx scripts/check-firestore.ts"
+    "test": "npx -y firebase-tools@15.32.1 emulators:exec --config ../firebase/firebase.json --only auth,firestore --project demo-lombada \"node --import tsx --test --test-concurrency=1 'test/**/*.test.ts'\"",
+    "check:firestore": "node --import tsx scripts/check-firestore.ts",
+    "record:fixtures": "node --import tsx scripts/record-fixtures.ts",
+    "lint": "biome check",
+    "format": "biome check --write"
   },
   "dependencies": {
-    "firebase-admin": "^13.5.0"
+    "firebase-admin": "13.10.0",
+    "zod": "4.6.5"
   },
   "devDependencies": {
-    "@types/node": "^24.0.0",
-    "tsx": "^4.20.0",
-    "typescript": "^5.9.0"
+    "@biomejs/biome": "2.5.15",
+    "@types/node": "24.19.2",
+    "tsx": "4.23.15",
+    "typescript": "5.9.3"
   }
 }

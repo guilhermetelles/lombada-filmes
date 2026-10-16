@@ -1,0 +1,109 @@
+{
+ "adult": false,
+ "backdrop_path": "/mW6XzxelLY8T2oW2NjciG9LpZT5.jpg",
+ "belongs_to_collection": null,
+ "budget": 43000000,
+ "genres": [
+  {
+   "id": 12,
+   "name": "Aventura"
+  },
+  {
+   "id": 53,
+   "name": "Thriller"
+  },
+  {
+   "id": 878,
+   "name": "Ficção científica"
+  }
+ ],
+ "homepage": "",
+ "id": 2756,
+ "imdb_id": "tt0096754",
+ "origin_country": [
+  "US"
+ ],
+ "original_language": "en",
+ "original_title": "The Abyss",
+ "overview": "Um submarino para de funcionar e deixa 156 tripulantes presos no fundo do oceano. Com um furacão se aproximando, a única saída é que cientistas de uma plataforma de petróleo façam o resgate. Numa corrida contra o relógio, os salvadores embarcam numa experiência surpreendente pelo desconhecido.",
+ "popularity": 12.5863,
+ "poster_path": "/iUmlHbK05F38QNnVDTDXa5qXFgF.jpg",
+ "production_companies": [
+  {
+   "id": 25,
+   "logo_path": "/nM2MfoMqzJQRiSynsDabOtFKetD.png",
+   "name": "20th Century Fox",
+   "origin_country": "US"
+  },
+  {
+   "id": 1280,
+   "logo_path": null,
+   "name": "Pacific Western",
+   "origin_country": "US"
+  }
+ ],
+ "production_countries": [
+  {
+   "iso_3166_1": "US",
+   "name": "United States of America"
+  }
+ ],
+ "release_date": "1989-08-09",
+ "revenue": 90000098,
+ "runtime": 138,
+ "softcore": false,
+ "spoken_languages": [
+  {
+   "english_name": "English",
+   "iso_639_1": "en",
+   "name": "English"
+  }
+ ],
+ "status": "Released",
+ "tagline": "Existe tudo que você já conheceu sobre aventura, e então existe O Segredo do Abismo.",
+ "title": "O Segredo do Abismo",
+ "video": false,
+ "vote_average": 7.364,
+ "vote_count": 3631,
+ "credits": {
+  "crew": [
+   {
+    "adult": false,
+    "gender": 2,
+    "id": 2710,
+    "known_for_department": "Directing",
+    "name": "James Cameron",
+    "original_name": "James Cameron",
+    "popularity": 4.3296,
+    "profile_path": "/9NAZnTjBQ9WcXAQEzZpKy4vdQto.jpg",
+    "credit_id": "52fe436ac3a36847f80528c5",
+    "department": "Directing",
+    "job": "Director"
+   }
+  ]
+ },
+ "external_ids": {
+  "imdb_id": "tt0096754",
+  "wikidata_id": "Q336517",
+  "facebook_id": null,
+  "instagram_id": null,
+  "twitter_id": null
+ },
+ "translations": {
+  "translations": [
+   {
+    "iso_3166_1": "US",
+    "iso_639_1": "en",
+    "name": "English",
+    "english_name": "English",
+    "data": {
+     "homepage": "",
+     "overview": "A civilian oil rig crew is recruited to conduct a search and rescue effort when a nuclear submarine mysteriously sinks. One diver soon finds himself on a spectacular odyssey 25,000 feet below the ocean's surface where he confronts a mysterious force that has the power to change the world or destroy it.",
+     "runtime": 140,
+     "tagline": "When you get there, you will understand.",
+     "title": ""
+    }
+   }
+  ]
+ }
+}
