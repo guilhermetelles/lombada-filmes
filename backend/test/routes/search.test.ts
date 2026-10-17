@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { beforeEach, describe, test } from 'node:test';
-import { searchRoute } from '../../api/search.js';
+import { searchRoute } from '../../api/search/index.js';
 import { usageDay } from '../../lib/usage/usage-day.js';
 import { createTestDependencies } from '../support/dependencies.js';
 import { resetEmulators, signUp } from '../support/emulators.js';

@@ -119,3 +119,20 @@ export const TmdbPersonResponse = z.object({
 
 /** Resposta de /person/{id} já validada. */
 export type TmdbPersonResponse = z.output<typeof TmdbPersonResponse>;
+
+/** Resposta de /search/person, só com o que a lista de resultados usa. */
+export const TmdbPersonSearchResponse = z.object({
+  results: z.array(
+    z.object({
+      id: z.number(),
+      name: z.string(),
+      known_for_department: optionalText,
+      profile_path: optionalText,
+      // Filmes usam title; séries, name.
+      known_for: z.array(z.object({ title: optionalText, name: optionalText })).default([]),
+    }),
+  ),
+});
+
+/** Resposta de /search/person já validada. */
+export type TmdbPersonSearchResponse = z.output<typeof TmdbPersonSearchResponse>;

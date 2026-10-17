@@ -1,6 +1,6 @@
-import type { TmdbPersonResponse } from '../../schemas/sources/tmdb.js';
-import type { ActedMovie, BiographyLanguage, DirectedMovie } from '../../types/person.js';
-import type { TmdbPerson } from '../../types/sources.js';
+import type { TmdbPersonResponse, TmdbPersonSearchResponse } from '../../schemas/sources/tmdb.js';
+import type { ActedMovie, BiographyLanguage, DirectedMovie, PersonDepartment } from '../../types/person.js';
+import type { TmdbPerson, TmdbPersonSearchResult } from '../../types/sources.js';
 
 /** Quantos filmes dirigidos guardar; o app mostra até 8 depois de tirar os que já estão na lista. */
 const DIRECTED_LIMIT = 12;
@@ -10,6 +10,13 @@ const ACTED_LIMIT = 20;
 
 /** Papel que é só reaproveitamento de imagens antigas, não atuação no filme. */
 const ARCHIVE_FOOTAGE = /\(archive footage\)/i;
+
+/** Quantas pessoas a busca devolve e quantos títulos conhecidos de cada uma. */
+const SEARCH_LIMIT = 5;
+const KNOWN_FOR_LIMIT = 3;
+
+/** Departamentos do TMDb que a busca mostra, e como o app os chama. */
+const DEPARTMENTS: Record<string, PersonDepartment> = { Acting: 'acting', Directing: 'directing' };
 
 /**
  * Converte a resposta de pessoa do TMDb no formato de people/{id}.
@@ -95,4 +102,22 @@ function actedMovies(response: TmdbPersonResponse): ActedMovie[] {
     }));
 }
 
-export { toTmdbPerson };
+/**
+ * Converte a busca de pessoas do TMDb: só quem é conhecido por atuar ou dirigir, as 5 primeiras na
+ * ordem do TMDb (por popularidade), cada uma com até 3 títulos conhecidos.
+ *
+ * @param response - Resposta validada de /search/person.
+ * @returns As pessoas resumidas para a lista de resultados.
+ */
+function toTmdbPersonSearchResults(response: TmdbPersonSearchResponse): TmdbPersonSearchResult[] {
+  return response.results
+    .flatMap((person) => {
+      const department = DEPARTMENTS[person.known_for_department ?? ''];
+      if (!department) return [];
+      const knownFor = person.known_for.flatMap((work) => work.title ?? work.name ?? []).slice(0, KNOWN_FOR_LIMIT);
+      return [{ personId: person.id, name: person.name, department, profilePath: person.profile_path, knownFor }];
+    })
+    .slice(0, SEARCH_LIMIT);
+}
+
+export { toTmdbPerson, toTmdbPersonSearchResults };

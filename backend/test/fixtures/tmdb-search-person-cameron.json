@@ -1,0 +1,1303 @@
+{
+ "results": [
+  {
+   "id": 5861197,
+   "adult": false,
+   "gender": 2,
+   "known_for_department": "Acting",
+   "name": "Cameron Winter",
+   "original_name": "Cameron Winter",
+   "popularity": 1.534,
+   "profile_path": "/6rMbchsOu7E82kEpZqL8mYHPG9G.jpg",
+   "known_for": [
+    {
+     "adult": false,
+     "backdrop_path": "/sSAX59Kf01lBRkBW4UcIL4kIoIm.jpg",
+     "id": 1667,
+     "name": "Saturday Night Live",
+     "original_name": "Saturday Night Live",
+     "overview": "Saturday Night Live é um programa semanal de comédia do canal NBC que é transmitido praticamente todos os sábados à noite desde sua estréia em 11 de outubro de 1975. Trata-se de um dos mais duradouros programas de entretenimento da história da televisão norte-americana. A cada semana, o elenco é incrementado por um convidado especial e uma apresentação musical.\n\nO programa tem sido o trampolim para a carreira da maioria dos astros de humor norte-americano nos últimos trinta anos.  Vai ao ar no Brasil pela Sony Entertainment Television. ",
+     "poster_path": "/s1cZBqbMwAF3w8S3Yo0j5nr2Yuo.jpg",
+     "media_type": "tv",
+     "original_language": "en",
+     "genre_ids": [
+      35,
+      10763
+     ],
+     "popularity": 182.4668,
+     "first_air_date": "1975-10-11",
+     "softcore": false,
+     "vote_average": 6.9,
+     "vote_count": 537,
+     "origin_country": [
+      "US"
+     ]
+    },
+    {
+     "adult": false,
+     "backdrop_path": "/pGEGFzTXVAj65q6UPWk7fq6asfh.jpg",
+     "id": 10959,
+     "name": "Later... with Jools Holland",
+     "original_name": "Later... with Jools Holland",
+     "overview": "",
+     "poster_path": "/4QmfzitM4bZhHqL6IlFwDkwDPVc.jpg",
+     "media_type": "tv",
+     "original_language": "en",
+     "genre_ids": [
+      10767
+     ],
+     "popularity": 35.5771,
+     "first_air_date": "1992-10-09",
+     "softcore": false,
+     "vote_average": 5.9,
+     "vote_count": 9,
+     "origin_country": [
+      "GB"
+     ]
+    },
+    {
+     "adult": false,
+     "backdrop_path": null,
+     "id": 14485,
+     "name": "From the Basement",
+     "original_name": "From the Basement",
+     "overview": "",
+     "poster_path": "/iXhscTYmApKaVQ7OoJwTYpiOURv.jpg",
+     "media_type": "tv",
+     "original_language": "en",
+     "genre_ids": [
+      99
+     ],
+     "popularity": 1.6982,
+     "first_air_date": "2007-12-01",
+     "softcore": false,
+     "vote_average": 10,
+     "vote_count": 1,
+     "origin_country": [
+      "GB",
+      "US"
+     ]
+    }
+   ]
+  },
+  {
+   "id": 1098962,
+   "adult": false,
+   "gender": 1,
+   "known_for_department": "Acting",
+   "name": "Dove Cameron",
+   "original_name": "Dove Cameron",
+   "popularity": 4.9306,
+   "profile_path": "/7sfEvzwUGrqs1qORnXCnLehwHfm.jpg",
+   "known_for": [
+    {
+     "adult": false,
+     "backdrop_path": "/20ncMtoy9Cxy6OQxgXZemHoFymz.jpg",
+     "id": 277217,
+     "title": "Descendentes",
+     "original_title": "Descendants",
+     "overview": "Em um reino idílico chamado Auradon, o príncipe Ben, filho da Bela e da Fera, está prestes a assumir o trono. Sua primeira proclamação oficial é oferecer uma chance de redenção para os filhos dos vilões mais cruéis da Disney, que vivem isolados na Ilha dos Perdidos.  Mal (filha de Malévola), Evie (filha da Rainha Má), Carlos (filho de Cruella de Vil) e Jay (filho de Jafar) são autorizados a frequentar a escola preparatória de Auradon junto aos filhos das fadas madrinhas, princesas e heróis. Sob as ordens de Malévola para roubar a varinha mágica da Fada Madrinha e libertar os vilões, os quatro adolescentes enfrentam um dilema profundo: seguir os passos malignos de seus pais ou escolher o caminho do bem e escrever sua própria história?",
+     "poster_path": "/i36xiPRiRgy8x261fk80CyVcaYF.jpg",
+     "media_type": "movie",
+     "original_language": "en",
+     "genre_ids": [
+      10751,
+      12,
+      14,
+      10770
+     ],
+     "popularity": 8.6067,
+     "release_date": "2015-07-31",
+     "softcore": false,
+     "video": false,
+     "vote_average": 7.2,
+     "vote_count": 2591
+    },
+    {
+     "adult": false,
+     "backdrop_path": "/mLihPIodzSenkZtiUauDy4e9hRs.jpg",
+     "id": 417320,
+     "title": "Descendentes 2",
+     "original_title": "Descendants 2",
+     "overview": "Mal, Jay, Carlos e Evie tentam encontrar seus lugares em Auradon, mas a pressão de se tornar um membro perfeito da realeza deixa Mal deslocada.",
+     "poster_path": "/by4Cmcn9nYwhvAe0CLHSQF1XMto.jpg",
+     "media_type": "movie",
+     "original_language": "en",
+     "genre_ids": [
+      10751,
+      14,
+      10770,
+      12
+     ],
+     "popularity": 12.6997,
+     "release_date": "2017-07-21",
+     "softcore": false,
+     "video": false,
+     "vote_average": 7.376,
+     "vote_count": 1837
+    },
+    {
+     "adult": false,
+     "backdrop_path": "/wWLUUGtemgrRyH24v8lAkSR58US.jpg",
+     "id": 506574,
+     "title": "Descendentes 3",
+     "original_title": "Descendants 3",
+     "overview": "Mal, Evie, Carlos e Jay voltam à Ilha Proibida com o intuito de convidar novos descendentes para viverem em Auradon. Quando a barreira mágica que protege a ilha é rompida, eles devem impedir que o local seja destruído.",
+     "poster_path": "/moyDQs4U4D4b0kG7vfqt8DKskkI.jpg",
+     "media_type": "movie",
+     "original_language": "en",
+     "genre_ids": [
+      10751,
+      10770,
+      12,
+      14
+     ],
+     "popularity": 8.6068,
+     "release_date": "2019-08-02",
+     "softcore": false,
+     "video": false,
+     "vote_average": 7.679,
+     "vote_count": 1668
+    }
+   ]
+  },
+  {
+   "id": 6941,
+   "adult": false,
+   "gender": 1,
+   "known_for_department": "Acting",
+   "name": "Cameron Diaz",
+   "original_name": "Cameron Diaz",
+   "popularity": 4.2442,
+   "profile_path": "/tIWUyvmJayu8gtbrzCWC0L3H8kH.jpg",
+   "known_for": [
+    {
+     "adult": false,
+     "backdrop_path": "/w0eKUOEog2ImtktCHAMUZws8qif.jpg",
+     "id": 808,
+     "title": "Shrek",
+     "original_title": "Shrek",
+     "overview": "Em um pântano distante vive Shrek, um ogro solitário que vê, sem mais nem menos, sua vida ser invadida por uma série de personagens de contos de fada. Todos eles foram expulsos de suas casas pelo maligno Lorde Farquaad. Determinado a recuperar a tranquilidade, Shrek faz um acordo com Farquaad: todos os personagens poderão retornar aos seus lares se ele e seu amigo Burro resgatarem uma princesa que foi aprisionada por um dragão.",
+     "poster_path": "/wxeqfC221YMptRRdzxlijAh7q8l.jpg",
+     "media_type": "movie",
+     "original_language": "en",
+     "genre_ids": [
+      16,
+      35,
+      14,
+      12,
+      10751
+     ],
+     "popularity": 43.2569,
+     "release_date": "2001-05-18",
+     "softcore": false,
+     "video": false,
+     "vote_average": 7.781,
+     "vote_count": 19451
+    },
+    {
+     "adult": false,
+     "backdrop_path": "/9Ebn8atCcGk5OZrx4xmoTobAxoh.jpg",
+     "id": 1581,
+     "title": "O Amor Não Tira Férias",
+     "original_title": "The Holiday",
+     "overview": "Amanda Woods e Iris Simpkins estão desesperadas por mudanças de ares depois de uma série de problemas com os homens. Numa troca de residências temporária, Amanda viaja para Londres, enquanto Iris parte para Los Angeles, cidades que não conhecem, mas onde rapidamente se integram.",
+     "poster_path": "/4TvrnjDdIACRp9Jy4KWO3VxrUrg.jpg",
+     "media_type": "movie",
+     "original_language": "en",
+     "genre_ids": [
+      35,
+      10749
+     ],
+     "popularity": 25.0862,
+     "release_date": "2006-12-05",
+     "softcore": false,
+     "video": false,
+     "vote_average": 7.101,
+     "vote_count": 5799
+    },
+    {
+     "adult": false,
+     "backdrop_path": "/egJQ3nIon5fT8wyXcKRHzvmtZpD.jpg",
+     "id": 544,
+     "title": "Quem Vai Ficar com Mary?",
+     "original_title": "There's Something About Mary",
+     "overview": "Apaixonado desde os tempos do colegial por Mary, o trapalhão Ted localiza de novo a garota do seus sonhos 13 anos mais tarde com a ajuda de um investigador particular muito pilantra, que também apaixona-se por ela. Para complicar ainda mais, os dois descobrem que qualquer homem que conheça a deslumbrante Mary fica louco para se casar com ela.",
+     "poster_path": "/nUi2j9Mp8HEE0r7Iq7nq4RIesO4.jpg",
+     "media_type": "movie",
+     "original_language": "en",
+     "genre_ids": [
+      10749,
+      35
+     ],
+     "popularity": 17.8184,
+     "release_date": "1998-07-15",
+     "softcore": false,
+     "video": false,
+     "vote_average": 6.639,
+     "vote_count": 5552
+    }
+   ]
+  },
+  {
+   "id": 2710,
+   "adult": false,
+   "gender": 2,
+   "known_for_department": "Directing",
+   "name": "James Cameron",
+   "original_name": "James Cameron",
+   "popularity": 4.2822,
+   "profile_path": "/9NAZnTjBQ9WcXAQEzZpKy4vdQto.jpg",
+   "known_for": [
+    {
+     "adult": false,
+     "backdrop_path": "/vL5LR6WdxWPjLPFRLe133jXWsh5.jpg",
+     "id": 19995,
+     "title": "Avatar",
+     "original_title": "Avatar",
+     "overview": "Apesar de não ter mais os movimentos da perna, o ex-fuzileiro naval Jake Sully ainda sente que pode ser um guerreiro. Sua intuição começa a se tornar realidade quando ele viaja anos-luz até a estação espacial montada no Planeta Pandora. Habitado por grandes seres azuis, os Na´vi, o local tem uma atmosfera fatal para qualquer terrestre. Por isso, oficiais criaram o programa Avatar, em que um corpo biológico, híbrido de humano e Na´vi, pode ser comandado a distância.",
+     "poster_path": "/lRRMQhlOLM9xgvjKKFndOmptqKR.jpg",
+     "media_type": "movie",
+     "original_language": "en",
+     "genre_ids": [
+      878,
+      28,
+      12
+     ],
+     "popularity": 43.3657,
+     "release_date": "2009-12-16",
+     "softcore": false,
+     "video": false,
+     "vote_average": 7.6,
+     "vote_count": 34858
+    },
+    {
+     "adult": false,
+     "backdrop_path": "/xXCuto8YVp5RFqBJ7yKmVmLOWpF.jpg",
+     "id": 597,
+     "title": "Titanic",
+     "original_title": "Titanic",
+     "overview": "Um artista pobre e uma jovem rica se conhecem e se apaixonam na fatídica jornada do Titanic, em 1912. Embora esteja noiva do arrogante herdeiro de uma siderúrgica, a jovem desafia sua família e amigos em busca do verdadeiro amor.",
+     "poster_path": "/As0zX43h3w6kD2NS4uVHu9HKdEh.jpg",
+     "media_type": "movie",
+     "original_language": "en",
+     "genre_ids": [
+      18,
+      10749
+     ],
+     "popularity": 51.9127,
+     "release_date": "1997-12-18",
+     "softcore": false,
+     "video": false,
+     "vote_average": 7.901,
+     "vote_count": 27911
+    },
+    {
+     "adult": false,
+     "backdrop_path": "/ffdqHMWkh1h9MABwIfbfRJhgFW6.jpg",
+     "id": 218,
+     "title": "O Exterminador do Futuro",
+     "original_title": "The Terminator",
+     "overview": "Em um futuro próximo, a guerra entre humanos e máquinas foi iniciada. Com a tecnologia a seu dispor, um plano inusitado é arquitetado pelas máquinas ao enviar para o passado um andróide com a missão de matar a mãe daquele que viria a se transformar num líder e seu pior inimigo. Contudo, os humanos também conseguem enviar seu representante para proteger a mulher e tentar garantir o futuro da humanidade.",
+     "poster_path": "/fo4SSoNT1ASI4JP7dOLrosWNWKa.jpg",
+     "media_type": "movie",
+     "original_language": "en",
+     "genre_ids": [
+      28,
+      53,
+      878
+     ],
+     "popularity": 55.079,
+     "release_date": "1984-10-26",
+     "softcore": false,
+     "video": false,
+     "vote_average": 7.698,
+     "vote_count": 15287
+    }
+   ]
+  },
+  {
+   "id": 37089,
+   "adult": false,
+   "gender": 2,
+   "known_for_department": "Acting",
+   "name": "Cameron Monaghan",
+   "original_name": "Cameron Monaghan",
+   "popularity": 3.5986,
+   "profile_path": "/u2nxAlWiFcc8qIjpTppFazl13CR.jpg",
+   "known_for": [
+    {
+     "adult": false,
+     "backdrop_path": "/1wX0Xgs316QapQXjmqrAY9UixgN.jpg",
+     "id": 227156,
+     "title": "O Doador de Memórias",
+     "original_title": "The Giver",
+     "overview": "O filme, baseado no livro de Lois Lowry, conta a história de um mundo perfeito, no qual todos são felizes. Quando Jonas faz 12 anos, é escolhido para ser o Receptor de Memórias da comunidade. Ele entra em treinamento com um velho homem, a quem chamam O Doador. Do Doador, Jonas aprende sobre dor, tristeza, guerra e todas as verdades infelizes do mundo \"real\", percebendo rapidamente que a comunidade vive em falsidade. Confrontado com a realidade, Jonas enfrenta escolhas difíceis sobre sua própria vida e seu futuro.",
+     "poster_path": "/Abe0Pmz6cuW2mWVyVEkEetVFtgG.jpg",
+     "media_type": "movie",
+     "original_language": "en",
+     "genre_ids": [
+      18,
+      878
+     ],
+     "popularity": 11.3227,
+     "release_date": "2014-08-13",
+     "softcore": false,
+     "video": false,
+     "vote_average": 6.558,
+     "vote_count": 4723
+    },
+    {
+     "adult": false,
+     "backdrop_path": "/lA8r57ye1Kg30RO8PesaajzAWAM.jpg",
+     "id": 203835,
+     "title": "Amityville: O Despertar",
+     "original_title": "Amityville: The Awakening",
+     "overview": "Belle (Bella Thorne) se muda com seus irmãos e sua mãe, Joan (Jennifer Jason Leigh), para uma nova casa. Mas, quando coisas estranhas começam a acontecer, Belle suspeita que sua mãe esteja escondendo algo importante, e logo percebe que eles estão morando na infame casa de Amityville.",
+     "poster_path": "/pHS8WS8CbcOcSc12sVTT9NAS6RB.jpg",
+     "media_type": "movie",
+     "original_language": "en",
+     "genre_ids": [
+      27
+     ],
+     "popularity": 5.2874,
+     "release_date": "2017-06-30",
+     "softcore": false,
+     "video": false,
+     "vote_average": 5.34,
+     "vote_count": 1125
+    },
+    {
+     "adult": false,
+     "backdrop_path": "/n6eIm882V7cj0In0xp8QXNItoTp.jpg",
+     "id": 9339,
+     "title": "Click",
+     "original_title": "Click",
+     "overview": "Um arquiteto casado e com filhos está cada vez mais frustrado por passar a maior parte de seu tempo trabalhando. Um dia, ele encontra um inventor excêntrico que lhe dá um controle remoto universal, com capacidade de acelerar o tempo.",
+     "poster_path": "/oL0k5JA53PyoHSZqKb3cNkhwBCE.jpg",
+     "media_type": "movie",
+     "original_language": "en",
+     "genre_ids": [
+      35,
+      18,
+      14
+     ],
+     "popularity": 22.8967,
+     "release_date": "2006-06-23",
+     "softcore": false,
+     "video": false,
+     "vote_average": 6.315,
+     "vote_count": 7812
+    }
+   ]
+  },
+  {
+   "id": 4160517,
+   "adult": false,
+   "gender": 0,
+   "known_for_department": "Camera",
+   "name": "Cameron Venture",
+   "original_name": "Cameron Venture",
+   "popularity": 0.3603,
+   "profile_path": null,
+   "known_for": [
+    {
+     "adult": false,
+     "backdrop_path": null,
+     "id": 1151573,
+     "title": "MISS UNIVERSO",
+     "original_title": "MISS UNIVERSO",
+     "overview": "Após serem Abduzidos, Ana e João recebem a missão de fazer uma alienígena ganhar o título de “Miss Universo”.",
+     "poster_path": "/aqvebfcHe2YUyv6FDYkE0hemdHY.jpg",
+     "media_type": "movie",
+     "original_language": "pt",
+     "genre_ids": [
+      12,
+      35,
+      878
+     ],
+     "popularity": 1.84,
+     "release_date": "",
+     "softcore": false,
+     "video": false,
+     "vote_average": 0,
+     "vote_count": 0
+    }
+   ]
+  },
+  {
+   "id": 75041,
+   "adult": false,
+   "gender": 2,
+   "known_for_department": "Acting",
+   "name": "Cameron Boyce",
+   "original_name": "Cameron Boyce",
+   "popularity": 3.4987,
+   "profile_path": "/dtONrW7kQ9DFyduL0W1YPawkGYs.jpg",
+   "known_for": [
+    {
+     "adult": false,
+     "backdrop_path": "/20ncMtoy9Cxy6OQxgXZemHoFymz.jpg",
+     "id": 277217,
+     "title": "Descendentes",
+     "original_title": "Descendants",
+     "overview": "Em um reino idílico chamado Auradon, o príncipe Ben, filho da Bela e da Fera, está prestes a assumir o trono. Sua primeira proclamação oficial é oferecer uma chance de redenção para os filhos dos vilões mais cruéis da Disney, que vivem isolados na Ilha dos Perdidos.  Mal (filha de Malévola), Evie (filha da Rainha Má), Carlos (filho de Cruella de Vil) e Jay (filho de Jafar) são autorizados a frequentar a escola preparatória de Auradon junto aos filhos das fadas madrinhas, princesas e heróis. Sob as ordens de Malévola para roubar a varinha mágica da Fada Madrinha e libertar os vilões, os quatro adolescentes enfrentam um dilema profundo: seguir os passos malignos de seus pais ou escolher o caminho do bem e escrever sua própria história?",
+     "poster_path": "/i36xiPRiRgy8x261fk80CyVcaYF.jpg",
+     "media_type": "movie",
+     "original_language": "en",
+     "genre_ids": [
+      10751,
+      12,
+      14,
+      10770
+     ],
+     "popularity": 8.6067,
+     "release_date": "2015-07-31",
+     "softcore": false,
+     "video": false,
+     "vote_average": 7.2,
+     "vote_count": 2591
+    },
+    {
+     "adult": false,
+     "backdrop_path": "/mLihPIodzSenkZtiUauDy4e9hRs.jpg",
+     "id": 417320,
+     "title": "Descendentes 2",
+     "original_title": "Descendants 2",
+     "overview": "Mal, Jay, Carlos e Evie tentam encontrar seus lugares em Auradon, mas a pressão de se tornar um membro perfeito da realeza deixa Mal deslocada.",
+     "poster_path": "/by4Cmcn9nYwhvAe0CLHSQF1XMto.jpg",
+     "media_type": "movie",
+     "original_language": "en",
+     "genre_ids": [
+      10751,
+      14,
+      10770,
+      12
+     ],
+     "popularity": 12.6997,
+     "release_date": "2017-07-21",
+     "softcore": false,
+     "video": false,
+     "vote_average": 7.376,
+     "vote_count": 1837
+    },
+    {
+     "adult": false,
+     "backdrop_path": "/pDjZE6hTt4YN2cC1Z1bYZfmH9bs.jpg",
+     "id": 13515,
+     "title": "Espelhos do Medo",
+     "original_title": "Mirrors",
+     "overview": "Ben Carson (Kiefer Sutherland) é um ex-detetive que, há um ano, foi suspenso do Departamento de Polícia de Nova York por ter atingido com um tiro um policial infiltrado. O caso fez com que se tornasse alcóolatra, o que o afastou de sua esposa e filhos. Tentando retomar sua vida em família, Ben aceita o emprego de vigia noturno nas ruínas de uma loja de departamentos. Porém enquanto patrulha o local ele começa a notar algo estranho nos espelhos usados como enfeite, já que refletem imagens horripilantes.",
+     "poster_path": "/1hnjHdVSsfnblSK1Q40cHpEumUa.jpg",
+     "media_type": "movie",
+     "original_language": "en",
+     "genre_ids": [
+      27,
+      9648
+     ],
+     "popularity": 4.733,
+     "release_date": "2008-08-14",
+     "softcore": false,
+     "video": false,
+     "vote_average": 6.311,
+     "vote_count": 2145
+    }
+   ]
+  },
+  {
+   "id": 1751248,
+   "adult": false,
+   "gender": 0,
+   "known_for_department": "Acting",
+   "name": "Giovanna Cameron",
+   "original_name": "Giovanna Cameron",
+   "popularity": 0.455,
+   "profile_path": null,
+   "known_for": [
+    {
+     "adult": false,
+     "backdrop_path": null,
+     "id": 439734,
+     "title": "Tutti Buona Gente",
+     "original_title": "Tutti Buona Gente",
+     "overview": "Comédia de costumes ambientada no bairro do Bexiga, apresentando uma tradicional família italiana com o Nonno, a Mamma, o Pappa e seus dois filhos brasileiros, um pós-adolescente roqueiro e uma menina namoradeira. Do outro lado do muro, uma vizinha fofoqueira. A chegada do namorado e atitude inesperada do Nonno numa noite fria alteram o destino de cada um dos personagens",
+     "poster_path": null,
+     "media_type": "movie",
+     "original_language": "pt",
+     "genre_ids": [
+      35
+     ],
+     "popularity": 0.6356,
+     "release_date": "2017-02-05",
+     "softcore": false,
+     "video": true,
+     "vote_average": 0,
+     "vote_count": 0
+    }
+   ]
+  },
+  {
+   "id": 5099695,
+   "adult": false,
+   "gender": 1,
+   "known_for_department": "Acting",
+   "name": "Cameron Stiehl",
+   "original_name": "Cameron Stiehl",
+   "popularity": 0.2635,
+   "profile_path": null,
+   "known_for": [
+    {
+     "adult": false,
+     "backdrop_path": "/83xzjqt1FBf1ONzLAYmk8xTtd4X.jpg",
+     "id": 383731,
+     "title": "Paradise Club – O Pecado Mora Aqui",
+     "original_title": "Paradise Club",
+     "overview": "Em 1968, no auge da revolução sexual, Catherine é uma jovem dançarina de São Francisco que decide deixar a prestigiada boate Paradise Club para se reconectar consigo mesma.",
+     "poster_path": "/7HyOFxmk9uUozioB7bBg72LXo41.jpg",
+     "media_type": "movie",
+     "original_language": "en",
+     "genre_ids": [
+      18,
+      36
+     ],
+     "popularity": 1.5355,
+     "release_date": "2017-08-19",
+     "softcore": false,
+     "video": false,
+     "vote_average": 2.857,
+     "vote_count": 7
+    }
+   ]
+  },
+  {
+   "id": 52414,
+   "adult": false,
+   "gender": 2,
+   "known_for_department": "Acting",
+   "name": "Cameron Bright",
+   "original_name": "Cameron Bright",
+   "popularity": 2.4337,
+   "profile_path": "/27thyaSbqHJc66d4pqNYXvnNS7i.jpg",
+   "known_for": [
+    {
+     "adult": false,
+     "backdrop_path": "/dSMWw6rNIKqtHyWEIkDa8u7Mboa.jpg",
+     "id": 9920,
+     "title": "Ultravioleta",
+     "original_title": "Ultraviolet",
+     "overview": "Uma mulher no meio de uma guerra civil futurística entre o governo e uma subcultura de humanos geneticamente modificados dotados de mais velocidade, força e inteligência. Na tentativa de proteger um garoto que foi jurado de morte, ela precisa se defender do governo humano.",
+     "poster_path": "/oUjrVXrASYin8N7kJZ3gqgxIeHp.jpg",
+     "media_type": "movie",
+     "original_language": "en",
+     "genre_ids": [
+      878,
+      28,
+      53
+     ],
+     "popularity": 5.9766,
+     "release_date": "2006-03-03",
+     "softcore": false,
+     "video": false,
+     "vote_average": 5.211,
+     "vote_count": 1795
+    },
+    {
+     "adult": false,
+     "backdrop_path": "/bvPsCaurkBk2jzSJXWJJXb0kTCA.jpg",
+     "id": 9388,
+     "title": "Obrigado Por Fumar",
+     "original_title": "Thank You for Smoking",
+     "overview": "Nick Naylor (Aaron Eckhart) é o principal porta-voz das grandes empresas de cigarros, ganhando a vida defendendo os direitos dos fumantes nos Estados Unidos. Desafiado pelos vigilantes da saúde e também por um senador oportunista, Ortolan K. Finistirre (William H. Macy), que deseja colocar rótulos de veneno nos maços de cigarros, Nick passa a manipular informações de forma a diminuir os riscos do cigarro em programas de TV. Além disto Nick conta com a ajuda de Jeff Megall (Rob Lowe), um poderoso agente de Hollywood, para fazer com que o cigarro seja promovido nos filmes. Sua fama faz com que Nick atraia a atenção dos principais chefes da indústria do tabaco e também de Heather Holloway (Katie Holmes), a repórter de um jornal de Washington que deseja investigá-lo. Nick repetidamente diz que trabalha apenas para pagar as contas, mas a atenção cada vez maior que seu filho Joey (Cameron Bright) dá ao seu trabalho começa a preocupá-lo.",
+     "poster_path": "/1TnnktqvgWLerkBJXkB2v9qRs7U.jpg",
+     "media_type": "movie",
+     "original_language": "en",
+     "genre_ids": [
+      35,
+      18
+     ],
+     "popularity": 6.5843,
+     "release_date": "2005-09-09",
+     "softcore": false,
+     "video": false,
+     "vote_average": 7.2,
+     "vote_count": 2508
+    },
+    {
+     "adult": false,
+     "backdrop_path": "/p5z5X3GRnaFEqgtEa7fiGhgtUkA.jpg",
+     "id": 7304,
+     "title": "No Rastro da Bala",
+     "original_title": "Running Scared",
+     "overview": "Com Paul Walker. Um bandido é escolhido por seu chefe do crime para se desfazer de uma arma que matou policiais corruptos, mas as coisas saem de controle.",
+     "poster_path": "/alkv6mapVLtCd58fa93VybPkXfg.jpg",
+     "media_type": "movie",
+     "original_language": "en",
+     "genre_ids": [
+      28,
+      80,
+      18,
+      53
+     ],
+     "popularity": 7.8752,
+     "release_date": "2006-01-06",
+     "softcore": false,
+     "video": false,
+     "vote_average": 7.001,
+     "vote_count": 1217
+    }
+   ]
+  },
+  {
+   "id": 1368723,
+   "adult": false,
+   "gender": 1,
+   "known_for_department": "Acting",
+   "name": "Cameron Oppenheimer",
+   "original_name": "Cameron Oppenheimer",
+   "popularity": 1.8424,
+   "profile_path": "/oCLWBWt2no0J1GXToxxPPArOuT4.jpg",
+   "known_for": [
+    {
+     "adult": false,
+     "backdrop_path": "/wygUDDRNpeKUnkekRGeLCZM93tA.jpg",
+     "id": 199,
+     "title": "Jornada nas Estrelas: Primeiro Contato",
+     "original_title": "Star Trek: First Contact",
+     "overview": "O capitão da Enterprise volta a encontrar os seus adversários, os Borg. Eles planejam mudar a história e conquistar a Terra no século XXI, através de uma viagem no tempo, que impediria o primeiro voo em dobra da raça humana e o subsequente primeiro contato com uma raça extraterrestre: os Vulcanos.",
+     "poster_path": "/idKfn9XDzVSemYDw7tsohdRNA5b.jpg",
+     "media_type": "movie",
+     "original_language": "en",
+     "genre_ids": [
+      878,
+      28,
+      12,
+      53
+     ],
+     "popularity": 9.0256,
+     "release_date": "1996-11-22",
+     "softcore": false,
+     "video": false,
+     "vote_average": 7.305,
+     "vote_count": 2051
+    },
+    {
+     "adult": false,
+     "backdrop_path": "/mNdsbVuRdsyo8eitW2IBW2BWRkU.jpg",
+     "id": 193,
+     "title": "Jornada nas Estrelas: Generations",
+     "original_title": "Star Trek: Generations",
+     "overview": "A viagem inaugural da terceira nave Enterprise está ameaçada pelo cientista louco Soren e apenas uma pessoa pode detê-lo, mas ela está morta há 78 anos.",
+     "poster_path": "/tVyaD651EiuME23UdhoAHHg3BlV.jpg",
+     "media_type": "movie",
+     "original_language": "en",
+     "genre_ids": [
+      878,
+      28,
+      12,
+      53
+     ],
+     "popularity": 8.1782,
+     "release_date": "1994-11-18",
+     "softcore": false,
+     "video": false,
+     "vote_average": 6.5,
+     "vote_count": 1570
+    },
+    {
+     "adult": false,
+     "backdrop_path": "/oUceCsSe255ZKXCMsHhqXM1xuUp.jpg",
+     "id": 8327,
+     "title": "A Montanha Sagrada",
+     "original_title": "La montaña sagrada",
+     "overview": "Um alquimista reúne um grupo de pessoas para representar os planetas do sistema solar. Sua intenção é submetê-los a estranhos rituais místicos antes de enviá-los para a Ilha de Lotus, onde escalarão a Montanha Sagrada para substituir os deuses que secretamente governam o universo.",
+     "poster_path": "/8FUYzzus5AWUPfF0TZrkNpqLexw.jpg",
+     "media_type": "movie",
+     "original_language": "es",
+     "genre_ids": [
+      18
+     ],
+     "popularity": 5.4757,
+     "release_date": "1973-11-29",
+     "softcore": false,
+     "video": false,
+     "vote_average": 7.5,
+     "vote_count": 1075
+    }
+   ]
+  },
+  {
+   "id": 5191769,
+   "adult": false,
+   "gender": 0,
+   "known_for_department": "Camera",
+   "name": "Moragh Cameron",
+   "original_name": "Moragh Cameron",
+   "popularity": 0.2823,
+   "profile_path": null,
+   "known_for": [
+    {
+     "adult": false,
+     "backdrop_path": null,
+     "id": 223845,
+     "title": "Trial Run",
+     "original_title": "Trial Run",
+     "overview": "",
+     "poster_path": "/41eyoT5xKuMn6ygGUam15nOCJay.jpg",
+     "media_type": "movie",
+     "original_language": "en",
+     "genre_ids": [
+      53
+     ],
+     "popularity": 1.0624,
+     "release_date": "1985-07-17",
+     "softcore": false,
+     "video": false,
+     "vote_average": 6,
+     "vote_count": 2
+    }
+   ]
+  },
+  {
+   "id": 6352459,
+   "adult": false,
+   "gender": 0,
+   "known_for_department": "Acting",
+   "name": "Ron Cameron",
+   "original_name": "Ron Cameron",
+   "popularity": 0.2694,
+   "profile_path": null,
+   "known_for": [
+    {
+     "adult": false,
+     "backdrop_path": "/eIXit8FbjVofuRqvoyBhAd2YNU4.jpg",
+     "id": 37582,
+     "title": "Força Selvagem",
+     "original_title": "Sleeping Dogs",
+     "overview": "O recluso Smith (Sam Neill) se vê em meio a uma luta revolucionária entre guerrilhas e direitistas na Nova Zelândia. Envolvido em um assassinato e incriminado como um conspirador revolucionário, Smith tenta manter uma atitude de não-violência enquanto se vê preso entre duas facções rivais.",
+     "poster_path": "/u1gKAfqLMvz1uH3HQmz9HdJ9DBw.jpg",
+     "media_type": "movie",
+     "original_language": "en",
+     "genre_ids": [
+      28,
+      18,
+      53
+     ],
+     "popularity": 2.1605,
+     "release_date": "1978-07-13",
+     "softcore": false,
+     "video": false,
+     "vote_average": 5.8,
+     "vote_count": 50
+    }
+   ]
+  },
+  {
+   "id": 2445481,
+   "adult": false,
+   "gender": 0,
+   "known_for_department": "Writing",
+   "name": "Marina Cameron",
+   "original_name": "Marina Cameron",
+   "popularity": 0.2954,
+   "profile_path": null,
+   "known_for": [
+    {
+     "adult": false,
+     "backdrop_path": "/aWOuMLbYpZbC7sSNc2XykdWYpVN.jpg",
+     "id": 644139,
+     "title": "Cine Cartoon - Especial Turma da Mônica Jovem",
+     "original_title": "Cine Cartoon - Especial Turma da Mônica Jovem",
+     "overview": "A série de animação mais aguardada do Cartoon Network e Maurício de Sousa Produções chega aos cinemas da rede Cinemark no “Especial Turma da Mônica Jovem”. Os fãs terão a chance de assistir nas telas do cinema a seis episódios inéditos da série além de conteúdos especiais que contarão um pouco mais sobre o processo de criação desse fenômeno dos quadrinhos, com participação especial de Maurício de Sousa. A iniciativa é o ponto de partida para uma série de ações do Cartoon Network ao redor da Turma da Mônica durante o mês de novembro, incluindo o lançamento completo da nova série animada e conteúdos exclusivos em sua grade de programação e plataformas digitais.",
+     "poster_path": "/dqxh9h1Eziz8cyKEOhJYHrpvDYt.jpg",
+     "media_type": "movie",
+     "original_language": "pt",
+     "genre_ids": [
+      16,
+      35,
+      12
+     ],
+     "popularity": 0.9691,
+     "release_date": "2019-11-02",
+     "softcore": false,
+     "video": false,
+     "vote_average": 8.2,
+     "vote_count": 5
+    }
+   ]
+  },
+  {
+   "id": 1286537,
+   "adult": false,
+   "gender": 2,
+   "known_for_department": "Acting",
+   "name": "Cameron Britton",
+   "original_name": "Cameron Britton",
+   "popularity": 2.4844,
+   "profile_path": "/9HFxi8ZnBiby3AQ7tBOPDxXFkCT.jpg",
+   "known_for": [
+    {
+     "adult": false,
+     "backdrop_path": "/v2LilmCylr3bL9TCZSj6syjowZh.jpg",
+     "id": 937278,
+     "title": "O Pior Vizinho do Mundo",
+     "original_title": "A Man Called Otto",
+     "overview": "A história de Otto Anderson, um viúvo mal-humorado que está muito preso aos seus hábitos. Quando uma jovem família animada se muda ao lado, ele conhece sua igual em Marisol, esperta e grávida, o que leva a uma amizade improvável que vai deixar o mundo de Otto de cabeça para baixo.",
+     "poster_path": "/hjOJGaLQe2aC3GCwJCedGvjEgvu.jpg",
+     "media_type": "movie",
+     "original_language": "en",
+     "genre_ids": [
+      35,
+      18
+     ],
+     "popularity": 22.2906,
+     "release_date": "2022-12-28",
+     "softcore": false,
+     "video": false,
+     "vote_average": 7.7,
+     "vote_count": 3815
+    },
+    {
+     "adult": false,
+     "backdrop_path": "/gHJhN9AJV4PmJ7YpLFa9ldDWuG8.jpg",
+     "id": 75006,
+     "name": "The Umbrella Academy",
+     "original_name": "The Umbrella Academy",
+     "overview": "Irmãos com poderes extraordinários se reencontram após a morte do pai e descobrem segredos surpreendentes da família, além de uma ameaça à humanidade.",
+     "poster_path": "/qhcwrnnCnN8NE1N6XXKHFmveJR9.jpg",
+     "media_type": "tv",
+     "original_language": "en",
+     "genre_ids": [
+      10759,
+      10765,
+      18
+     ],
+     "popularity": 36.0517,
+     "first_air_date": "2019-02-15",
+     "softcore": false,
+     "vote_average": 8.452,
+     "vote_count": 10165,
+     "origin_country": [
+      "US"
+     ]
+    },
+    {
+     "adult": false,
+     "backdrop_path": "/9PRKAdrDvAdCfg3EcApLTfzGsEt.jpg",
+     "id": 696506,
+     "title": "Mickey 17",
+     "original_title": "Mickey 17",
+     "overview": "Mickey faz parte de um programa espacial de colonização e sempre é enviado para missões perigosas, quase suicidas. Se morrer, ele é clonado e boa parte de suas memórias são recuperadas. Mas, após seis mortes, ele começa a entender o porquê de seu cargo nunca ter sido ocupado antes.",
+     "poster_path": "/is1U9n0e9ofg50U1T7p2WZuIwiO.jpg",
+     "media_type": "movie",
+     "original_language": "en",
+     "genre_ids": [
+      878,
+      35,
+      12
+     ],
+     "popularity": 22.0043,
+     "release_date": "2025-02-28",
+     "softcore": false,
+     "video": false,
+     "vote_average": 6.818,
+     "vote_count": 4088
+    }
+   ]
+  },
+  {
+   "id": 49914,
+   "adult": false,
+   "gender": 1,
+   "known_for_department": "Acting",
+   "name": "Cameron Richardson",
+   "original_name": "Cameron Richardson",
+   "popularity": 1.7451,
+   "profile_path": "/g5Ib7uSd7CKNXbDAs67AyeqTNvZ.jpg",
+   "known_for": [
+    {
+     "adult": false,
+     "backdrop_path": "/lKkkogTlIQT8o83GFQZZ3CA9MzB.jpg",
+     "id": 6477,
+     "title": "Alvin e os Esquilos",
+     "original_title": "Alvin and the Chipmunks",
+     "overview": "Alvin, Simon e Theodore são três esquilos especiais, que decidem morar na casa de Dave Seville, um compositor em busca do sucesso. Logo eles percebem que, para que Dave permita que eles morem em sua casa, o trio precisará demonstrar que tem talento. Assim Alvin, Simon e Theodore mostram que sabem cantar, tornando-se um grande sucesso. Isto faz com que Dave torne-se não apenas seu compositor, mas também um verdadeiro pai. Só que o estrelato sobe à cabeça do trio, gerando problemas no relacionamento deles com Dave.",
+     "poster_path": "/o2WoeYJv9ISS9bw0kKD2cvmg9xN.jpg",
+     "media_type": "movie",
+     "original_language": "en",
+     "genre_ids": [
+      35,
+      10751,
+      14,
+      16
+     ],
+     "popularity": 21.3019,
+     "release_date": "2007-12-13",
+     "softcore": false,
+     "video": false,
+     "vote_average": 5.844,
+     "vote_count": 4857
+    },
+    {
+     "adult": false,
+     "backdrop_path": "/ApgpEdgtU9Y55mehnR9TV9wPyHd.jpg",
+     "id": 9592,
+     "title": "Pânico em Alto Mar",
+     "original_title": "Open Water 2: Adrift",
+     "overview": "Grupo de amigos passa um final de semana em alto mar, velejando num luxuoso iate. Quando decidem dar um mergulho, se esquecem de instalar a escada para retornarem à embarcação - que é muito alta e impossível de escalar. Eles ficam presos na água, à mercê de todos os perigos possíveis. A reunião que deveria ser alegre se torna uma luta pela sobrevivência. Suposta continuação de \"Mar Aberto\", feito em 2003.",
+     "poster_path": "/t5VhpASpUwnX3meWPYLSBMORl4e.jpg",
+     "media_type": "movie",
+     "original_language": "en",
+     "genre_ids": [
+      18,
+      27,
+      53
+     ],
+     "popularity": 4.7528,
+     "release_date": "2006-07-10",
+     "softcore": false,
+     "video": false,
+     "vote_average": 5.482,
+     "vote_count": 735
+    },
+    {
+     "adult": false,
+     "backdrop_path": "/s1bCQKRcJsJ0cQfYUTfH70PbHMI.jpg",
+     "id": 7354,
+     "name": "Harper's Island: O Mistério da Ilha",
+     "original_name": "Harper's Island",
+     "overview": "Amigos e familiares passam uma semana na ilha de Harper, para o casamento de Henry e Trish. A história é contada pela melhor amiga do noivo, Abby. Sete anos antes, um serial killer, Wakefield, matou seis pessoas, sendo uma delas a mãe de Abby. Mas agora, com a chegada dos convidados do casamento na ilha, alguém está seguindo as pegadas de Wakefield, matando os hóspedes, um por um.",
+     "poster_path": "/jKpT5yt9Qtj7RG7Xn0ZHmKPjtdT.jpg",
+     "media_type": "tv",
+     "original_language": "en",
+     "genre_ids": [
+      9648,
+      18
+     ],
+     "popularity": 14.0618,
+     "first_air_date": "2009-04-09",
+     "softcore": false,
+     "vote_average": 6.9,
+     "vote_count": 287,
+     "origin_country": [
+      "US"
+     ]
+    }
+   ]
+  },
+  {
+   "id": 78041,
+   "adult": false,
+   "gender": 2,
+   "known_for_department": "Acting",
+   "name": "Kirk Cameron",
+   "original_name": "Kirk Cameron",
+   "popularity": 2.2192,
+   "profile_path": "/oloVIPnlEBff1gXmzGlY7Fk1KWn.jpg",
+   "known_for": [
+    {
+     "adult": false,
+     "backdrop_path": "/3gMtnO5vDznlKsUW7sU9EfRufIc.jpg",
+     "id": 14438,
+     "title": "À Prova de Fogo",
+     "original_title": "Fireproof",
+     "overview": "Caleb Holt, um heroico capitão bombeiro que preza a dedicação e o serviço ao próximo acima de tudo. Mas a parceria mais importante de sua vida, seu casamento, está prestes a se desfazer em fumaça. Esta história cativante acompanha o desejo de um homem de transformar sua vida e seu casamento através do poder curativo da fé e de seguir adiante pelo lema dos bombeiros: \"Nunca deixe seu parceiro para trás\".",
+     "poster_path": "/fX1n097j6l7Y47jtph8Z4SwJkbR.jpg",
+     "media_type": "movie",
+     "original_language": "en",
+     "genre_ids": [
+      18,
+      10749
+     ],
+     "popularity": 4.0583,
+     "release_date": "2008-09-26",
+     "softcore": false,
+     "video": false,
+     "vote_average": 7.7,
+     "vote_count": 881
+    },
+    {
+     "adult": false,
+     "backdrop_path": "/rzADbsNfcvTrmgfSKjO8Tv6vgsC.jpg",
+     "id": 37302,
+     "title": "Deixados para Trás: O Filme",
+     "original_title": "Left Behind",
+     "overview": "Em um voo internacional rumo a Londres, o jornalista Buck Williams e o piloto Rayford Steele se veem no meio do mais incrível acontecimento da história. De repente, sem qualquer tipo de alerta, dúzias de passageiros simplesmente desaparecem no ar. Mas isso não é tudo. Logo fica claro que milhões de pessoas estão desaparecendo. E a medida que o caos e a anarquia tomam conta do mundo, esses dois homens partem em rumos diferentes numa busca desesperada por respostas.",
+     "poster_path": "/yNWQ921ypzkzYRSRBU795OoKdDc.jpg",
+     "media_type": "movie",
+     "original_language": "en",
+     "genre_ids": [
+      18,
+      14,
+      878,
+      53
+     ],
+     "popularity": 3.16,
+     "release_date": "2000-10-30",
+     "softcore": false,
+     "video": false,
+     "vote_average": 4.2,
+     "vote_count": 140
+    },
+    {
+     "adult": false,
+     "backdrop_path": "/4WeepGC2ySw8HCn7eBcIvWBvkv2.jpg",
+     "id": 295884,
+     "title": "Salvando o Natal",
+     "original_title": "Saving Christmas",
+     "overview": "",
+     "poster_path": "/6MLSD1OYGDWkCk05m7vA1xCrfKr.jpg",
+     "media_type": "movie",
+     "original_language": "en",
+     "genre_ids": [
+      35
+     ],
+     "popularity": 1.2341,
+     "release_date": "2014-11-14",
+     "softcore": false,
+     "video": false,
+     "vote_average": 1.8,
+     "vote_count": 105
+    }
+   ]
+  },
+  {
+   "id": 1696015,
+   "adult": false,
+   "gender": 2,
+   "known_for_department": "Acting",
+   "name": "Cameron Crovetti",
+   "original_name": "Cameron Crovetti",
+   "popularity": 1.7313,
+   "profile_path": "/q0pMJXABDNiTMA3CSO8WFFDBbnq.jpg",
+   "known_for": [
+    {
+     "adult": false,
+     "backdrop_path": "/bq28ajZaoMyzEIm6REelqyqtEDZ.jpg",
+     "id": 76479,
+     "name": "The Boys",
+     "original_name": "The Boys",
+     "overview": "Na trama, conhecemos um mundo em que super-heróis são as maiores celebridades do planeta, e rotineiramente abusam dos seus poderes ao invés de os usarem para o bem.",
+     "poster_path": "/in1R2dDc421JxsoRWaIIAqVI2KE.jpg",
+     "media_type": "tv",
+     "original_language": "en",
+     "genre_ids": [
+      10765,
+      10759
+     ],
+     "popularity": 139.531,
+     "first_air_date": "2019-07-25",
+     "softcore": false,
+     "vote_average": 8.424,
+     "vote_count": 13555,
+     "origin_country": [
+      "US"
+     ]
+    },
+    {
+     "adult": false,
+     "backdrop_path": "/aCaqCvYn48b3lfGKGnUdVAE1yeB.jpg",
+     "id": 814800,
+     "title": "Boa Noite, Mamãe!",
+     "original_title": "Goodnight Mommy",
+     "overview": "Chegando à casa de campo da mãe, os filhos gêmeos a encontram com o rosto coberto por uma bandagem – resultado, segundo ela, de uma cirurgia plástica recente. À medida em que o comportamento dela se torna cada vez mais errático e incomum, contudo, um pensamento horrível vai se enraizando na mente dos meninos: a suspeita de que a mulher por baixo da bandagem não é a mãe deles.",
+     "poster_path": "/lwq6ct0AeroUxlXwr49QJiMzf4k.jpg",
+     "media_type": "movie",
+     "original_language": "en",
+     "genre_ids": [
+      27,
+      53,
+      9648
+     ],
+     "popularity": 6.3964,
+     "release_date": "2022-09-16",
+     "softcore": false,
+     "video": false,
+     "vote_average": 6.3,
+     "vote_count": 590
+    },
+    {
+     "adult": false,
+     "backdrop_path": "/2u1YBNBlSwvBReyvI7i5z5ykQXP.jpg",
+     "id": 725201,
+     "title": "Agente Oculto",
+     "original_title": "The Gray Man",
+     "overview": "Um agente oculto da CIA descobre segredos comprometedores da agência e é caçado mundo afora por um dissidente sociopata que coloca sua cabeça a prêmio.",
+     "poster_path": "/1f10KUKW7KyNt8bF8NHmwbBQ9fs.jpg",
+     "media_type": "movie",
+     "original_language": "en",
+     "genre_ids": [
+      28,
+      53
+     ],
+     "popularity": 17.9898,
+     "release_date": "2022-07-13",
+     "softcore": false,
+     "video": false,
+     "vote_average": 6.897,
+     "vote_count": 4517
+    }
+   ]
+  },
+  {
+   "id": 1515477,
+   "adult": false,
+   "gender": 1,
+   "known_for_department": "Acting",
+   "name": "Karis Cameron",
+   "original_name": "Karis Cameron",
+   "popularity": 1.7216,
+   "profile_path": "/ejZsNmrxfHwBLo02L0olIOU0Ft4.jpg",
+   "known_for": [
+    {
+     "adult": false,
+     "backdrop_path": "/hzpIkW1oDahteZayFFhH1U3Bq6H.jpg",
+     "id": 627579,
+     "title": "Identity Theft of a Cheerleader",
+     "original_title": "Identity Theft of a Cheerleader",
+     "overview": "",
+     "poster_path": "/tgioRYPQee3oEz5J1b0JIvEEd8v.jpg",
+     "media_type": "movie",
+     "original_language": "en",
+     "genre_ids": [
+      53,
+      10770
+     ],
+     "popularity": 1.6544,
+     "release_date": "2019-09-07",
+     "softcore": false,
+     "video": false,
+     "vote_average": 6.6,
+     "vote_count": 27
+    },
+    {
+     "adult": false,
+     "backdrop_path": "/pyGFy37yT97siWeZ4Tp7wEGA0yE.jpg",
+     "id": 64029,
+     "name": "Open Heart",
+     "original_name": "Open Heart",
+     "overview": "",
+     "poster_path": "/jip8C33Q0TA5P1u46gbcd4imLrk.jpg",
+     "media_type": "tv",
+     "original_language": "en",
+     "genre_ids": [
+      9648,
+      18
+     ],
+     "popularity": 4.766,
+     "first_air_date": "2015-01-20",
+     "softcore": false,
+     "vote_average": 5,
+     "vote_count": 9,
+     "origin_country": [
+      "CA"
+     ]
+    },
+    {
+     "adult": false,
+     "backdrop_path": "/ugBZ1VP9zMYjZPrEKnaH80fu5hY.jpg",
+     "id": 750185,
+     "title": "Cheer Squad Secrets",
+     "original_title": "Cheer Squad Secrets",
+     "overview": "",
+     "poster_path": "/uUnTNfLflqoxhNINVxa0Y5yFi9J.jpg",
+     "media_type": "movie",
+     "original_language": "en",
+     "genre_ids": [
+      53,
+      10770
+     ],
+     "popularity": 1.4825,
+     "release_date": "2020-10-04",
+     "softcore": false,
+     "video": false,
+     "vote_average": 6.7,
+     "vote_count": 18
+    }
+   ]
+  },
+  {
+   "id": 1924458,
+   "adult": false,
+   "gender": 2,
+   "known_for_department": "Acting",
+   "name": "Cameron Cowperthwaite",
+   "original_name": "Cameron Cowperthwaite",
+   "popularity": 1.4209,
+   "profile_path": "/uT8SXIWieodbiVxjzSavuVr5rM1.jpg",
+   "known_for": [
+    {
+     "adult": false,
+     "backdrop_path": "/aqdjM6chmFlOtt1bzW0uLVIJWan.jpg",
+     "id": 530157,
+     "title": "O Juramento",
+     "original_title": "Pledge",
+     "overview": "Três amigos prometem uma fraternidade que é mortalmente séria sobre seus rituais secretos, transformando sua corrida em uma corrida pela sobrevivência.",
+     "poster_path": "/7EAX0daHdlOYqErmPZVEhPSz7pP.jpg",
+     "media_type": "movie",
+     "original_language": "en",
+     "genre_ids": [
+      27,
+      53
+     ],
+     "popularity": 1.946,
+     "release_date": "2019-01-11",
+     "softcore": false,
+     "video": false,
+     "vote_average": 5.2,
+     "vote_count": 146
+    },
+    {
+     "adult": false,
+     "backdrop_path": "/5G4Bnc4Q0YUK1bwLEUYmIsmm2Ib.jpg",
+     "id": 1413,
+     "name": "American Horror Story",
+     "original_name": "American Horror Story",
+     "overview": "Uma antologia dramática de terror trazendo a cada temporada novas histórias, cenários e personagens perturbadores.",
+     "poster_path": "/yCkPLQ10qKIUgRBXmQVVMF1h96d.jpg",
+     "media_type": "tv",
+     "original_language": "en",
+     "genre_ids": [
+      18,
+      9648,
+      10765
+     ],
+     "popularity": 214.8041,
+     "first_air_date": "2011-10-05",
+     "softcore": false,
+     "vote_average": 8.1,
+     "vote_count": 6243,
+     "origin_country": [
+      "US"
+     ]
+    },
+    {
+     "adult": false,
+     "backdrop_path": "/coaPCIqQBPUZsOnJcWZxhaORcDT.jpg",
+     "id": 106379,
+     "name": "Fallout",
+     "original_name": "Fallout",
+     "overview": "Baseada em uma das maiores séries de videogame de todos os tempos, Fallout é a história de quem tem e de quem não tem, em um mundo onde não existe quase nada para se ter. 200 anos após o apocalipse, uma habitante pacífica de um agradável refúgio é forçada a se aventurar na superfície e fica chocada quando descobre a terra devastada que a espera.",
+     "poster_path": "/tQRX6GbYooU7kUaarKf5YXDTONy.jpg",
+     "media_type": "tv",
+     "original_language": "en",
+     "genre_ids": [
+      10759,
+      10765,
+      18
+     ],
+     "popularity": 58.1949,
+     "first_air_date": "2024-04-10",
+     "softcore": false,
+     "vote_average": 8.1,
+     "vote_count": 3178,
+     "origin_country": [
+      "US"
+     ]
+    }
+   ]
+  }
+ ],
+ "page": 1,
+ "total_pages": 185,
+ "total_results": 3696
+}

@@ -28,3 +28,6 @@ export const TmdbPersonToRecord = z.looseObject({
   }),
   translations: z.looseObject({ translations: z.array(z.looseObject({ iso_639_1: z.string() })) }),
 });
+
+/** Resposta de /search/person que o script grava como veio. */
+export const TmdbPersonSearchToRecord = z.looseObject({ results: z.array(z.looseObject({ id: z.number() })) });

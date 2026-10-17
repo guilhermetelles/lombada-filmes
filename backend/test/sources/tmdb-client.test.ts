@@ -154,3 +154,42 @@ describe('TMDb: elenco', () => {
     assert.ok(cameron.acted.every((movie) => !/archive footage/i.test(movie.character ?? '')));
   });
 });
+
+describe('TMDb: searchPeople', () => {
+  test('"cameron": só quem atua ou dirige, até 5, com James Cameron como direção', async () => {
+    const people = await tmdbClient().searchPeople('cameron');
+
+    assert.equal(people.length, 5);
+    assert.ok(people.every((person) => person.department === 'acting' || person.department === 'directing'));
+    const james = people.find((person) => person.personId === 2710);
+    assert.equal(james?.department, 'directing');
+    assert.ok((james?.knownFor.length ?? 0) > 0 && (james?.knownFor.length ?? 0) <= 3);
+  });
+
+  test('"ed harris": o ator vem primeiro, e os homônimos de efeitos, arte e edição ficam de fora', async () => {
+    const people = await tmdbClient().searchPeople('ed harris');
+
+    assert.deepEqual(
+      { personId: people[0]?.personId, name: people[0]?.name, department: people[0]?.department },
+      { personId: 228, name: 'Ed Harris', department: 'acting' },
+    );
+    assert.ok(people.every((person) => person.personId !== 6210476));
+  });
+
+  test('títulos conhecidos aceitam séries (name) e param em 3', async () => {
+    const response = {
+      results: [
+        {
+          id: 1,
+          name: 'Atriz',
+          known_for_department: 'Acting',
+          profile_path: null,
+          known_for: [{ name: 'Série' }, { title: 'Filme 1' }, { title: 'Filme 2' }, { title: 'Filme 3' }],
+        },
+      ],
+    };
+    const [person] = await tmdbClient(respondWith(response)).searchPeople('atriz');
+    assert.deepEqual(person?.knownFor, ['Série', 'Filme 1', 'Filme 2']);
+    assert.equal(person?.profilePath, null);
+  });
+});

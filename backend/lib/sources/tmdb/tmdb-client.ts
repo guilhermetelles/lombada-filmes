@@ -3,12 +3,13 @@ import {
   TmdbCreditsResponse,
   TmdbMovieResponse,
   TmdbPersonResponse,
+  TmdbPersonSearchResponse,
   TmdbSearchResponse,
 } from '../../schemas/sources/tmdb.js';
 import type { Fetch, TmdbClient } from '../../types/sources.js';
 import { fetchJson } from '../shared/fetch-json.js';
 import { toCast, toTmdbMovie, toTmdbSearchResults } from './tmdb-mappers.js';
-import { toTmdbPerson } from './tmdb-person-mapper.js';
+import { toTmdbPerson, toTmdbPersonSearchResults } from './tmdb-person-mapper.js';
 
 /** Endereço da API v3 do TMDb; o token vai no cabeçalho Authorization. */
 const BASE_URL = 'https://api.themoviedb.org/3';
@@ -17,7 +18,7 @@ const BASE_URL = 'https://api.themoviedb.org/3';
  * Cria o cliente do TMDb.
  *
  * @param options - Token de leitura do TMDb e o fetch a usar.
- * @returns Cliente com detalhes de filme, busca, detalhes de pessoa e elenco.
+ * @returns Cliente com detalhes de filme, busca de filmes e de pessoas, detalhes de pessoa e elenco.
  */
 function createTmdbClient({ token, fetch }: { token: string; fetch: Fetch }): TmdbClient {
   const getFromTmdb = <Schema extends z.ZodType>(path: string, schema: Schema) =>
@@ -77,6 +78,18 @@ function createTmdbClient({ token, fetch }: { token: string; fetch: Fetch }): Tm
     async getCast(tmdbId) {
       const { cast } = await getFromTmdb(`/movie/${tmdbId}/credits`, TmdbCreditsResponse);
       return toCast(cast);
+    },
+
+    /**
+     * Busca pessoas por nome, em pt-BR e sem conteúdo adulto.
+     *
+     * @param query - Texto digitado.
+     * @returns Até 5 pessoas conhecidas por atuar ou dirigir.
+     * @throws {SourceUnavailableError} Se o TMDb falhar ou responder fora do formato.
+     */
+    async searchPeople(query) {
+      const params = new URLSearchParams({ query, language: 'pt-BR', include_adult: 'false' });
+      return toTmdbPersonSearchResults(await getFromTmdb(`/search/person?${params}`, TmdbPersonSearchResponse));
     },
   };
 }

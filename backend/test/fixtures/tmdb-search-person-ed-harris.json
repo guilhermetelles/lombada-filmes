@@ -1,0 +1,385 @@
+{
+ "results": [
+  {
+   "id": 228,
+   "adult": false,
+   "gender": 2,
+   "known_for_department": "Acting",
+   "name": "Ed Harris",
+   "original_name": "Ed Harris",
+   "popularity": 6.6636,
+   "profile_path": "/kUbUA70WPiosPT4kBJMWtGk0ASd.jpg",
+   "known_for": [
+    {
+     "adult": false,
+     "backdrop_path": "/a2n6bKD7qhCPCAEALgsAhWOAQcc.jpg",
+     "id": 49047,
+     "title": "Gravidade",
+     "original_title": "Gravity",
+     "overview": "Matt Kowalski é um astronauta experiente que está em missão de conserto ao telescópio Hubble juntamente com a doutora Ryan Stone. Ambos são surpreendidos por uma chuva de destroços decorrente da destruição de um satélite por um míssil russo, que faz com que sejam jogados no espaço sideral. Sem qualquer apoio da base terrestre da NASA, eles precisam encontrar um meio de sobreviver em meio a um ambiente completamente inóspito para a vida humana.",
+     "poster_path": "/eHLufJ1bHy4PtEBJdPSTu4jIhZ0.jpg",
+     "media_type": "movie",
+     "original_language": "en",
+     "genre_ids": [
+      878,
+      53,
+      18
+     ],
+     "popularity": 23.2235,
+     "release_date": "2013-10-03",
+     "softcore": false,
+     "video": false,
+     "vote_average": 7.172,
+     "vote_count": 16780
+    },
+    {
+     "adult": false,
+     "backdrop_path": "/hCJFWTPghXCwwSpvPpAoIB8318Q.jpg",
+     "id": 453,
+     "title": "Uma Mente Brilhante",
+     "original_title": "A Beautiful Mind",
+     "overview": "John Nash é um gênio da matemática que, aos 21 anos, formulou um teorema que provou sua genialidade e o tornou aclamado no meio onde atuava. Mas aos poucos o belo e arrogante Nash se transforma em um sofrido e atormentado homem, que chega até mesmo a ser diagnosticado como esquizofrênico pelos médicos que o tratam. Porém, após anos de luta para se recuperar, ele consegue retornar à sociedade e acaba sendo premiado com o Nobel.",
+     "poster_path": "/8K5W9QnNT7r1V9GuJ5z5KlrROkd.jpg",
+     "media_type": "movie",
+     "original_language": "en",
+     "genre_ids": [
+      18,
+      10749
+     ],
+     "popularity": 31.0504,
+     "release_date": "2001-12-14",
+     "softcore": false,
+     "video": false,
+     "vote_average": 7.853,
+     "vote_count": 11489
+    },
+    {
+     "adult": false,
+     "backdrop_path": "/mW6XzxelLY8T2oW2NjciG9LpZT5.jpg",
+     "id": 2756,
+     "title": "O Segredo do Abismo",
+     "original_title": "The Abyss",
+     "overview": "Um submarino para de funcionar e deixa 156 tripulantes presos no fundo do oceano. Com um furacão se aproximando, a única saída é que cientistas de uma plataforma de petróleo façam o resgate. Numa corrida contra o relógio, os salvadores embarcam numa experiência surpreendente pelo desconhecido.",
+     "poster_path": "/iUmlHbK05F38QNnVDTDXa5qXFgF.jpg",
+     "media_type": "movie",
+     "original_language": "en",
+     "genre_ids": [
+      12,
+      53,
+      878
+     ],
+     "popularity": 14.0849,
+     "release_date": "1989-08-09",
+     "softcore": false,
+     "video": false,
+     "vote_average": 7.364,
+     "vote_count": 3631
+    }
+   ]
+  },
+  {
+   "id": 6210476,
+   "adult": false,
+   "gender": 0,
+   "known_for_department": "Visual Effects",
+   "name": "Ed Harris",
+   "original_name": "Ed Harris",
+   "popularity": 0.2989,
+   "profile_path": null,
+   "known_for": [
+    {
+     "adult": false,
+     "backdrop_path": "/m8t7K3LcAY7bpyQ7iQ5kGsrcjnh.jpg",
+     "id": 2668,
+     "title": "A Lenda do Cavaleiro Sem Cabeça",
+     "original_title": "Sleepy Hollow",
+     "overview": "O jovem e cético detetive Ichabod Crane é transferido para a aldeia de Sleepy Hollow, em Nova Iorque, onde é encarregado de investigar as decapitações de três pessoas - assassinatos que os habitantes da cidade atribuem a um fantasma lendário, O Cavaleiro Sem Cabeça.",
+     "poster_path": "/zxOuNnW2qrOOFtiPVJtx5aRAJoX.jpg",
+     "media_type": "movie",
+     "original_language": "en",
+     "genre_ids": [
+      14,
+      53,
+      9648,
+      27
+     ],
+     "popularity": 26.3212,
+     "release_date": "1999-11-19",
+     "softcore": false,
+     "video": false,
+     "vote_average": 7.198,
+     "vote_count": 7645
+    }
+   ]
+  },
+  {
+   "id": 2237392,
+   "adult": false,
+   "gender": 0,
+   "known_for_department": "Art",
+   "name": "Ed Harris",
+   "original_name": "Ed Harris",
+   "popularity": 0.25,
+   "profile_path": null,
+   "known_for": [
+    {
+     "adult": false,
+     "backdrop_path": null,
+     "id": 580759,
+     "title": "A Father's Rights",
+     "original_title": "A Father's Rights",
+     "overview": "",
+     "poster_path": "/l8USLqEBB7p4aq0fWaz8eMg02C.jpg",
+     "media_type": "movie",
+     "original_language": "en",
+     "genre_ids": [],
+     "popularity": 1.471,
+     "release_date": "2008-06-01",
+     "softcore": false,
+     "video": false,
+     "vote_average": 0,
+     "vote_count": 0
+    }
+   ]
+  },
+  {
+   "id": 2872449,
+   "adult": false,
+   "gender": 0,
+   "known_for_department": "Editing",
+   "name": "Ed Harris",
+   "original_name": "Ed Harris",
+   "popularity": 0.2607,
+   "profile_path": null,
+   "known_for": [
+    {
+     "adult": false,
+     "backdrop_path": null,
+     "id": 658519,
+     "title": "Heston's Marvellous Menu Back to the Noughties",
+     "original_title": "Heston's Marvellous Menu Back to the Noughties",
+     "overview": "",
+     "poster_path": null,
+     "media_type": "movie",
+     "original_language": "en",
+     "genre_ids": [
+      99,
+      10770
+     ],
+     "popularity": 0.9307,
+     "release_date": "2019-12-19",
+     "softcore": false,
+     "video": false,
+     "vote_average": 0,
+     "vote_count": 0
+    },
+    {
+     "adult": false,
+     "backdrop_path": null,
+     "id": 769211,
+     "title": "COVID: Our Lockdown In Shanghai",
+     "original_title": "COVID: Our Lockdown In Shanghai",
+     "overview": "",
+     "poster_path": "/eI2bRvvx0XxrB5nTJqfEeyTMKdL.jpg",
+     "media_type": "movie",
+     "original_language": "en",
+     "genre_ids": [
+      99
+     ],
+     "popularity": 0.78,
+     "release_date": "2020-05-25",
+     "softcore": false,
+     "video": false,
+     "vote_average": 0,
+     "vote_count": 0
+    }
+   ]
+  },
+  {
+   "id": 3756296,
+   "adult": false,
+   "gender": 0,
+   "known_for_department": "Acting",
+   "name": "Ed Harris",
+   "original_name": "Ed Harris",
+   "popularity": 0.2694,
+   "profile_path": null,
+   "known_for": [
+    {
+     "adult": false,
+     "backdrop_path": "/ksk988PJp0oyFjtnOmqrN1nfrRr.jpg",
+     "id": 536281,
+     "title": "Do No Harm: The Opioid Epidemic",
+     "original_title": "Do No Harm: The Opioid Epidemic",
+     "overview": "",
+     "poster_path": "/dxdy0ZwdJQubQQcKgU70I4wPb7N.jpg",
+     "media_type": "movie",
+     "original_language": "en",
+     "genre_ids": [
+      99
+     ],
+     "popularity": 0.8341,
+     "release_date": "2018-10-24",
+     "softcore": false,
+     "video": false,
+     "vote_average": 0,
+     "vote_count": 0
+    }
+   ]
+  },
+  {
+   "id": 819,
+   "adult": false,
+   "gender": 2,
+   "known_for_department": "Acting",
+   "name": "Edward Norton",
+   "original_name": "Edward Norton",
+   "popularity": 7.8103,
+   "profile_path": "/8nytsqL59SFJTVYVrN72k6qkGgJ.jpg",
+   "known_for": [
+    {
+     "adult": false,
+     "backdrop_path": "/c6OLXfKAk5BKeR6broC8pYiCquX.jpg",
+     "id": 550,
+     "title": "Clube da Luta",
+     "original_title": "Fight Club",
+     "overview": "Um homem deprimido que sofre de insônia conhece um estranho vendedor de sabonetes chamado Tyler Durden. Eles formam um clube clandestino com regras rígidas onde lutam com outros homens cansados de suas vidas mundanas. Mas sua parceria perfeita é comprometida quando Marla chama a atenção de Tyler.",
+     "poster_path": "/mCICnh7QBH0gzYaTQChBDDVIKdm.jpg",
+     "media_type": "movie",
+     "original_language": "en",
+     "genre_ids": [
+      18,
+      53
+     ],
+     "popularity": 37.9771,
+     "release_date": "1999-10-15",
+     "softcore": false,
+     "video": false,
+     "vote_average": 8.4,
+     "vote_count": 33035
+    },
+    {
+     "adult": false,
+     "backdrop_path": "/xfBnQ4mgf1jYZsscJGJjr6ce0Ar.jpg",
+     "id": 1724,
+     "title": "O Incrível Hulk",
+     "original_title": "The Incredible Hulk",
+     "overview": "Vivendo escondido e longe de Betty Ross, a mulher que ama, o cientista Bruce Banner busca um meio de retirar a radiação gama que está em seu sangue. Ao mesmo tempo ele precisa fugir da perseguição do general Ross, seu grande inimigo, e da máquina militar que tenta capturá-lo, na intenção de explorar o poder que faz com que Banner se transforme no Hulk.",
+     "poster_path": "/v1UXe9WlwkkZ5YrffUSPdYNeJz3.jpg",
+     "media_type": "movie",
+     "original_language": "en",
+     "genre_ids": [
+      878,
+      28,
+      12
+     ],
+     "popularity": 38.356,
+     "release_date": "2008-06-12",
+     "softcore": false,
+     "video": false,
+     "vote_average": 6.265,
+     "vote_count": 13252
+    },
+    {
+     "adult": false,
+     "backdrop_path": "/6qHI1IYj7QlLSCwHRzkL62X175s.jpg",
+     "id": 73,
+     "title": "A Outra História Americana",
+     "original_title": "American History X",
+     "overview": "Derek busca vazão para suas agruras tornando-se líder de uma gangue de racistas. A violência o leva a um assassinato, e ele é condenado pelo crime. Três anos mais tarde, ele sai da prisão e tem que convencer seu irmão, que está prestes a assumir a liderança do grupo, a não trilhar o mesmo caminho.",
+     "poster_path": "/hgvKHv8d9bQEiQV5JE8nx0I2zhr.jpg",
+     "media_type": "movie",
+     "original_language": "en",
+     "genre_ids": [
+      18
+     ],
+     "popularity": 26.1613,
+     "release_date": "1998-07-01",
+     "softcore": false,
+     "video": false,
+     "vote_average": 8.322,
+     "vote_count": 13026
+    }
+   ]
+  },
+  {
+   "id": 84591,
+   "adult": false,
+   "gender": 2,
+   "known_for_department": "Acting",
+   "name": "Ed Leslie",
+   "original_name": "Ed Leslie",
+   "popularity": 0.7634,
+   "profile_path": "/7LfTR4x2Ar35CccJGWbVIkNdoXi.jpg",
+   "known_for": [
+    {
+     "adult": false,
+     "backdrop_path": "/nddtdxD1HSYD1LabTsiV8aHVr6p.jpg",
+     "id": 19371,
+     "title": "Mr. Nanny: Uma Babá de Peso",
+     "original_title": "Mr. Nanny",
+     "overview": "Sean, ex-astro de luta livre, é convencido por seu ex-empresário, diante da falta de perspectivas profissionais, a se tornar um guarda-costas dos filhos de um poderoso gerente de tecnologia que desenvolvia um projeto secreto, que lhe renderá muitos problemas. Sean logo se vê diante de dois pestinhas, órfãos de mãe há dois anos e carentes da atenção do pai, levando-o à loucura em pouco tempo. Ele deixa de ser guarda-costas para se tornar babá de toda família.",
+     "poster_path": "/gSRSvh9kSEgCOsPR7yrH0ueh4lC.jpg",
+     "media_type": "movie",
+     "original_language": "en",
+     "genre_ids": [
+      10751,
+      35
+     ],
+     "popularity": 2.5521,
+     "release_date": "1993-04-02",
+     "softcore": false,
+     "video": false,
+     "vote_average": 5.1,
+     "vote_count": 209
+    },
+    {
+     "adult": false,
+     "backdrop_path": "/9dVNdIHmI31Vc70jcobSE4rchyn.jpg",
+     "id": 1605,
+     "name": "Thunder: Missão no Mar",
+     "original_name": "Thunder in Paradise",
+     "overview": "Spencer é um ex-fuzileiro naval, que juntamente com Martin, amigo dos tempos da marinha, trabalha como mercenário. Pilotando Thunder, uma lancha blindada, computadorizada e de alta-tecnologia, eles viajam o mundo em perigosas missões. Paralelamente, Spencer, cuida de sua filha adotiva Jessica, herdeira do milionário Edward, dono do resort local, onde também trabalha Kelly, amiga da dupla.",
+     "poster_path": "/yAPTuO5Z5r1ZsEslfkuGfoWJokM.jpg",
+     "media_type": "tv",
+     "original_language": "en",
+     "genre_ids": [
+      10759
+     ],
+     "popularity": 6.9937,
+     "first_air_date": "1994-03-25",
+     "softcore": false,
+     "vote_average": 6.431,
+     "vote_count": 51,
+     "origin_country": [
+      "US"
+     ]
+    },
+    {
+     "adult": false,
+     "backdrop_path": "/hxEUTeIQn7jRSifwgT8iARMWRKr.jpg",
+     "id": 154901,
+     "title": "WWE SummerSlam 1989",
+     "original_title": "WWE SummerSlam 1989",
+     "overview": "",
+     "poster_path": "/eJQRITXk2UCKWqgAe586RMh5RBj.jpg",
+     "media_type": "movie",
+     "original_language": "en",
+     "genre_ids": [
+      28,
+      18
+     ],
+     "popularity": 1.5998,
+     "release_date": "1989-08-28",
+     "softcore": false,
+     "video": true,
+     "vote_average": 6.7,
+     "vote_count": 9
+    }
+   ]
+  }
+ ],
+ "page": 1,
+ "total_pages": 1,
+ "total_results": 7
+}

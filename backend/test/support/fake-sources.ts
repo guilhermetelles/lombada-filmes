@@ -59,6 +59,12 @@ function recordedResponse(source: SourceName, url: URL): Response {
   if (source === 'tmdb' && url.pathname === '/3/person/2710') {
     return fixture('tmdb-person-2710.json', 'application/json');
   }
+  if (source === 'tmdb' && url.pathname === '/3/search/person') {
+    const query = url.searchParams.get('query');
+    if (query === 'cameron') return fixture('tmdb-search-person-cameron.json', 'application/json');
+    if (query === 'ed harris') return fixture('tmdb-search-person-ed-harris.json', 'application/json');
+    return new Response('{"results":[]}', { headers: { 'content-type': 'application/json' } });
+  }
   if (source === 'tmdb' && url.pathname === '/3/search/movie') {
     return fixture('tmdb-search-abismo.json', 'application/json');
   }

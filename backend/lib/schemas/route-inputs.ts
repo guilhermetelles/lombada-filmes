@@ -27,6 +27,11 @@ export const JoinListBody = z.object({
     .pipe(z.string().length(INVITE_CODE_LENGTH, `code deve ter ${INVITE_CODE_LENGTH} caracteres`)),
 });
 
+/** GET /api/search/people?q= */
+export const PersonSearchQuery = z.object({
+  q: z.string().trim().min(2, 'q deve ter pelo menos 2 caracteres').max(100, 'q pode ter até 100 caracteres'),
+});
+
 /** GET /api/movies/{tmdbId} */
 export const MovieParams = z.object({
   tmdbId: z

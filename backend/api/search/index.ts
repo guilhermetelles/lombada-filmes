@@ -1,7 +1,7 @@
-import { getProductionDependencies } from '../lib/dependencies.js';
-import { authenticatedRoute } from '../lib/http/authenticated-route.js';
-import { parseInput } from '../lib/http/parse-input.js';
-import { SearchQuery } from '../lib/schemas/route-inputs.js';
+import { getProductionDependencies } from '../../lib/dependencies.js';
+import { authenticatedRoute } from '../../lib/http/authenticated-route.js';
+import { parseInput } from '../../lib/http/parse-input.js';
+import { SearchQuery } from '../../lib/schemas/route-inputs.js';
 
 /**
  * GET /api/search?q=: busca no TMDb em pt-BR e devolve só o que a lista de resultados mostra.

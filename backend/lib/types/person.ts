@@ -29,6 +29,9 @@ export type DirectedMovie = {
   year: number | null;
 };
 
+/** Área pela qual a pessoa é conhecida, entre as que a busca devolve. */
+export type PersonDepartment = 'acting' | 'directing';
+
 /** Idioma da biografia guardada. */
 export type BiographyLanguage = 'pt' | 'en';
 

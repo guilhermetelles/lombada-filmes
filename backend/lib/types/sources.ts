@@ -3,7 +3,7 @@
  * Quando a fonte não tem o filme, as notas vêm null: é uma resposta válida, que também vale 7 dias.
  */
 
-import type { CastMember, Person, PersonRef } from './person.js';
+import type { CastMember, Person, PersonDepartment, PersonRef } from './person.js';
 
 /** Fontes externas, também usadas como chave do consumo em usage/{dia}. */
 export type SourceName = 'tmdb' | 'omdb' | 'letterboxd';
@@ -37,6 +37,15 @@ export type TmdbSearchResult = {
   overview: string | null; // trecho de até 200 caracteres
 };
 
+/** Uma pessoa encontrada na busca do TMDb, resumida para a lista de resultados. */
+export type TmdbPersonSearchResult = {
+  personId: number;
+  name: string;
+  department: PersonDepartment; // acting abre a tela do ator; directing, a do diretor
+  profilePath: string | null;
+  knownFor: string[]; // até 3 títulos, em português quando há tradução; ajudam a diferenciar homônimos
+};
+
 /** Pessoa como o TMDb descreve, já no formato de people/{id} (sem a data da busca). */
 export type TmdbPerson = Omit<Person, 'fetchedAt'>;
 
@@ -54,12 +63,13 @@ export type LetterboxdRating = {
   url: string | null; // página do filme; null quando o Letterboxd não tem o filme
 };
 
-/** Cliente do TMDb: detalhes de filme, busca, detalhes de pessoa e elenco. */
+/** Cliente do TMDb: detalhes de filme, busca de filmes e de pessoas, detalhes de pessoa e elenco. */
 export type TmdbClient = {
   getMovie(tmdbId: number): Promise<TmdbMovie>;
   search(query: string): Promise<TmdbSearchResult[]>;
   getPerson(personId: number): Promise<TmdbPerson>;
   getCast(tmdbId: number): Promise<CastMember[]>;
+  searchPeople(query: string): Promise<TmdbPersonSearchResult[]>;
 };
 
 /** Cliente da OMDb: notas por id do IMDb. */

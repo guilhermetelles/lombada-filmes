@@ -9,6 +9,7 @@ import { readEnv } from '../lib/config/env.js';
 import {
   TmdbCreditsToRecord,
   TmdbDetailsToRecord,
+  TmdbPersonSearchToRecord,
   TmdbPersonToRecord,
   TmdbSearchToRecord,
 } from '../lib/schemas/fixtures.js';
@@ -43,6 +44,15 @@ save('tmdb-movie-2756.json', {
     translations: details.translations.translations.filter((translation) => translation.iso_639_1 === 'en'),
   },
 });
+
+// Busca de pessoas: a resposta inteira da primeira página, com quem não atua nem dirige no meio.
+for (const [query, file] of [
+  ['cameron', 'tmdb-search-person-cameron.json'],
+  ['ed harris', 'tmdb-search-person-ed-harris.json'],
+] as const) {
+  const params = new URLSearchParams({ query, language: 'pt-BR', include_adult: 'false' });
+  save(file, await tmdb(`/search/person?${params}`, TmdbPersonSearchToRecord));
+}
 
 const credits = await tmdb('/movie/2756/credits', TmdbCreditsToRecord);
 save('tmdb-credits-2756.json', {
