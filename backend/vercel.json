@@ -1,8 +1,16 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "regions": ["gru1"],
-  "crons": [{ "path": "/api/cron/daily", "schedule": "0 9 * * *" }],
+  "outputDirectory": "public",
+  "crons": [
+    {
+      "path": "/api/cron/daily",
+      "schedule": "0 9 * * *"
+    }
+  ],
   "functions": {
-    "api/cron/daily.ts": { "maxDuration": 300 }
+    "api/cron/daily.ts": {
+      "maxDuration": 300
+    }
   }
 }

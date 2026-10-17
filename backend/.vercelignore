@@ -1,4 +1,5 @@
-# Só api/, lib/ e a configuração vão para a Vercel. O resto é ferramenta local e não pode virar
+# Só api/, lib/, public/ e a configuração vão para a Vercel. O resto é ferramenta local e não pode virar
 # arquivo estático público (a Vercel serve como estático o que estiver fora de api/).
 scripts
 test
+*.log
