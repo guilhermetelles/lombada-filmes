@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Só o que o sistema usa antes do Compose: ícone e janela de abertura. O resto fica em LombadaColors. -->
+    <color name="ground">#121433</color>
+</resources>
