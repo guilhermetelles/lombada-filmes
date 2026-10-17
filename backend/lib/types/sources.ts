@@ -3,7 +3,7 @@
  * Quando a fonte não tem o filme, as notas vêm null: é uma resposta válida, que também vale 7 dias.
  */
 
-import type { CastMember, Person, PersonDepartment, PersonRef } from './person.js';
+import type { CastMember, Director, Person, PersonDepartment } from './person.js';
 
 /** Fontes externas, também usadas como chave do consumo em usage/{dia}. */
 export type SourceName = 'tmdb' | 'omdb' | 'letterboxd';
@@ -18,7 +18,7 @@ export type Synopsis = { pt: string | null; en: string | null };
 export type TmdbMovie = {
   title: string; // em inglês, como no Letterboxd e na lista original
   year: number | null;
-  directors: PersonRef[];
+  directors: Director[];
   cast: CastMember[]; // os 12 primeiros dos créditos
   runtime: number | null; // minutos
   genres: string[]; // em português

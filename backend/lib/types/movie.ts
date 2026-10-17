@@ -1,4 +1,4 @@
-import type { CastMember, PersonRef } from './person.js';
+import type { CastMember, Director, PersonRef } from './person.js';
 import type { LetterboxdRating, OmdbRatings, Synopsis, TmdbMovie } from './sources.js';
 
 /** Documento movies/{tmdbId}: catálogo do filme e as quatro notas, cada uma com a data da busca. */
@@ -21,7 +21,7 @@ export type MovieRatings = {
 export type Movie = {
   title: string;
   year: number | null;
-  directors: PersonRef[];
+  directors: Director[]; // a cópia resumida leva só id e nome
   cast: CastMember[]; // os 12 primeiros dos créditos; fica fora da cópia resumida das entradas
   runtime: number | null;
   genres: string[];

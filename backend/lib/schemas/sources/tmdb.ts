@@ -37,7 +37,7 @@ export const TmdbMovieResponse = z.object({
   genres: z.array(z.object({ name: z.string() })).default([]),
   credits: z
     .object({
-      crew: z.array(z.object({ id: z.number(), job: z.string(), name: z.string() })),
+      crew: z.array(z.object({ id: z.number(), job: z.string(), name: z.string(), profile_path: optionalText })),
       cast: z.array(CastCredit).default([]),
     })
     .optional(),

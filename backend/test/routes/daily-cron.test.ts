@@ -14,7 +14,6 @@ import { getRequest, readErrorCode } from '../support/requests.js';
 
 type Report = {
   movies: { refreshed: number; failed: number };
-  people: { refreshed: number; failed: number };
   invitesDeleted: number;
 };
 
@@ -57,7 +56,7 @@ describe('GET /api/cron/daily: acesso', () => {
 });
 
 describe('GET /api/cron/daily: filmes', () => {
-  test('nota com mais de 7 dias é atualizada; filme fresco não é tocado', async () => {
+  test('nota com mais de 7 dias é atualizada sem buscar o TMDb; filme fresco não é tocado', async () => {
     await getFreshMovie(2756, dependencies, new UsageMeter());
     forgetCalls();
 
@@ -69,47 +68,53 @@ describe('GET /api/cron/daily: filmes', () => {
     const stale = await runAsVercel();
 
     assert.deepEqual(stale.movies, { refreshed: 1, failed: 0 });
-    assert.deepEqual(sources.calls, { tmdb: 1, omdb: 1, letterboxd: 1 });
+    assert.deepEqual(sources.calls, { tmdb: 0, omdb: 1, letterboxd: 1 });
     const saved = (await dependencies.db.doc('movies/2756').get()).data();
     assert.equal(saved?.ratings.imdb.fetchedAt.toDate().toISOString(), clock.toISOString());
   });
 
-  test('respeita o limite por execução, começando pelo que está há mais tempo sem busca', async () => {
+  test('respeita o limite por execução, começando pela nota há mais tempo sem busca', async () => {
     await getFreshMovie(2756, dependencies, new UsageMeter());
     const abyss = (await dependencies.db.doc('movies/2756').get()).data() ?? {};
-    // Duas cópias guardadas há mais tempo; o TMDb falso não as conhece (responde 404), mas com
-    // documento guardado a falha só mantém o que havia.
-    await dependencies.db.doc('movies/11').set({ ...abyss, tmdbFetchedAt: new Date(clock.getTime() - 1000) });
-    await dependencies.db.doc('movies/12').set({ ...abyss, tmdbFetchedAt: new Date(clock.getTime() - 2000) });
+    // Duas cópias com a nota do Letterboxd mais antiga; o Letterboxd falso não as conhece (404), mas
+    // com documento guardado a falha só mantém o que havia.
+    const olderLetterboxd = (ms: number) => ({
+      ...abyss,
+      ratings: {
+        ...abyss.ratings,
+        letterboxd: { ...abyss.ratings.letterboxd, fetchedAt: new Date(clock.getTime() - ms) },
+      },
+    });
+    await dependencies.db.doc('movies/11').set(olderLetterboxd(1000));
+    await dependencies.db.doc('movies/12').set(olderLetterboxd(2000));
     advanceClock(FRESHNESS_MS);
     forgetCalls();
 
-    const report = await runDailyMaintenance(dependencies, new UsageMeter(), { movies: 2, people: 0 });
+    const report = await runDailyMaintenance(dependencies, new UsageMeter(), { movies: 2 });
 
     assert.deepEqual(report.movies, { refreshed: 2, failed: 0 });
-    assert.equal(sources.calls.tmdb, 2);
+    assert.deepEqual(sources.calls, { tmdb: 0, omdb: 2, letterboxd: 2 });
     assert.equal(
-      (await dependencies.db.doc('movies/2756').get()).get('tmdbFetchedAt').toDate().getTime(),
+      (await dependencies.db.doc('movies/2756').get()).get('ratings.letterboxd.fetchedAt').toDate().getTime(),
       clock.getTime() - FRESHNESS_MS,
     );
   });
 });
 
 describe('GET /api/cron/daily: pessoas e convites', () => {
-  test('pessoa com mais de 30 dias é atualizada', async () => {
+  test('pessoas não são atualizadas, nem com mais de 30 dias', async () => {
     await getFreshPerson(2710, dependencies, new UsageMeter());
     advanceClock(PERSON_FRESHNESS_MS);
     forgetCalls();
 
     const report = await runAsVercel();
 
-    assert.deepEqual(report.people, { refreshed: 1, failed: 0 });
-    assert.equal(sources.calls.tmdb, 1);
+    assert.equal('people' in report, false);
+    assert.deepEqual(sources.calls, NO_CALLS);
   });
 
   test('documento fora do formato é pulado sem derrubar a rotina', async () => {
     await dependencies.db.doc('movies/999').set({ title: 'Quebrado' });
-    await dependencies.db.doc('people/999').set({ name: 'Quebrada' });
     await dependencies.db
       .collection('invites')
       .doc('VENCID')

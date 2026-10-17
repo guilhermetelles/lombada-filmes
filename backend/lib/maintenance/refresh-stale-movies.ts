@@ -1,5 +1,5 @@
 import { logger } from '../logging/logger.js';
-import { needsRefresh, oldestFetch } from '../movies/freshness.js';
+import { needsRefresh, oldestRatingFetch } from '../movies/freshness.js';
 import { getFreshMovie } from '../movies/get-fresh-movie.js';
 import { MovieSchema } from '../schemas/movie.js';
 import type { Dependencies } from '../types/dependencies.js';
@@ -12,7 +12,8 @@ const CONCURRENCY = 4;
 
 /**
  * Atualiza os filmes com alguma nota vencida, do que está há mais tempo sem busca para o mais
- * recente. Cada atualização também corrige a cópia resumida nas entradas das listas.
+ * recente. Só as notas são buscadas (o TMDb não vence para filme guardado), e cada atualização
+ * também corrige a cópia resumida nas entradas das listas.
  *
  * @param dependencies - Banco, clientes das fontes e relógio.
  * @param usage - Medidor de consumo da execução.
@@ -36,7 +37,7 @@ async function refreshStaleMovies(
       return [];
     })
     .filter(({ movie }) => needsRefresh(movie, now))
-    .sort((a, b) => oldestFetch(a.movie).getTime() - oldestFetch(b.movie).getTime())
+    .sort((a, b) => oldestRatingFetch(a.movie).getTime() - oldestRatingFetch(b.movie).getTime())
     .slice(0, limit);
 
   let failed = 0;

@@ -1,5 +1,5 @@
 import type { TmdbCastCredit, TmdbMovieResponse, TmdbSearchResponse } from '../../schemas/sources/tmdb.js';
-import type { CastMember, PersonRef } from '../../types/person.js';
+import type { CastMember, Director } from '../../types/person.js';
 import type { TmdbMovie, TmdbSearchResult } from '../../types/sources.js';
 
 /** Tamanho do trecho de sinopse nos resultados de busca. */
@@ -65,12 +65,16 @@ function findEnglishTranslation(response: TmdbMovieResponse) {
  * Lista quem dirigiu o filme, a partir da equipe técnica.
  *
  * @param response - Resposta de detalhes do TMDb.
- * @returns Id e nome de quem tem o cargo Director, na ordem do TMDb e sem repetição.
+ * @returns Id, nome e foto de quem tem o cargo Director, na ordem do TMDb e sem repetição.
  */
-function findDirectors(response: TmdbMovieResponse): PersonRef[] {
+function findDirectors(response: TmdbMovieResponse): Director[] {
   const crew = response.credits?.crew ?? [];
   const directors = crew.filter((person) => person.job === 'Director');
-  return uniqueBy(directors, (person) => person.id).map(({ id, name }) => ({ id, name }));
+  return uniqueBy(directors, (person) => person.id).map(({ id, name, profile_path }) => ({
+    id,
+    name,
+    profilePath: profile_path,
+  }));
 }
 
 /**

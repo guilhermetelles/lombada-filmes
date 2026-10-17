@@ -1,7 +1,7 @@
 import * as z from 'zod';
 import type { Movie, MovieSnapshot } from '../types/movie.js';
 import { firestoreDate } from './firestore.js';
-import { CastMemberSchema, PersonRefSchema } from './person.js';
+import { CastMemberSchema, DirectorSchema, PersonRefSchema } from './person.js';
 
 /** Campos comuns a toda nota: valor e data da busca. */
 const rating = { value: z.number().nullable(), fetchedAt: firestoreDate };
@@ -10,8 +10,8 @@ const rating = { value: z.number().nullable(), fetchedAt: firestoreDate };
 export const MovieSchema: z.ZodType<Movie> = z.object({
   title: z.string(),
   year: z.number().int().nullable(),
-  directors: z.array(PersonRefSchema),
-  // Filmes gravados antes do passo 9 não têm elenco; contam como vazio até a recarga.
+  directors: z.array(DirectorSchema),
+  // Filmes gravados antes do passo 9 não têm elenco; contam como vazio (os da lista já foram recarregados).
   cast: z.array(CastMemberSchema).default([]),
   runtime: z.number().nullable(),
   genres: z.array(z.string()),

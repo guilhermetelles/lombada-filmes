@@ -14,7 +14,9 @@ describe('TMDb: getMovie', () => {
     assert.equal(movie.title, 'The Abyss');
     assert.equal(movie.year, 1989);
     assert.equal(movie.runtime, 138);
-    assert.deepEqual(movie.directors, [{ id: 2710, name: 'James Cameron' }]);
+    assert.deepEqual(movie.directors, [
+      { id: 2710, name: 'James Cameron', profilePath: '/9NAZnTjBQ9WcXAQEzZpKy4vdQto.jpg' },
+    ]);
     assert.deepEqual(movie.genres, ['Aventura', 'Thriller', 'Ficção científica']);
     assert.equal(movie.imdbId, 'tt0096754');
     assert.match(movie.posterPath ?? '', /^\/.+\.jpg$/);
@@ -120,18 +122,20 @@ describe('TMDb: elenco', () => {
 
   test('sem foto, profilePath fica null; quem tem dois papéis aparece uma vez', async () => {
     const credits = {
+      crew: [{ id: 3, name: 'Diretora', job: 'Director', profile_path: null }],
       cast: [
         { id: 1, name: 'Ator', character: 'Papel A', order: 0, profile_path: null },
         { id: 1, name: 'Ator', character: 'Papel B', order: 1, profile_path: null },
         { id: 2, name: 'Atriz', character: '', order: 2, profile_path: '/a.jpg' },
       ],
     };
-    const movie = await tmdbClient(respondWith({ id: 1, credits: { crew: [], ...credits } })).getMovie(1);
+    const movie = await tmdbClient(respondWith({ id: 1, credits })).getMovie(1);
 
     assert.deepEqual(movie.cast, [
       { id: 1, name: 'Ator', character: 'Papel A', profilePath: null },
       { id: 2, name: 'Atriz', character: null, profilePath: '/a.jpg' },
     ]);
+    assert.deepEqual(movie.directors, [{ id: 3, name: 'Diretora', profilePath: null }]);
   });
 
   test('getPerson de um ator: os 20 filmes mais votados, com personagem', async () => {

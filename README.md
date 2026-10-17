@@ -23,14 +23,14 @@ As rotas do app exigem `Authorization: Bearer <ID token do Firebase Auth>`. Erro
 | `GET /api/me` | Devolve o uid de quem chamou |
 | `GET /api/search?q=` | Busca filmes no TMDb (pt-BR) |
 | `GET /api/search/people?q=` | Busca atores e diretores no TMDb (até 5, com títulos conhecidos) |
-| `GET /api/movies/{tmdbId}` | Filme com as quatro notas, diretores e elenco, buscando de novo só o que tem mais de 7 dias |
-| `GET /api/people/{personId}` | Diretor ou ator (biografia, nascimento, foto, filmes dirigidos e atuados), buscando de novo depois de 30 dias |
+| `GET /api/movies/{tmdbId}` | Filme com as quatro notas, diretores e elenco; o TMDb só na primeira vez, as notas de novo depois de 7 dias |
+| `GET /api/people/{personId}` | Diretor ou ator (biografia, nascimento, foto, filmes dirigidos e atuados), buscado só quando a tela é aberta e de novo depois de 30 dias |
 | `POST /api/lists` | Cria uma lista e o primeiro código de convite |
 | `POST /api/lists/join` | Entra numa lista com um código (`{ code }`) |
 | `POST /api/lists/{listId}/invites` | Gera um código de convite novo (7 dias) |
 | `POST /api/lists/{listId}/leave` | Sai da lista; a última pessoa a sair apaga a lista |
 | `DELETE /api/lists/{listId}` | A dona apaga a lista, as entradas e os convites |
-| `GET /api/cron/daily` | Rotina diária da Vercel (6h de Brasília): atualiza notas e diretores vencidos e apaga convites vencidos. Exige `Authorization: Bearer <CRON_SECRET>` em vez do ID token |
+| `GET /api/cron/daily` | Rotina diária da Vercel (6h de Brasília): atualiza as notas com mais de 7 dias (só Letterboxd e OMDb; nada do TMDb nem de pessoas) e apaga convites vencidos. Exige `Authorization: Bearer <CRON_SECRET>` em vez do ID token |
 
 Para chamar as rotas na mão, `cd backend && npm run login-page` abre em http://localhost:5173 uma página de login com Google que mostra o uid e um ID token.
 

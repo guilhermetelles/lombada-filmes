@@ -14,8 +14,8 @@ type FetchContext = {
 };
 
 /**
- * Busca só as fontes vencidas. O TMDb vem primeiro porque dá o id do IMDb que a OMDb precisa;
- * Letterboxd e OMDb vão em paralelo.
+ * Busca só as fontes vencidas. O TMDb, só buscado quando o filme ainda não está guardado, vem
+ * primeiro porque dá o id do IMDb que a OMDb precisa; Letterboxd e OMDb vão em paralelo.
  *
  * @param context - Filme, documento guardado, momento, clientes e medidor de consumo.
  * @returns O que cada fonte trouxe; fica de fora o que estava fresco ou falhou.

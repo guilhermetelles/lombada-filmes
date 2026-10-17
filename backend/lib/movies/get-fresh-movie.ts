@@ -8,8 +8,8 @@ import { findMovie, saveMovie } from './movie-repository.js';
 import { toMovieSnapshot } from './movie-snapshot.js';
 
 /**
- * Devolve movies/{tmdbId} com cada fonte buscada há menos de 7 dias, buscando só o que venceu, e
- * garante que a cópia resumida nas entradas das listas está igual ao filme.
+ * Devolve movies/{tmdbId} com as notas buscadas há menos de 7 dias, buscando só o que venceu (o
+ * TMDb só na primeira vez), e garante que a cópia resumida nas entradas das listas está igual ao filme.
  *
  * @param tmdbId - Id do filme no TMDb.
  * @param dependencies - Banco, clientes das fontes e relógio.

@@ -84,14 +84,35 @@ describe('GET /api/movies/{tmdbId}: frescor', () => {
     assert.deepEqual([usage?.tmdb.cacheHits, usage?.letterboxd.cacheHits, usage?.omdb.cacheHits], [1, 1, 1]);
   });
 
-  test('depois de 7 dias busca as três fontes de novo', async () => {
+  test('depois de 7 dias busca só as notas; o TMDb não vence', async () => {
     await getAbyss();
+    forgetCalls();
+    advanceClock(10 * FRESHNESS_MS);
+
+    await getAbyss();
+
+    assert.deepEqual(sources.calls, { tmdb: 0, omdb: 1, letterboxd: 1 });
+  });
+
+  test('guarda a foto do diretor no filme, mas não na cópia resumida', async () => {
+    await getAbyss();
+
+    const saved = (await dependencies.db.doc('movies/2756').get()).get('directors');
+    assert.deepEqual(saved, [{ id: 2710, name: 'James Cameron', profilePath: '/9NAZnTjBQ9WcXAQEzZpKy4vdQto.jpg' }]);
+  });
+
+  test('filme guardado antes da foto dos diretores continua válido e não é buscado no TMDb', async () => {
+    await getAbyss();
+    const movie = dependencies.db.doc('movies/2756');
+    await movie.update({ directors: [{ id: 2710, name: 'James Cameron' }] });
     forgetCalls();
     advanceClock(FRESHNESS_MS);
 
-    await getAbyss();
+    const response = await getAbyss();
 
-    assert.deepEqual(sources.calls, { tmdb: 1, omdb: 1, letterboxd: 1 });
+    assert.equal(response.status, 200);
+    assert.equal(sources.calls.tmdb, 0);
+    assert.deepEqual((await movie.get()).get('directors'), [{ id: 2710, name: 'James Cameron' }]);
   });
 });
 
