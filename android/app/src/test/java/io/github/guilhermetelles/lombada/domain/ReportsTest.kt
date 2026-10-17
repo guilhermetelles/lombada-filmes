@@ -219,9 +219,10 @@ class ReportsTest {
     }
 
     @Test
-    fun `bechdel da lista original bate com o mock`() {
-        // Avaliações do mock (BECHDEL do mock/index.html) na ordem da lista original: critérios,
-        // "d" para duvidosa e "-" para filme fora do site.
+    fun `bechdel sobre as avaliações do mock bate com o card do mock`() {
+        // Avaliações embutidas no mock (BECHDEL do mock/index.html) na ordem da lista original:
+        // critérios, "d" para duvidosa e "-" para filme sem avaliação no mock. Testa o cálculo sobre
+        // esses dados; o banco real tem mais filmes casados que o mock.
         val original =
             "3 1 3 1 - 1 3 3d 0 0 2 - 0 0 3 3 0 3 - - 3d 3d 1 3 1 2 2 - 3 - 3 - 3 3 3 3d 3d 3 2d 2 1 1 1 3 " +
                 "3 3 3 3 3 3d - - - - 3 1 1 3 3 - 1 0d 1 3 3 1 1 3 - 3d 1 - - 3 1 3 3 1 3d - 3 0 1 - - 1 - 3 3 - -"
