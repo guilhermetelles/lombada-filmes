@@ -23,6 +23,15 @@ describe('isStale', () => {
     assert.equal(isStale(movie, 'tmdb', after(FRESHNESS_MS)), true);
   });
 
+  test('TMDb vence na hora com diretor sem o campo da foto; foto null conta como completa', () => {
+    const movie = mergeMovie(undefined, { tmdb: tmdbAbyss }, fetchedAt);
+    const oldFormat = { ...movie, directors: [{ id: 2710, name: 'James Cameron' }] };
+    const withoutPhoto = { ...movie, directors: [{ id: 2710, name: 'James Cameron', profilePath: null }] };
+
+    assert.equal(isStale(oldFormat, 'tmdb', fetchedAt), true);
+    assert.equal(isStale(withoutPhoto, 'tmdb', fetchedAt), false);
+  });
+
   test('vence exatamente aos 7 dias', () => {
     const movie = mergeMovie(undefined, { tmdb: tmdbAbyss, omdb: omdbAbyss }, fetchedAt);
     assert.equal(isStale(movie, 'omdb', after(FRESHNESS_MS - 1)), false);

@@ -6,7 +6,7 @@ import type { LetterboxdRating, OmdbRatings, TmdbMovie } from '../../lib/types/s
 export const tmdbAbyss: TmdbMovie = {
   title: 'The Abyss',
   year: 1989,
-  directors: [{ id: 2710, name: 'James Cameron' }],
+  directors: [{ id: 2710, name: 'James Cameron', profilePath: '/cameron.jpg' }],
   cast: [{ id: 228, name: 'Ed Harris', character: "Virgil 'Bud' Brigman", profilePath: '/harris.jpg' }],
   runtime: 138,
   genres: ['Aventura'],

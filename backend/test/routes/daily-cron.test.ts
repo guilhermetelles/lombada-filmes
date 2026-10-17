@@ -73,6 +73,17 @@ describe('GET /api/cron/daily: filmes', () => {
     assert.equal(saved?.ratings.imdb.fetchedAt.toDate().toISOString(), clock.toISOString());
   });
 
+  test('filme sem a foto dos diretores, com notas frescas, não é tocado pela rotina', async () => {
+    await getFreshMovie(2756, dependencies, new UsageMeter());
+    await dependencies.db.doc('movies/2756').update({ directors: [{ id: 2710, name: 'James Cameron' }] });
+    forgetCalls();
+
+    const report = await runAsVercel();
+
+    assert.deepEqual(report.movies, { refreshed: 0, failed: 0 });
+    assert.deepEqual(sources.calls, NO_CALLS);
+  });
+
   test('respeita o limite por execução, começando pela nota há mais tempo sem busca', async () => {
     await getFreshMovie(2756, dependencies, new UsageMeter());
     const abyss = (await dependencies.db.doc('movies/2756').get()).data() ?? {};

@@ -22,7 +22,8 @@ const LAST_RATING_FETCH: Record<RatingSource, (movie: Movie) => Date | undefined
 
 /**
  * Diz se uma fonte precisa ser buscada: nunca buscada, ou buscada há 7 dias ou mais. Vale para o
- * TMDb (catálogo, diretores e elenco com foto) e para as notas.
+ * TMDb (catálogo, diretores e elenco com foto) e para as notas. O TMDb também vence quando o filme
+ * foi gravado num formato antigo, com dados incompletos.
  *
  * @param movie - Documento guardado, se existir.
  * @param source - Fonte a conferir.
@@ -31,9 +32,22 @@ const LAST_RATING_FETCH: Record<RatingSource, (movie: Movie) => Date | undefined
  */
 function isStale(movie: Movie | undefined, source: SourceName, now: Date): boolean {
   if (!movie) return true;
+  if (source === 'tmdb' && hasIncompleteTmdbData(movie)) return true;
   const fetchedAt = source === 'tmdb' ? movie.tmdbFetchedAt : LAST_RATING_FETCH[source](movie);
   if (!fetchedAt) return true;
   return now.getTime() - fetchedAt.getTime() >= FRESHNESS_MS;
+}
+
+/**
+ * Diz se faltam dados que a busca do TMDb sempre grava: hoje, a foto dos diretores, ausente nos
+ * filmes gravados antes do passo 11. Foto `null` (o TMDb não tem) conta como completa, para o filme
+ * não ser buscado de novo a cada abertura.
+ *
+ * @param movie - Documento guardado.
+ * @returns true se algum diretor estiver sem o campo profilePath.
+ */
+function hasIncompleteTmdbData(movie: Movie): boolean {
+  return movie.directors.some((director) => director.profilePath === undefined);
 }
 
 /**
