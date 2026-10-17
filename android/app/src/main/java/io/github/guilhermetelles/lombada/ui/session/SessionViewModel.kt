@@ -1,0 +1,146 @@
+package io.github.guilhermetelles.lombada.ui.session
+
+import android.content.Context
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import io.github.guilhermetelles.lombada.AppContainer
+import io.github.guilhermetelles.lombada.data.auth.SignInException
+import io.github.guilhermetelles.lombada.data.model.MovieList
+import io.github.guilhermetelles.lombada.data.model.UserProfile
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
+
+/**
+ * Decide o que o app mostra: entrar, escolher a primeira lista ou a lista ativa. Acompanha a
+ * sessão, o perfil `users/{uid}` e as listas de que a pessoa participa.
+ *
+ * @param container Dependências do app.
+ */
+class SessionViewModel(private val container: AppContainer) : ViewModel() {
+    private val _signingIn = MutableStateFlow(false)
+
+    /** Se a janela do Google está aberta ou o login está em andamento. */
+    val signingIn: StateFlow<Boolean> = _signingIn.asStateFlow()
+
+    private val _signInError = MutableStateFlow<String?>(null)
+
+    /** Erro do último login, para mostrar na tela de entrada. */
+    val signInError: StateFlow<String?> = _signInError.asStateFlow()
+
+    // Enquanto a tela "Lista criada" está aberta, a lista nova não abre sozinha.
+    private val holdingNewList = MutableStateFlow(false)
+
+    /** Estado da sessão. */
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val state: StateFlow<SessionState> =
+        container.authRepository
+            .observeUser()
+            .flatMapLatest { user ->
+                if (user == null) {
+                    flowOf(SessionState.SignedOut)
+                } else {
+                    flow {
+                        val profile = container.users.ensure(user)
+                        emit(profile)
+                    }.flatMapLatest {
+                        combine(
+                            container.users.observe(user.uid).filterNotNull(),
+                            container.lists.observeMine(user.uid),
+                            holdingNewList
+                        ) { profile, lists, holding -> decide(user.uid, profile, lists, holding) }
+                    }.onStart { emit(SessionState.Loading) }
+                        .catch {
+                            emit(
+                                SessionState.Failed(
+                                    "Não deu para carregar suas listas. Confira a internet e abra o app de novo."
+                                )
+                            )
+                        }
+                }
+            }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SessionState.Loading)
+
+    private fun decide(uid: String, profile: UserProfile, lists: List<MovieList>, holding: Boolean): SessionState {
+        val ordered = orderByRecent(lists, profile.recentListIds)
+        val active = ordered.firstOrNull { it.id == profile.activeListId } ?: ordered.firstOrNull()
+        if (active == null || holding) return SessionState.NeedsList(uid, profile)
+        if (active.id != profile.activeListId) {
+            // A lista ativa sumiu (a pessoa saiu ou a lista foi apagada): abre a mais recente.
+            viewModelScope.launch { runCatching { container.users.visit(uid, active.id) } }
+        }
+        return SessionState.Ready(uid, profile, active, ordered)
+    }
+
+    /**
+     * Abre a janela do Google e entra.
+     *
+     * @param activityContext Contexto da Activity.
+     */
+    fun signIn(activityContext: Context) {
+        if (_signingIn.value) return
+        _signingIn.value = true
+        _signInError.value = null
+        viewModelScope.launch {
+            try {
+                container.authRepository.signInWithGoogle(activityContext)
+            } catch (error: SignInException) {
+                if (!error.cancelled) _signInError.value = "${error.message} Tente de novo."
+            } finally {
+                _signingIn.value = false
+            }
+        }
+    }
+
+    /**
+     * Sai da conta.
+     *
+     * @param context Contexto do app.
+     */
+    fun signOut(context: Context) {
+        viewModelScope.launch { container.authRepository.signOut(context) }
+    }
+
+    /**
+     * Segura a abertura automática de uma lista recém-criada, enquanto o código é mostrado.
+     *
+     * @param hold true ao criar; false ao tocar em "Abrir a lista".
+     */
+    fun holdNewList(hold: Boolean) {
+        holdingNewList.value = hold
+    }
+
+    /**
+     * Abre outra lista da pessoa.
+     *
+     * @param listId Lista escolhida.
+     */
+    fun openList(listId: String) {
+        val uid = container.authRepository.currentUid ?: return
+        viewModelScope.launch { runCatching { container.users.visit(uid, listId) } }
+    }
+
+    companion object {
+        /**
+         * Ordena as listas pela ordem de visita; as nunca visitadas vão para o fim, por nome.
+         *
+         * @param lists Listas da pessoa.
+         * @param recentIds Ordem guardada no perfil.
+         * @return Listas ordenadas.
+         */
+        fun orderByRecent(lists: List<MovieList>, recentIds: List<String>): List<MovieList> {
+            val rank = recentIds.withIndex().associate { (index, id) -> id to index }
+            return lists.sortedWith(compareBy<MovieList> { rank[it.id] ?: Int.MAX_VALUE }.thenBy { it.name })
+        }
+    }
+}
