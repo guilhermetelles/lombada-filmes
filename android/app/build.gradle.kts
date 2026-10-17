@@ -21,6 +21,28 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    // Chave de versão fora do git: caminho e senha em ~/.gradle/gradle.properties.
+    signingConfigs {
+        create("release") {
+            val keystore = providers.gradleProperty("LOMBADA_KEYSTORE").orNull
+            if (keystore != null) {
+                storeFile = file(keystore)
+                storePassword = providers.gradleProperty("LOMBADA_KEYSTORE_PASSWORD").get()
+                keyAlias = providers.gradleProperty("LOMBADA_KEY_ALIAS").get()
+                keyPassword = providers.gradleProperty("LOMBADA_KEYSTORE_PASSWORD").get()
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            signingConfig = signingConfigs.getByName("release")
+        }
+    }
+
     buildFeatures {
         compose = true
         buildConfig = true
