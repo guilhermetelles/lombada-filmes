@@ -31,6 +31,36 @@ data class CastMember(val id: Int, val name: String, val character: String?, val
 data class Rating(val value: Double?, val fetchedAt: Instant?, val url: String? = null)
 
 /**
+ * Teste de Bechdel do filme segundo o bechdeltest.com, em `movies/{tmdbId}.bechdel`.
+ *
+ * @property siteId Id do filme no site; null quando o filme não está lá.
+ * @property url Página do filme no site.
+ * @property rating Quantos dos 3 critérios o filme passa, de 0 a 3; null fora do site.
+ * @property dubious Se o site marca a avaliação como duvidosa.
+ * @property disputes Quantas pessoas contestaram a avaliação nos comentários do site.
+ * @property fetchedAt Quando o backend leu a página do filme.
+ */
+data class Bechdel(
+    val siteId: Int?,
+    val url: String?,
+    val rating: Int?,
+    val dubious: Boolean,
+    val disputes: Int,
+    val fetchedAt: Instant?
+) {
+    /** Se o filme tem avaliação no site, com os critérios. */
+    val isRated: Boolean get() = siteId != null && rating != null
+
+    /** Se passa nos 3 critérios. */
+    val passes: Boolean get() = isRated && rating == CRITERIA
+
+    companion object {
+        /** Quantidade de critérios do teste. */
+        const val CRITERIA = 3
+    }
+}
+
+/**
  * Filme em `movies/{tmdbId}`, escrito só pelo backend.
  *
  * @property tmdbId Id no TMDb.
@@ -52,6 +82,7 @@ data class Rating(val value: Double?, val fetchedAt: Instant?, val url: String? 
  * @property tmdbFetchedAt Quando os dados do TMDb foram buscados.
  * @property missingDirectorPhotos Se algum diretor está no formato antigo, sem o campo de foto; o
  *   backend completa na próxima abertura do filme.
+ * @property bechdel Teste de Bechdel; null quando o backend ainda não buscou.
  */
 data class Movie(
     val tmdbId: Int,
@@ -71,7 +102,8 @@ data class Movie(
     val rottenTomatoes: Rating?,
     val metacritic: Rating?,
     val tmdbFetchedAt: Instant?,
-    val missingDirectorPhotos: Boolean = false
+    val missingDirectorPhotos: Boolean = false,
+    val bechdel: Bechdel? = null
 ) {
     /** Cópia resumida para gravar numa entrada nova. */
     fun toSnapshot(): MovieSnapshot = MovieSnapshot(

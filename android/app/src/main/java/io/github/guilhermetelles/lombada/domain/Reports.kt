@@ -1,5 +1,6 @@
 package io.github.guilhermetelles.lombada.domain
 
+import io.github.guilhermetelles.lombada.data.model.Bechdel
 import io.github.guilhermetelles.lombada.data.model.Entry
 import io.github.guilhermetelles.lombada.data.model.Movie
 import java.text.Collator
@@ -111,6 +112,31 @@ data class Calendar(
  * @property total Filmes da lista.
  */
 data class TopActors(val bars: List<Bar>, val withCast: Int, val total: Int)
+
+/**
+ * Card "Teste de Bechdel".
+ *
+ * @property rated Filmes da lista avaliados no bechdeltest.com.
+ * @property total Filmes da lista.
+ * @property passingPercent Porcentagem dos avaliados que passa nos 3 critérios, arredondada.
+ * @property distribution Barras por critérios cumpridos, de 3 a 0.
+ * @property passingAverageRank Posição média no ranking de quem passa; null sem os dois grupos.
+ * @property failingAverageRank Posição média no ranking de quem não passa; null sem os dois grupos.
+ * @property topPassing Quantos dos 10 primeiros passam.
+ * @property topRated Quantos dos 10 primeiros foram avaliados.
+ * @property dubious Avaliações que o site marca como duvidosas.
+ */
+data class BechdelReport(
+    val rated: Int,
+    val total: Int,
+    val passingPercent: Int,
+    val distribution: List<Bar>,
+    val passingAverageRank: Int?,
+    val failingAverageRank: Int?,
+    val topPassing: Int,
+    val topRated: Int,
+    val dubious: Int
+)
 
 /** Cálculos dos relatórios, a partir da lista em memória, como no mock. */
 object Reports {
@@ -305,6 +331,43 @@ object Reports {
                 .sortedWith(compareByDescending<Bar> { it.count }.thenBy(byName) { it.label })
                 .take(TOP)
         return TopActors(bars, casts.size, ranking.size)
+    }
+
+    /**
+     * Teste de Bechdel na lista: quantos passam, quantos critérios cada um cumpre e onde ficam no
+     * ranking. Só contam filmes avaliados no site.
+     *
+     * @param ranking Entradas na ordem do ranking.
+     * @param movies Filmes, com o Teste de Bechdel.
+     * @return O card, ou null quando nenhum filme da lista foi avaliado.
+     */
+    fun bechdel(ranking: List<Entry>, movies: Map<Int, Movie>): BechdelReport? {
+        // Posição no ranking (a partir de 1) e a avaliação de cada filme avaliado.
+        val rated =
+            ranking.withIndex().mapNotNull { (index, entry) ->
+                movies[entry.tmdbId]?.bechdel?.takeIf { it.isRated }?.let { index + 1 to it }
+            }
+        if (rated.isEmpty()) return null
+        val (passing, failing) = rated.partition { (_, bechdel) -> bechdel.passes }
+        val bothGroups = passing.isNotEmpty() && failing.isNotEmpty()
+        val top = rated.filter { (position, _) -> position <= TOP }
+        return BechdelReport(
+            rated = rated.size,
+            total = ranking.size,
+            passingPercent = jsRound(passing.size * 100.0 / rated.size),
+            distribution =
+                (Bechdel.CRITERIA downTo 0).map { criteria ->
+                    Bar(
+                        if (criteria == Bechdel.CRITERIA) "3 de 3 · passa" else "$criteria de 3",
+                        rated.count { (_, bechdel) -> bechdel.rating == criteria }
+                    )
+                },
+            passingAverageRank = if (bothGroups) jsRound(passing.map { it.first.toDouble() }.average()) else null,
+            failingAverageRank = if (bothGroups) jsRound(failing.map { it.first.toDouble() }.average()) else null,
+            topPassing = top.count { (_, bechdel) -> bechdel.passes },
+            topRated = top.size,
+            dubious = rated.count { (_, bechdel) -> bechdel.dubious }
+        )
     }
 
     /**

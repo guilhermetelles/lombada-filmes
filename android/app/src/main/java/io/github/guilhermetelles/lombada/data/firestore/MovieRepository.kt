@@ -5,6 +5,7 @@ import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FieldPath
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.snapshots
+import io.github.guilhermetelles.lombada.data.model.Bechdel
 import io.github.guilhermetelles.lombada.data.model.CastMember
 import io.github.guilhermetelles.lombada.data.model.Director
 import io.github.guilhermetelles.lombada.data.model.Movie
@@ -90,11 +91,28 @@ class MovieRepository(private val db: FirebaseFirestore) {
             rottenTomatoes = ratings.rating("rottenTomatoes"),
             metacritic = ratings.rating("metacritic"),
             tmdbFetchedAt = getTimestamp("tmdbFetchedAt")?.toDate()?.toInstant(),
-            missingDirectorPhotos = rawDirectors.any { !it.containsKey("profilePath") }
+            missingDirectorPhotos = rawDirectors.any { !it.containsKey("profilePath") },
+            bechdel = (get("bechdel") as? Map<*, *>)?.toBechdel()
         )
     }
 
     private fun Map<*, *>.int(key: String): Int? = (this[key] as? Number)?.toInt()
+
+    // Fora do formato vira null: id que não é número, ou filme no site sem critérios de 0 a 3.
+    private fun Map<*, *>.toBechdel(): Bechdel? {
+        val siteId = this["siteId"]
+        if (siteId != null && siteId !is Number) return null
+        val rating = (this["rating"] as? Number)?.toInt()?.takeIf { it in 0..Bechdel.CRITERIA }
+        if (siteId != null && rating == null) return null
+        return Bechdel(
+            siteId = (siteId as? Number)?.toInt(),
+            url = this["url"] as? String,
+            rating = rating,
+            dubious = this["dubious"] as? Boolean ?: false,
+            disputes = (this["disputes"] as? Number)?.toInt()?.coerceAtLeast(0) ?: 0,
+            fetchedAt = (this["fetchedAt"] as? Timestamp)?.toDate()?.toInstant()
+        )
+    }
 
     private fun Map<*, *>?.rating(key: String): Rating? {
         val rating = this?.get(key) as? Map<*, *> ?: return null

@@ -1,5 +1,6 @@
 package io.github.guilhermetelles.lombada.domain
 
+import io.github.guilhermetelles.lombada.data.model.Bechdel
 import io.github.guilhermetelles.lombada.data.model.CastMember
 import io.github.guilhermetelles.lombada.data.model.Entry
 import io.github.guilhermetelles.lombada.data.model.Movie
@@ -8,6 +9,7 @@ import io.github.guilhermetelles.lombada.data.model.PersonRef
 import java.time.LocalDate
 import java.time.YearMonth
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Test
 
 class ReportsTest {
@@ -21,7 +23,13 @@ class ReportsTest {
         MovieSnapshot("Filme $id", year, null, imdb, 3.0, directors)
     )
 
-    private fun movie(id: Int, runtime: Int, genres: List<String>, cast: List<CastMember>) = Movie(
+    private fun movie(
+        id: Int,
+        runtime: Int = 100,
+        genres: List<String> = emptyList(),
+        cast: List<CastMember> = emptyList(),
+        bechdel: Bechdel? = null
+    ) = Movie(
         tmdbId = id,
         title = "Filme $id",
         year = null,
@@ -38,8 +46,22 @@ class ReportsTest {
         imdb = null,
         rottenTomatoes = null,
         metacritic = null,
-        tmdbFetchedAt = null
+        tmdbFetchedAt = null,
+        bechdel = bechdel
     )
+
+    private fun bechdel(rating: Int, dubious: Boolean = false) =
+        Bechdel(siteId = 1, url = null, rating = rating, dubious = dubious, disputes = 0, fetchedAt = null)
+
+    private val notOnSite =
+        Bechdel(siteId = null, url = null, rating = null, dubious = false, disputes = 0, fetchedAt = null)
+
+    /** Lista com um filme por avaliação, na ordem do ranking. */
+    private fun bechdelList(ratings: List<Bechdel?>): Pair<List<Entry>, Map<Int, Movie>> {
+        val entries = ratings.indices.map { entry(it + 1, 2000, null, null, emptyList()) }
+        val byId = ratings.withIndex().associate { (index, rating) -> index + 1 to movie(index + 1, bechdel = rating) }
+        return entries to byId
+    }
 
     private val cameron = PersonRef(2710, "James Cameron")
     private val coen = PersonRef(1223, "Joel Coen")
@@ -140,5 +162,80 @@ class ReportsTest {
         // IMDb ordena 2, 1, 4, 3: o 1º de vocês fica em 2º.
         assertEquals(2, row.imdbPosition)
         assertEquals("Vocês colocaram 1 posição acima do IMDb", row.why)
+    }
+
+    @Test
+    fun `bechdel com porcentagem, distribuição, posições médias, 10 primeiros e duvidosas`() {
+        // Posições 1 a 12; a 4 fora do site e a 6 nunca buscada não contam.
+        val (entries, byId) =
+            bechdelList(
+                listOf(
+                    bechdel(3),
+                    bechdel(1),
+                    bechdel(3, dubious = true),
+                    notOnSite,
+                    bechdel(0),
+                    null,
+                    bechdel(3),
+                    bechdel(2, dubious = true),
+                    bechdel(3),
+                    bechdel(1),
+                    bechdel(3),
+                    bechdel(0)
+                )
+            )
+        val report = requireNotNull(Reports.bechdel(entries, byId))
+        assertEquals(10, report.rated)
+        assertEquals(12, report.total)
+        // 5 de 10 passam.
+        assertEquals(50, report.passingPercent)
+        assertEquals(
+            listOf("3 de 3 · passa" to 5, "2 de 3" to 1, "1 de 3" to 2, "0 de 3" to 2),
+            report.distribution.map { it.label to it.count }
+        )
+        // Passam: 1, 3, 7, 9, 11 (média 6,2). Não passam: 2, 5, 8, 10, 12 (média 7,4).
+        assertEquals(6, report.passingAverageRank)
+        assertEquals(7, report.failingAverageRank)
+        // Dos 10 primeiros, 8 avaliados e 4 passam.
+        assertEquals(4, report.topPassing)
+        assertEquals(8, report.topRated)
+        assertEquals(2, report.dubious)
+    }
+
+    @Test
+    fun `bechdel sem os dois grupos não tem posições médias`() {
+        val (entries, byId) = bechdelList(listOf(bechdel(3), bechdel(3)))
+        val report = requireNotNull(Reports.bechdel(entries, byId))
+        assertEquals(100, report.passingPercent)
+        assertNull(report.passingAverageRank)
+        assertNull(report.failingAverageRank)
+    }
+
+    @Test
+    fun `bechdel sem nenhum avaliado não tem card`() {
+        val (entries, byId) = bechdelList(listOf(null, notOnSite))
+        assertNull(Reports.bechdel(entries, byId))
+        assertNull(Reports.bechdel(emptyList(), emptyMap()))
+    }
+
+    @Test
+    fun `bechdel da lista original bate com o mock`() {
+        // Avaliações do mock (BECHDEL do mock/index.html) na ordem da lista original: critérios,
+        // "d" para duvidosa e "-" para filme fora do site.
+        val original =
+            "3 1 3 1 - 1 3 3d 0 0 2 - 0 0 3 3 0 3 - - 3d 3d 1 3 1 2 2 - 3 - 3 - 3 3 3 3d 3d 3 2d 2 1 1 1 3 " +
+                "3 3 3 3 3 3d - - - - 3 1 1 3 3 - 1 0d 1 3 3 1 1 3 - 3d 1 - - 3 1 3 3 1 3d - 3 0 1 - - 1 - 3 3 - -"
+        val ratings =
+            original.split(" ").map { code ->
+                if (code == "-") notOnSite else bechdel(code.take(1).toInt(), dubious = code.endsWith("d"))
+            }
+        val (entries, byId) = bechdelList(ratings)
+        val report = requireNotNull(Reports.bechdel(entries, byId))
+        assertEquals(56, report.passingPercent)
+        assertEquals(70 to 91, report.rated to report.total)
+        assertEquals(listOf(39, 5, 19, 7), report.distribution.map { it.count })
+        assertEquals(45 to 42, report.passingAverageRank to report.failingAverageRank)
+        assertEquals(4 to 9, report.topPassing to report.topRated)
+        assertEquals(10, report.dubious)
     }
 }
