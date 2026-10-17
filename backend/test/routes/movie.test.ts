@@ -18,7 +18,7 @@ type MovieBody = {
   ratings: { imdb?: RatingBody; letterboxd?: RatingBody; rottenTomatoes?: RatingBody; metacritic?: RatingBody };
 };
 
-const NO_CALLS = { tmdb: 0, omdb: 0, letterboxd: 0 };
+const NO_CALLS = { tmdb: 0, omdb: 0, letterboxd: 0, bechdel: 0 };
 
 let sources: FakeSources;
 let clock: Date;
@@ -63,7 +63,7 @@ describe('GET /api/movies/{tmdbId}: frescor', () => {
       profilePath: movie.cast[0]?.profilePath,
     });
     assert.equal(movie.cast.length, 12);
-    assert.deepEqual(sources.calls, { tmdb: 1, omdb: 1, letterboxd: 1 });
+    assert.deepEqual(sources.calls, { tmdb: 1, omdb: 1, letterboxd: 1, bechdel: 0 });
     assert.equal((await dependencies.db.doc('movies/2756').get()).exists, true);
     assert.deepEqual(await usageToday(), {
       tmdb: { calls: 1 },
@@ -91,7 +91,7 @@ describe('GET /api/movies/{tmdbId}: frescor', () => {
 
     await getAbyss();
 
-    assert.deepEqual(sources.calls, { tmdb: 1, omdb: 1, letterboxd: 1 });
+    assert.deepEqual(sources.calls, { tmdb: 1, omdb: 1, letterboxd: 1, bechdel: 0 });
   });
 
   test('guarda a foto do diretor no filme, mas não na cópia resumida', async () => {
@@ -110,7 +110,7 @@ describe('GET /api/movies/{tmdbId}: frescor', () => {
     assert.equal((await getAbyss()).status, 200);
     await getAbyss();
 
-    assert.deepEqual(sources.calls, { tmdb: 1, omdb: 0, letterboxd: 0 });
+    assert.deepEqual(sources.calls, { tmdb: 1, omdb: 0, letterboxd: 0, bechdel: 0 });
     assert.equal((await movie.get()).get('directors')[0].profilePath, '/9NAZnTjBQ9WcXAQEzZpKy4vdQto.jpg');
   });
 

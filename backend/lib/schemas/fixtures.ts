@@ -28,3 +28,6 @@ export const TmdbPersonToRecord = z.looseObject({
 
 /** Resposta de /search/person que o script grava como veio. */
 export const TmdbPersonSearchToRecord = z.looseObject({ results: z.array(z.looseObject({ id: z.number() })) });
+
+/** Índice do bechdeltest.com que o script grava, só com os filmes que os testes usam. */
+export const BechdelIndexToRecord = z.array(z.tuple([z.number(), z.string(), z.number(), z.number(), z.number()]));

@@ -1,6 +1,6 @@
 import { DAY_MS } from '../time/durations.js';
 import type { Movie } from '../types/movie.js';
-import type { SourceName } from '../types/sources.js';
+import type { WeeklySource } from '../types/sources.js';
 
 /**
  * Cada fonte é buscada de novo só depois de 7 dias. Notas mudam pouco, e isso mantém a OMDb muito
@@ -8,8 +8,8 @@ import type { SourceName } from '../types/sources.js';
  */
 const FRESHNESS_MS = 7 * DAY_MS;
 
-/** Fontes de nota, as únicas que a rotina diária atualiza. */
-type RatingSource = Exclude<SourceName, 'tmdb'>;
+/** Fontes de nota, as únicas que a rotina diária atualiza por aqui. */
+type RatingSource = Exclude<WeeklySource, 'tmdb'>;
 
 /**
  * Quando cada fonte de nota foi buscada pela última vez. A OMDb traz IMDb, Rotten Tomatoes e
@@ -30,7 +30,7 @@ const LAST_RATING_FETCH: Record<RatingSource, (movie: Movie) => Date | undefined
  * @param now - Momento de referência.
  * @returns true se a fonte estiver vencida.
  */
-function isStale(movie: Movie | undefined, source: SourceName, now: Date): boolean {
+function isStale(movie: Movie | undefined, source: WeeklySource, now: Date): boolean {
   if (!movie) return true;
   if (source === 'tmdb' && hasIncompleteTmdbData(movie)) return true;
   const fetchedAt = source === 'tmdb' ? movie.tmdbFetchedAt : LAST_RATING_FETCH[source](movie);

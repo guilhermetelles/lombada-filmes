@@ -1,6 +1,6 @@
 import { logger } from '../logging/logger.js';
 import type { FetchedSources, Movie } from '../types/movie.js';
-import type { SourceClients, SourceName } from '../types/sources.js';
+import type { SourceClients, WeeklySource } from '../types/sources.js';
 import type { UsageRecorder } from '../types/usage.js';
 import { isStale } from './freshness.js';
 
@@ -57,7 +57,7 @@ export async function fetchStaleSources(context: FetchContext): Promise<FetchedS
  */
 async function fetchIfStale<T>(
   { tmdbId, stored, now, usage }: FetchContext,
-  source: SourceName,
+  source: WeeklySource,
   fetchSource: () => Promise<T>,
   { required = false } = {},
 ): Promise<T | undefined> {

@@ -6,6 +6,7 @@ const SOURCE_BY_HOST: Record<string, SourceName> = {
   'api.themoviedb.org': 'tmdb',
   'www.omdbapi.com': 'omdb',
   'letterboxd.com': 'letterboxd',
+  'bechdeltest.com': 'bechdel',
 };
 
 /** O fetch falso e o que ele registra. */
@@ -25,7 +26,7 @@ export type FakeSources = {
  * @throws {Error} Ao receber pedido para um host que não é de fonte (erro do teste).
  */
 export function fakeSources(): FakeSources {
-  const calls: Record<SourceName, number> = { tmdb: 0, omdb: 0, letterboxd: 0 };
+  const calls: Record<SourceName, number> = { tmdb: 0, omdb: 0, letterboxd: 0, bechdel: 0 };
   const failing = new Set<SourceName>();
 
   const fetch: Fetch = async (input) => {
@@ -69,6 +70,13 @@ function recordedResponse(source: SourceName, url: URL): Response {
     return fixture('omdb-tt0096754.json', 'application/json');
   }
   if (source === 'letterboxd' && url.pathname === '/tmdb/2756/') return fixture('letterboxd-2756.html', 'text/html');
+  if (source === 'bechdel' && url.pathname === '/search/index.json') {
+    return fixture('bechdel-index.json', 'application/json');
+  }
+  if (source === 'bechdel' && url.pathname === '/view/1478/') return fixture('bechdel-1478-redirect.html', 'text/html');
+  if (source === 'bechdel' && url.pathname === '/view/1478/the_abyss/') {
+    return fixture('bechdel-1478.html', 'text/html');
+  }
   return new Response('{"status_message":"not found"}', { status: 404 });
 }
 

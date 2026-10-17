@@ -6,7 +6,10 @@
 import type { CastMember, Director, Person, PersonDepartment } from './person.js';
 
 /** Fontes externas, também usadas como chave do consumo em usage/{dia}. */
-export type SourceName = 'tmdb' | 'omdb' | 'letterboxd';
+export type SourceName = 'tmdb' | 'omdb' | 'letterboxd' | 'bechdel';
+
+/** Fontes com prazo de 7 dias por filme: o TMDb e as notas (o Teste de Bechdel tem prazos próprios). */
+export type WeeklySource = Exclude<SourceName, 'bechdel'>;
 
 /** Assinatura do fetch, injetado nos clientes (o global em produção, um falso nos testes). */
 export type Fetch = typeof globalThis.fetch;
@@ -63,6 +66,25 @@ export type LetterboxdRating = {
   url: string | null; // página do filme; null quando o Letterboxd não tem o filme
 };
 
+/** Um filme do índice do bechdeltest.com (/search/index.json). */
+export type BechdelIndexEntry = {
+  siteId: number;
+  title: string; // no formato do site ("Abyss, The")
+  year: number;
+  rating: number; // quantos dos 3 critérios o filme passa
+  dubious: boolean; // o site marca a avaliação como duvidosa
+};
+
+/** Página de um filme no bechdeltest.com, já lida. */
+export type BechdelPage = {
+  siteId: number;
+  url: string; // endereço final da página, depois do redirecionamento
+  imdbId: string | null; // para confirmar o casamento; null quando a página não traz o link
+  rating: number;
+  dubious: boolean;
+  disputes: number; // comentários que contestam a avaliação
+};
+
 /** Cliente do TMDb: detalhes de filme, busca de filmes e de pessoas e detalhes de pessoa. */
 export type TmdbClient = {
   getMovie(tmdbId: number): Promise<TmdbMovie>;
@@ -81,9 +103,16 @@ export type LetterboxdClient = {
   getRating(tmdbId: number): Promise<LetterboxdRating>;
 };
 
-/** Os clientes das três fontes, como as rotas recebem. */
+/** Cliente do bechdeltest.com: o índice com todos os filmes e a página de um filme. */
+export type BechdelClient = {
+  getIndex(): Promise<BechdelIndexEntry[]>;
+  getMoviePage(siteId: number): Promise<BechdelPage>;
+};
+
+/** Os clientes das fontes, como as rotas recebem. */
 export type SourceClients = {
   tmdb: TmdbClient;
   omdb: OmdbClient;
   letterboxd: LetterboxdClient;
+  bechdel: BechdelClient;
 };

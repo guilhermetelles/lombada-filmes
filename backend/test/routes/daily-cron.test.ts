@@ -17,7 +17,7 @@ type Report = {
   invitesDeleted: number;
 };
 
-const NO_CALLS = { tmdb: 0, omdb: 0, letterboxd: 0 };
+const NO_CALLS = { tmdb: 0, omdb: 0, letterboxd: 0, bechdel: 0 };
 
 let sources: FakeSources;
 let clock: Date;
@@ -68,7 +68,7 @@ describe('GET /api/cron/daily: filmes', () => {
     const stale = await runAsVercel();
 
     assert.deepEqual(stale.movies, { refreshed: 1, failed: 0 });
-    assert.deepEqual(sources.calls, { tmdb: 0, omdb: 1, letterboxd: 1 });
+    assert.deepEqual(sources.calls, { tmdb: 0, omdb: 1, letterboxd: 1, bechdel: 0 });
     const saved = (await dependencies.db.doc('movies/2756').get()).data();
     assert.equal(saved?.ratings.imdb.fetchedAt.toDate().toISOString(), clock.toISOString());
   });
@@ -104,7 +104,7 @@ describe('GET /api/cron/daily: filmes', () => {
     const report = await runDailyMaintenance(dependencies, new UsageMeter(), { movies: 2 });
 
     assert.deepEqual(report.movies, { refreshed: 2, failed: 0 });
-    assert.deepEqual(sources.calls, { tmdb: 0, omdb: 2, letterboxd: 2 });
+    assert.deepEqual(sources.calls, { tmdb: 0, omdb: 2, letterboxd: 2, bechdel: 0 });
     assert.equal(
       (await dependencies.db.doc('movies/2756').get()).get('ratings.letterboxd.fetchedAt').toDate().getTime(),
       clock.getTime() - FRESHNESS_MS,
