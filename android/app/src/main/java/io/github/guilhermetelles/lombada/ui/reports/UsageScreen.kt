@@ -64,7 +64,8 @@ private val SOURCES =
             "Letterboxd",
             "Nota e página de cada filme, pelas páginas públicas. Sem cota documentada."
         ),
-        Triple("omdb", "OMDb", "Notas do IMDb, Rotten Tomatoes e Metacritic. Cota diária do plano gratuito.")
+        Triple("omdb", "OMDb", "Notas do IMDb, Rotten Tomatoes e Metacritic. Cota diária do plano gratuito."),
+        Triple("bechdel", "Bechdel Test", "Teste de Bechdel: índice e páginas do site. Sem cota documentada.")
     )
 
 /**
