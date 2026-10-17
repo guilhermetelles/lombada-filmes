@@ -14,6 +14,8 @@ O app lê e grava a lista direto no Firestore, protegido pelas regras. O backend
 
 ## API do backend
 
+Produção: **https://lombada-lovat.vercel.app** (Vercel, região `gru1`). Cada push na `main` de `guilhermetelles/lombada-filmes` publica em produção; outras branches viram deploy de preview.
+
 As rotas do app exigem `Authorization: Bearer <ID token do Firebase Auth>`. Erros vêm como `{ error: { code, message } }`.
 
 | Rota | O que faz |
