@@ -16,6 +16,15 @@ const Translation = z.object({
   data: z.object({ title: optionalText, overview: optionalText }),
 });
 
+/** Pessoa do elenco nos créditos de um filme; `order` é a posição nos créditos. */
+const CastCredit = z.object({
+  id: z.number(),
+  name: z.string(),
+  character: optionalText,
+  order: z.number().default(Number.MAX_SAFE_INTEGER),
+  profile_path: optionalText,
+});
+
 /** Resposta de /movie/{id}?append_to_response=credits,external_ids,translations. */
 export const TmdbMovieResponse = z.object({
   id: z.number(),
@@ -26,13 +35,24 @@ export const TmdbMovieResponse = z.object({
   release_date: releaseYear,
   runtime: z.number().nullish(),
   genres: z.array(z.object({ name: z.string() })).default([]),
-  credits: z.object({ crew: z.array(z.object({ id: z.number(), job: z.string(), name: z.string() })) }).optional(),
+  credits: z
+    .object({
+      crew: z.array(z.object({ id: z.number(), job: z.string(), name: z.string() })),
+      cast: z.array(CastCredit).default([]),
+    })
+    .optional(),
   external_ids: z.object({ imdb_id: optionalText }).optional(),
   translations: z.object({ translations: z.array(Translation) }).optional(),
 });
 
 /** Resposta de /movie/{id} já validada. */
 export type TmdbMovieResponse = z.output<typeof TmdbMovieResponse>;
+
+/** Resposta de /movie/{id}/credits, só com o elenco (usada na recarga do elenco). */
+export const TmdbCreditsResponse = z.object({ cast: z.array(CastCredit).default([]) });
+
+/** Elenco de um filme já validado. */
+export type TmdbCastCredit = z.output<typeof CastCredit>;
 
 /** Resposta de /search/movie. */
 export const TmdbSearchResponse = z.object({
@@ -80,6 +100,18 @@ export const TmdbPersonResponse = z.object({
           popularity: z.number().default(0),
         }),
       ),
+      cast: z
+        .array(
+          z.object({
+            id: z.number(),
+            title: optionalText,
+            original_title: optionalText,
+            release_date: releaseYear,
+            character: optionalText,
+            vote_count: z.number().default(0),
+          }),
+        )
+        .default([]),
     })
     .optional(),
   translations: z.object({ translations: z.array(PersonTranslation) }).optional(),

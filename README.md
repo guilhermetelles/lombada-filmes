@@ -66,6 +66,8 @@ npm run record:fixtures   # regrava as respostas das APIs usadas nos testes
 npm run login-page        # página local de login com Google (uid e ID token)
 npm run seed:original-list:emulator   # ensaio da carga da lista original no emulador
 npm run seed:original-list            # carga da lista original no lombada-db (já feita; pode rodar de novo sem duplicar)
+npm run backfill:cast:dry-run         # ensaio da recarga do elenco (lê o lombada-db, não grava)
+npm run backfill:cast                 # recarga do elenco e dos filmes atuados (já feita)
 ```
 
 A carga lê o mock (`mock/index.html` e `mock/data/real.json`, fora do git) e o `OWNER_UID` do `.env`.

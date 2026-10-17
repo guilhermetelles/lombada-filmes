@@ -14,6 +14,7 @@ type RatingBody = { value: number | null; fetchedAt: string };
 type MovieBody = {
   tmdbId: number;
   title: string;
+  cast: { id: number; name: string; character: string | null; profilePath: string | null }[];
   ratings: { imdb?: RatingBody; letterboxd?: RatingBody; rottenTomatoes?: RatingBody; metacritic?: RatingBody };
 };
 
@@ -55,6 +56,13 @@ describe('GET /api/movies/{tmdbId}: frescor', () => {
     assert.equal(movie.ratings.rottenTomatoes?.value, 75);
     assert.equal(movie.ratings.metacritic?.value, 62);
     assert.equal(movie.ratings.imdb?.fetchedAt, clock.toISOString());
+    assert.deepEqual(movie.cast[0], {
+      id: 228,
+      name: 'Ed Harris',
+      character: "Virgil 'Bud' Brigman",
+      profilePath: movie.cast[0]?.profilePath,
+    });
+    assert.equal(movie.cast.length, 12);
     assert.deepEqual(sources.calls, { tmdb: 1, omdb: 1, letterboxd: 1 });
     assert.equal((await dependencies.db.doc('movies/2756').get()).exists, true);
     assert.deepEqual(await usageToday(), {

@@ -16,3 +16,16 @@ export type MaintenanceReport = {
   people: RefreshCount;
   invitesDeleted: number;
 };
+
+/** O que a recarga do elenco encontrou e fez com um tipo de documento. */
+export type BackfillCount = {
+  missing: number; // documentos sem o dado novo
+  updated: number; // gravados nesta execução (zero no ensaio)
+  failed: number;
+};
+
+/** Resultado da recarga do elenco (passo 9): filmes sem `cast` e pessoas sem `acted`. */
+export type BackfillReport = {
+  movies: BackfillCount;
+  people: BackfillCount;
+};

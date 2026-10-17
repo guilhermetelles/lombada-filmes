@@ -25,6 +25,10 @@ describe('cópia resumida do filme', () => {
     assert.equal(isSameSnapshot(snapshot, undefined), false);
   });
 
+  test('o elenco não entra na cópia resumida', () => {
+    assert.equal('cast' in toMovieSnapshot(abyss), false);
+  });
+
   test('a cópia leva só os 8 primeiros diretores (limite das regras do Firestore)', () => {
     const anthology = { ...abyss, directors: Array.from({ length: 11 }, (_, i) => ({ id: i + 1, name: `D${i}` })) };
     assert.deepEqual(

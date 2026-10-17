@@ -1,9 +1,12 @@
-import type { TmdbMovieResponse, TmdbSearchResponse } from '../../schemas/sources/tmdb.js';
-import type { PersonRef } from '../../types/person.js';
+import type { TmdbCastCredit, TmdbMovieResponse, TmdbSearchResponse } from '../../schemas/sources/tmdb.js';
+import type { CastMember, PersonRef } from '../../types/person.js';
 import type { TmdbMovie, TmdbSearchResult } from '../../types/sources.js';
 
 /** Tamanho do trecho de sinopse nos resultados de busca. */
 const OVERVIEW_EXCERPT_LENGTH = 200;
+
+/** Quantas pessoas do elenco guardar por filme, na ordem dos créditos. */
+const CAST_LIMIT = 12;
 
 /**
  * Converte a resposta de detalhes do TMDb no filme do app. O TMDb deixa a tradução em inglês vazia
@@ -20,6 +23,7 @@ export function toTmdbMovie(response: TmdbMovieResponse): TmdbMovie {
     title: english?.title ?? response.original_title ?? response.title ?? `TMDb ${response.id}`,
     year: response.release_date,
     directors: findDirectors(response),
+    cast: toCast(response.credits?.cast ?? []),
     runtime: response.runtime && response.runtime > 0 ? response.runtime : null,
     genres: response.genres.map((genre) => genre.name),
     synopsis: { pt: response.overview, en: english?.overview ?? null },
@@ -79,6 +83,25 @@ function findDirectors(response: TmdbMovieResponse): PersonRef[] {
 function excerpt(text: string | null, maxLength: number): string | null {
   if (!text || text.length <= maxLength) return text;
   return `${text.slice(0, maxLength - 1).trimEnd()}…`;
+}
+
+/**
+ * Converte o elenco dos créditos do TMDb: os 12 primeiros na ordem dos créditos, sem repetir pessoa
+ * (quem faz dois papéis aparece uma vez, com o primeiro).
+ *
+ * @param credits - Elenco dos créditos do filme.
+ * @returns O elenco no formato de movies/{tmdbId}.cast.
+ */
+export function toCast(credits: TmdbCastCredit[]): CastMember[] {
+  const ordered = [...credits].sort((a, b) => a.order - b.order);
+  return uniqueBy(ordered, (credit) => credit.id)
+    .slice(0, CAST_LIMIT)
+    .map((credit) => ({
+      id: credit.id,
+      name: credit.name,
+      character: credit.character,
+      profilePath: credit.profile_path,
+    }));
 }
 
 /**

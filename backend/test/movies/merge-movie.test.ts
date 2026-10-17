@@ -44,6 +44,11 @@ describe('mergeMovie', () => {
     assert.deepEqual(movie.ratings.letterboxd, { value: null, count: null, fetchedAt: nextDay });
   });
 
+  test('o elenco vem do TMDb e se mantém quando só as notas são atualizadas', () => {
+    const movie = mergeMovie(storedAbyss(), { letterboxd: letterboxdAbyss }, nextDay);
+    assert.deepEqual(movie.cast, tmdbAbyss.cast);
+  });
+
   test('sem documento guardado, o TMDb é obrigatório', () => {
     assert.throws(() => mergeMovie(undefined, { letterboxd: letterboxdAbyss }, firstDay), /TMDb é obrigatório/);
   });

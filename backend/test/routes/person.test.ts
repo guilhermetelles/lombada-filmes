@@ -85,6 +85,15 @@ describe('GET /api/people/{personId}', () => {
     assert.equal(await readErrorCode(response), 'source_unavailable');
   });
 
+  test('Michael Biehn vem com os filmes em que atuou, incluindo The Abyss e Aliens', async () => {
+    const response = await getPerson('2712');
+    const biehn = (await response.json()) as PersonBody & { acted: { title: string; character: string | null }[] };
+
+    assert.equal(response.status, 200);
+    assert.equal(biehn.name, 'Michael Biehn');
+    assert.ok(['The Abyss', 'Aliens'].every((title) => biehn.acted.some((movie) => movie.title === title)));
+  });
+
   test('pessoa inexistente: 404; personId inválido: 400; sem token: 401', async () => {
     assert.equal((await getPerson('99999999')).status, 404);
     assert.equal((await getPerson('abc')).status, 400);

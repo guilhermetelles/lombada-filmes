@@ -1,18 +1,18 @@
 {
  "results": [
   {
+   "id": 9392,
    "adult": false,
    "backdrop_path": "/9T5D5RGuCsC6CeqYZJTv4rT4RPy.jpg",
    "genre_ids": [
     12,
     27
    ],
-   "id": 9392,
    "title": "Abismo do Medo",
    "original_language": "en",
    "original_title": "The Descent",
    "overview": "Um ano após um grave trauma emocional, Sarah passa o tempo explorando cavernas com suas amigas. Depois de descerem ao subsolo, as mulheres encontram provas de uma expedição anterior e descobrem que não estão sozinhas. Predadores subterrâneos habitam as fendas e gostam de carne humana.",
-   "popularity": 11.1827,
+   "popularity": 10.8217,
    "poster_path": "/dSi7PfC9MiKZwntUZBArUpwbXZa.jpg",
    "release_date": "2005-07-08",
    "softcore": false,
@@ -21,18 +21,18 @@
    "vote_count": 4630
   },
   {
+   "id": 1566384,
    "adult": false,
    "backdrop_path": null,
    "genre_ids": [
     18,
     9648
    ],
-   "id": 1566384,
    "title": "ABISMO",
    "original_language": "es",
    "original_title": "ABISMO",
    "overview": "",
-   "popularity": 1.2067,
+   "popularity": 1.3348,
    "poster_path": "/6k2nPwmj3IVFva2ZMeTBLaFfhQX.jpg",
    "release_date": "2025-10-21",
    "softcore": false,
@@ -41,6 +41,24 @@
    "vote_count": 0
   },
   {
+   "id": 522213,
+   "adult": false,
+   "backdrop_path": null,
+   "genre_ids": [],
+   "title": "Abismo",
+   "original_language": "pt",
+   "original_title": "Abismo",
+   "overview": "Juvenal acaba de se tornar porteiro de um edifício. Quarenta anos se vão e Juvenal continua lá como se o tempo não tivesse passado. O interfone toca e um morador o solicita para resolver algum problema. Juvenal sobe deixando a portaria por um instante vazia e chegando no apartamento, ninguém atende. Juvenal resolve voltar para seu posto mas não consegue. O elevador não o obedece e as escadas o enganam. Prisioneiro daquele edifício, Juvenal, enfim, entende o misterioso chamado.",
+   "popularity": 1.2057,
+   "poster_path": "/um1e8BACLGAKhdDI1EuvnJI7Tsg.jpg",
+   "release_date": "2018-05-23",
+   "softcore": false,
+   "video": false,
+   "vote_average": 0,
+   "vote_count": 0
+  },
+  {
+   "id": 2756,
    "adult": false,
    "backdrop_path": "/mW6XzxelLY8T2oW2NjciG9LpZT5.jpg",
    "genre_ids": [
@@ -48,12 +66,11 @@
     53,
     878
    ],
-   "id": 2756,
    "title": "O Segredo do Abismo",
    "original_language": "en",
    "original_title": "The Abyss",
    "overview": "Um submarino para de funcionar e deixa 156 tripulantes presos no fundo do oceano. Com um furacão se aproximando, a única saída é que cientistas de uma plataforma de petróleo façam o resgate. Numa corrida contra o relógio, os salvadores embarcam numa experiência surpreendente pelo desconhecido.",
-   "popularity": 12.5863,
+   "popularity": 14.0849,
    "poster_path": "/iUmlHbK05F38QNnVDTDXa5qXFgF.jpg",
    "release_date": "1989-08-09",
    "softcore": false,

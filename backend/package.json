@@ -14,7 +14,9 @@
     "format": "biome check --write",
     "login-page": "python3 -m http.server 5173 --bind 127.0.0.1 --directory scripts/google-login",
     "seed:original-list": "node --import tsx scripts/seed-original-list.ts",
-    "seed:original-list:emulator": "npx -y firebase-tools@15.32.1 emulators:exec --config ../firebase/firebase.json --only firestore --project demo-lombada \"node --import tsx scripts/seed-original-list.ts\""
+    "seed:original-list:emulator": "npx -y firebase-tools@15.32.1 emulators:exec --config ../firebase/firebase.json --only firestore --project demo-lombada \"node --import tsx scripts/seed-original-list.ts\"",
+    "backfill:cast": "node --import tsx scripts/backfill-cast.ts",
+    "backfill:cast:dry-run": "node --import tsx scripts/backfill-cast.ts --dry-run"
   },
   "dependencies": {
     "firebase-admin": "13.10.0",

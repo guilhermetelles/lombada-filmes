@@ -1,8 +1,13 @@
 import type * as z from 'zod';
-import { TmdbMovieResponse, TmdbPersonResponse, TmdbSearchResponse } from '../../schemas/sources/tmdb.js';
+import {
+  TmdbCreditsResponse,
+  TmdbMovieResponse,
+  TmdbPersonResponse,
+  TmdbSearchResponse,
+} from '../../schemas/sources/tmdb.js';
 import type { Fetch, TmdbClient } from '../../types/sources.js';
 import { fetchJson } from '../shared/fetch-json.js';
-import { toTmdbMovie, toTmdbSearchResults } from './tmdb-mappers.js';
+import { toCast, toTmdbMovie, toTmdbSearchResults } from './tmdb-mappers.js';
 import { toTmdbPerson } from './tmdb-person-mapper.js';
 
 /** Endereço da API v3 do TMDb; o token vai no cabeçalho Authorization. */
@@ -12,7 +17,7 @@ const BASE_URL = 'https://api.themoviedb.org/3';
  * Cria o cliente do TMDb.
  *
  * @param options - Token de leitura do TMDb e o fetch a usar.
- * @returns Cliente com detalhes de filme, busca e detalhes de pessoa.
+ * @returns Cliente com detalhes de filme, busca, detalhes de pessoa e elenco.
  */
 function createTmdbClient({ token, fetch }: { token: string; fetch: Fetch }): TmdbClient {
   const getFromTmdb = <Schema extends z.ZodType>(path: string, schema: Schema) =>
@@ -59,6 +64,19 @@ function createTmdbClient({ token, fetch }: { token: string; fetch: Fetch }): Tm
     async getPerson(personId) {
       const path = `/person/${personId}?language=en-US&append_to_response=movie_credits,external_ids,translations`;
       return toTmdbPerson(await getFromTmdb(path, TmdbPersonResponse));
+    },
+
+    /**
+     * Busca só o elenco de um filme (usado na recarga do elenco, sem mexer no resto do filme).
+     *
+     * @param tmdbId - Id do filme no TMDb.
+     * @returns Os 12 primeiros dos créditos.
+     * @throws {NotFoundError} Se o TMDb não tiver o filme.
+     * @throws {SourceUnavailableError} Se o TMDb falhar ou responder fora do formato.
+     */
+    async getCast(tmdbId) {
+      const { cast } = await getFromTmdb(`/movie/${tmdbId}/credits`, TmdbCreditsResponse);
+      return toCast(cast);
     },
   };
 }

@@ -6,7 +6,12 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import type * as z from 'zod';
 import { readEnv } from '../lib/config/env.js';
-import { TmdbDetailsToRecord, TmdbPersonToRecord, TmdbSearchToRecord } from '../lib/schemas/fixtures.js';
+import {
+  TmdbCreditsToRecord,
+  TmdbDetailsToRecord,
+  TmdbPersonToRecord,
+  TmdbSearchToRecord,
+} from '../lib/schemas/fixtures.js';
 import { LETTERBOXD_USER_AGENT } from '../lib/sources/letterboxd/letterboxd-client.js';
 
 process.loadEnvFile(new URL('../../.env', import.meta.url));
@@ -29,14 +34,41 @@ const details = await tmdb(
 );
 save('tmdb-movie-2756.json', {
   ...details,
-  credits: { crew: details.credits.crew.filter((person) => person.job === 'Director') },
+  credits: {
+    crew: details.credits.crew.filter((person) => person.job === 'Director'),
+    // 15 para os testes conferirem o corte nos 12 primeiros.
+    cast: [...details.credits.cast].sort((a, b) => a.order - b.order).slice(0, 15),
+  },
   translations: {
     translations: details.translations.translations.filter((translation) => translation.iso_639_1 === 'en'),
   },
 });
 
+const credits = await tmdb('/movie/2756/credits', TmdbCreditsToRecord);
+save('tmdb-credits-2756.json', {
+  ...credits,
+  crew: [],
+  cast: [...credits.cast].sort((a, b) => a.order - b.order).slice(0, 15),
+});
+
 const search = await tmdb('/search/movie?query=abismo&language=pt-BR&include_adult=false', TmdbSearchToRecord);
-save('tmdb-search-abismo.json', { ...search, results: search.results.slice(0, 3) });
+// Os 3 primeiros e o The Abyss, que os testes procuram (a ordem do TMDb muda com o tempo).
+const abyssResult = search.results.find((result) => result.id === 2756);
+const topResults = search.results.slice(0, 3).filter((result) => result.id !== 2756);
+save('tmdb-search-abismo.json', { ...search, results: abyssResult ? [...topResults, abyssResult] : topResults });
+
+/** Michael Biehn: ator do The Abyss; os filmes atuados vêm inteiros. */
+const actor = await tmdb(
+  '/person/2712?language=en-US&append_to_response=movie_credits,external_ids,translations',
+  TmdbPersonToRecord,
+);
+save('tmdb-person-2712.json', {
+  ...actor,
+  movie_credits: { crew: [], cast: actor.movie_credits.cast },
+  translations: {
+    translations: actor.translations.translations.filter((translation) => ['pt', 'en'].includes(translation.iso_639_1)),
+  },
+});
 
 /** James Cameron: os créditos de direção, mais um crédito de outro cargo para testar o filtro. */
 const person = await tmdb(
@@ -47,7 +79,7 @@ const directing = person.movie_credits.crew.filter((credit) => credit.job === 'D
 const otherJob = person.movie_credits.crew.find((credit) => credit.job !== 'Director');
 save('tmdb-person-2710.json', {
   ...person,
-  movie_credits: { crew: otherJob ? [...directing, otherJob] : directing },
+  movie_credits: { crew: otherJob ? [...directing, otherJob] : directing, cast: person.movie_credits.cast },
   translations: {
     translations: person.translations.translations.filter((translation) =>
       ['pt', 'en'].includes(translation.iso_639_1),

@@ -33,6 +33,7 @@ function applyTmdb(stored: Movie | undefined, tmdb: TmdbMovie, now: Date): Movie
     title: tmdb.title,
     year: tmdb.year,
     directors: tmdb.directors,
+    cast: tmdb.cast,
     runtime: tmdb.runtime,
     genres: tmdb.genres,
     synopsis: tmdb.synopsis,

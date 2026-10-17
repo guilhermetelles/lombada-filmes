@@ -3,7 +3,7 @@
  * Quando a fonte não tem o filme, as notas vêm null: é uma resposta válida, que também vale 7 dias.
  */
 
-import type { Person, PersonRef } from './person.js';
+import type { CastMember, Person, PersonRef } from './person.js';
 
 /** Fontes externas, também usadas como chave do consumo em usage/{dia}. */
 export type SourceName = 'tmdb' | 'omdb' | 'letterboxd';
@@ -19,6 +19,7 @@ export type TmdbMovie = {
   title: string; // em inglês, como no Letterboxd e na lista original
   year: number | null;
   directors: PersonRef[];
+  cast: CastMember[]; // os 12 primeiros dos créditos
   runtime: number | null; // minutos
   genres: string[]; // em português
   synopsis: Synopsis;
@@ -53,11 +54,12 @@ export type LetterboxdRating = {
   url: string | null; // página do filme; null quando o Letterboxd não tem o filme
 };
 
-/** Cliente do TMDb: detalhes de filme, busca e detalhes de pessoa. */
+/** Cliente do TMDb: detalhes de filme, busca, detalhes de pessoa e elenco. */
 export type TmdbClient = {
   getMovie(tmdbId: number): Promise<TmdbMovie>;
   search(query: string): Promise<TmdbSearchResult[]>;
   getPerson(personId: number): Promise<TmdbPerson>;
+  getCast(tmdbId: number): Promise<CastMember[]>;
 };
 
 /** Cliente da OMDb: notas por id do IMDb. */

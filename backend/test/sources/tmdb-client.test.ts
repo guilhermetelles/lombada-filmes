@@ -104,3 +104,53 @@ describe('TMDb: getPerson', () => {
     await assert.rejects(tmdbClient().getPerson(99999999), NotFoundError);
   });
 });
+
+describe('TMDb: elenco', () => {
+  test('getMovie traz os 12 primeiros dos créditos, na ordem, com personagem e foto', async () => {
+    const { cast } = await tmdbClient().getMovie(2756);
+
+    assert.equal(cast.length, 12);
+    assert.deepEqual(
+      { id: cast[0]?.id, name: cast[0]?.name, character: cast[0]?.character },
+      { id: 228, name: 'Ed Harris', character: "Virgil 'Bud' Brigman" },
+    );
+    assert.equal(cast[1]?.name, 'Mary Elizabeth Mastrantonio');
+    assert.ok(cast.some((member) => member.id === 2712 && member.name === 'Michael Biehn'));
+  });
+
+  test('getCast lê só os créditos e devolve o mesmo elenco de getMovie', async () => {
+    const client = tmdbClient();
+    assert.deepEqual(await client.getCast(2756), (await client.getMovie(2756)).cast);
+  });
+
+  test('sem foto, profilePath fica null; quem tem dois papéis aparece uma vez', async () => {
+    const credits = {
+      cast: [
+        { id: 1, name: 'Ator', character: 'Papel A', order: 0, profile_path: null },
+        { id: 1, name: 'Ator', character: 'Papel B', order: 1, profile_path: null },
+        { id: 2, name: 'Atriz', character: '', order: 2, profile_path: '/a.jpg' },
+      ],
+    };
+    assert.deepEqual(await tmdbClient(respondWith(credits)).getCast(1), [
+      { id: 1, name: 'Ator', character: 'Papel A', profilePath: null },
+      { id: 2, name: 'Atriz', character: null, profilePath: '/a.jpg' },
+    ]);
+  });
+
+  test('getPerson de um ator: os 20 filmes mais votados, com personagem', async () => {
+    const biehn = await tmdbClient().getPerson(2712);
+    const titles = biehn.acted.map((movie) => movie.title);
+
+    assert.equal(biehn.name, 'Michael Biehn');
+    assert.equal(biehn.actedCount, 101);
+    assert.equal(biehn.acted.length, 20);
+    assert.ok(titles.includes('The Abyss') && titles.includes('Aliens'));
+    assert.ok(biehn.acted.find((movie) => movie.title === 'Aliens')?.character);
+  });
+
+  test('papéis só com imagens de arquivo não contam como atuação', async () => {
+    const cameron = await tmdbClient().getPerson(2710);
+    assert.equal(cameron.actedCount, 83);
+    assert.ok(cameron.acted.every((movie) => !/archive footage/i.test(movie.character ?? '')));
+  });
+});
