@@ -8,7 +8,7 @@ export type PersonRef = {
 
 /**
  * Quem dirigiu um filme, em movies/{tmdbId}.directors. A foto fica ausente nos filmes guardados
- * antes do passo 11; o app mostra iniciais, ou a foto de people/ depois que a pessoa é aberta.
+ * antes do passo 11, até a próxima atualização do TMDb ao abrir o filme; sem foto, o app mostra iniciais.
  */
 export type Director = PersonRef & {
   profilePath?: string | null | undefined; // foto: image.tmdb.org/t/p/w185{profilePath}

@@ -84,14 +84,14 @@ describe('GET /api/movies/{tmdbId}: frescor', () => {
     assert.deepEqual([usage?.tmdb.cacheHits, usage?.letterboxd.cacheHits, usage?.omdb.cacheHits], [1, 1, 1]);
   });
 
-  test('depois de 7 dias busca só as notas; o TMDb não vence', async () => {
+  test('depois de 7 dias busca as três fontes de novo', async () => {
     await getAbyss();
     forgetCalls();
-    advanceClock(10 * FRESHNESS_MS);
+    advanceClock(FRESHNESS_MS);
 
     await getAbyss();
 
-    assert.deepEqual(sources.calls, { tmdb: 0, omdb: 1, letterboxd: 1 });
+    assert.deepEqual(sources.calls, { tmdb: 1, omdb: 1, letterboxd: 1 });
   });
 
   test('guarda a foto do diretor no filme, mas não na cópia resumida', async () => {
@@ -101,18 +101,16 @@ describe('GET /api/movies/{tmdbId}: frescor', () => {
     assert.deepEqual(saved, [{ id: 2710, name: 'James Cameron', profilePath: '/9NAZnTjBQ9WcXAQEzZpKy4vdQto.jpg' }]);
   });
 
-  test('filme guardado antes da foto dos diretores continua válido e não é buscado no TMDb', async () => {
+  test('filme guardado sem a foto dos diretores é lido e ganha a foto ao vencer o TMDb', async () => {
     await getAbyss();
     const movie = dependencies.db.doc('movies/2756');
     await movie.update({ directors: [{ id: 2710, name: 'James Cameron' }] });
-    forgetCalls();
+
+    assert.equal((await getAbyss()).status, 200);
     advanceClock(FRESHNESS_MS);
+    await getAbyss();
 
-    const response = await getAbyss();
-
-    assert.equal(response.status, 200);
-    assert.equal(sources.calls.tmdb, 0);
-    assert.deepEqual((await movie.get()).get('directors'), [{ id: 2710, name: 'James Cameron' }]);
+    assert.equal((await movie.get()).get('directors')[0].profilePath, '/9NAZnTjBQ9WcXAQEzZpKy4vdQto.jpg');
   });
 });
 

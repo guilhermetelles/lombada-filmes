@@ -8,12 +8,13 @@ import { findMovie, saveMovie } from './movie-repository.js';
 import { toMovieSnapshot } from './movie-snapshot.js';
 
 /**
- * Devolve movies/{tmdbId} com as notas buscadas há menos de 7 dias, buscando só o que venceu (o
- * TMDb só na primeira vez), e garante que a cópia resumida nas entradas das listas está igual ao filme.
+ * Devolve movies/{tmdbId} com cada fonte buscada há menos de 7 dias, buscando só o que venceu (o
+ * TMDb traz catálogo, diretores e elenco com foto), e garante que a cópia resumida nas entradas das listas está igual ao filme.
  *
  * @param tmdbId - Id do filme no TMDb.
  * @param dependencies - Banco, clientes das fontes e relógio.
  * @param usage - Medidor de consumo do pedido.
+ * @param options - `ratingsOnly`: busca só as notas vencidas, sem o TMDb (rotina diária).
  * @returns O documento do filme.
  * @throws {NotFoundError} Se o filme ainda não estiver guardado e o TMDb não o tiver.
  * @throws {SourceUnavailableError} Se o filme ainda não estiver guardado e o TMDb falhar.
@@ -22,10 +23,11 @@ export async function getFreshMovie(
   tmdbId: number,
   { db, sources, now }: Dependencies,
   usage: UsageRecorder,
+  { ratingsOnly = false } = {},
 ): Promise<Movie> {
   const stored = await findMovie(db, tmdbId);
   const fetchedAt = now();
-  const fetched = await fetchStaleSources({ tmdbId, stored, now: fetchedAt, sources, usage });
+  const fetched = await fetchStaleSources({ tmdbId, stored, now: fetchedAt, sources, usage, ratingsOnly });
 
   const movie = stored && !fetchedAnySource(fetched) ? stored : mergeMovie(stored, fetched, fetchedAt);
   if (movie !== stored) await saveMovie(db, tmdbId, movie);

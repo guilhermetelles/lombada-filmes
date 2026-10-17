@@ -12,7 +12,7 @@ const CONCURRENCY = 4;
 
 /**
  * Atualiza os filmes com alguma nota vencida, do que está há mais tempo sem busca para o mais
- * recente. Só as notas são buscadas (o TMDb não vence para filme guardado), e cada atualização
+ * recente. Só as notas são buscadas (o TMDb fica para quando alguém abre o filme), e cada atualização
  * também corrige a cópia resumida nas entradas das listas.
  *
  * @param dependencies - Banco, clientes das fontes e relógio.
@@ -43,7 +43,7 @@ async function refreshStaleMovies(
   let failed = 0;
   await runInBatches(stale, CONCURRENCY, async ({ tmdbId }) => {
     try {
-      await getFreshMovie(tmdbId, dependencies, usage);
+      await getFreshMovie(tmdbId, dependencies, usage, { ratingsOnly: true });
     } catch (error) {
       failed++;
       logger.warn('rotina diária: filme não atualizado', { tmdbId, error });

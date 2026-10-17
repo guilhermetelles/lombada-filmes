@@ -9,7 +9,7 @@ const DEFAULT_LIMITS: MaintenanceLimits = { movies: 100 };
 
 /**
  * Rotina diária: atualiza as notas vencidas (7 dias) e apaga os códigos de convite vencidos. Dados
- * do TMDb e fichas de pessoas ficam de fora: só são buscados quando alguém abre o filme ou a pessoa.
+ * do TMDb e fichas de pessoas ficam de fora: são atualizados quando alguém abre o filme ou a pessoa.
  *
  * @param dependencies - Banco, clientes das fontes e relógio.
  * @param usage - Medidor de consumo da execução.

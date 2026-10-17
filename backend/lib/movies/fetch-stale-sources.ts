@@ -11,24 +11,28 @@ type FetchContext = {
   now: Date;
   sources: SourceClients;
   usage: UsageRecorder;
+  ratingsOnly: boolean; // rotina diária: com documento guardado, deixa o TMDb de fora
 };
 
 /**
- * Busca só as fontes vencidas. O TMDb, só buscado quando o filme ainda não está guardado, vem
- * primeiro porque dá o id do IMDb que a OMDb precisa; Letterboxd e OMDb vão em paralelo.
+ * Busca só as fontes vencidas. O TMDb vem primeiro porque dá o id do IMDb que a OMDb precisa;
+ * Letterboxd e OMDb vão em paralelo. Com `ratingsOnly` e documento guardado, o TMDb fica de fora.
  *
- * @param context - Filme, documento guardado, momento, clientes e medidor de consumo.
+ * @param context - Filme, documento guardado, momento, clientes, medidor de consumo e se busca só notas.
  * @returns O que cada fonte trouxe; fica de fora o que estava fresco ou falhou.
  * @throws {NotFoundError} Se não houver documento guardado e o TMDb não tiver o filme.
  * @throws {SourceUnavailableError} Se não houver documento guardado e o TMDb falhar.
  */
 export async function fetchStaleSources(context: FetchContext): Promise<FetchedSources> {
-  const { tmdbId, stored, sources } = context;
+  const { tmdbId, stored, sources, ratingsOnly } = context;
 
-  const tmdb = await fetchIfStale(context, 'tmdb', () => sources.tmdb.getMovie(tmdbId), {
-    // Sem documento guardado não há o que mostrar, então a falha do TMDb chega à rota.
-    required: stored === undefined,
-  });
+  const tmdb =
+    ratingsOnly && stored
+      ? undefined
+      : await fetchIfStale(context, 'tmdb', () => sources.tmdb.getMovie(tmdbId), {
+          // Sem documento guardado não há o que mostrar, então a falha do TMDb chega à rota.
+          required: stored === undefined,
+        });
 
   const imdbId = tmdb?.imdbId ?? stored?.ids.imdb ?? null;
   const [letterboxd, omdb] = await Promise.all([

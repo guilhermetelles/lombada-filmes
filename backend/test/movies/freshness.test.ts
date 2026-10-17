@@ -17,9 +17,10 @@ describe('isStale', () => {
     assert.equal(isStale(movie, 'letterboxd', fetchedAt), true);
   });
 
-  test('TMDb de filme guardado nunca vence', () => {
+  test('TMDb também vence aos 7 dias', () => {
     const movie = mergeMovie(undefined, { tmdb: tmdbAbyss }, fetchedAt);
-    assert.equal(isStale(movie, 'tmdb', after(100 * FRESHNESS_MS)), false);
+    assert.equal(isStale(movie, 'tmdb', after(FRESHNESS_MS - 1)), false);
+    assert.equal(isStale(movie, 'tmdb', after(FRESHNESS_MS)), true);
   });
 
   test('vence exatamente aos 7 dias', () => {

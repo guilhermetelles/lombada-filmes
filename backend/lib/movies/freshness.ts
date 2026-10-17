@@ -3,12 +3,12 @@ import type { Movie } from '../types/movie.js';
 import type { SourceName } from '../types/sources.js';
 
 /**
- * Notas são buscadas de novo só depois de 7 dias. Mudam pouco, e isso mantém a OMDb muito abaixo
- * da cota de 1.000 pedidos por dia.
+ * Cada fonte é buscada de novo só depois de 7 dias. Notas mudam pouco, e isso mantém a OMDb muito
+ * abaixo da cota de 1.000 pedidos por dia.
  */
 const FRESHNESS_MS = 7 * DAY_MS;
 
-/** Fontes de nota, as únicas que vencem por tempo. */
+/** Fontes de nota, as únicas que a rotina diária atualiza. */
 type RatingSource = Exclude<SourceName, 'tmdb'>;
 
 /**
@@ -21,8 +21,8 @@ const LAST_RATING_FETCH: Record<RatingSource, (movie: Movie) => Date | undefined
 };
 
 /**
- * Diz se uma fonte precisa ser buscada. O TMDb (catálogo, diretores e elenco) quase nunca muda: só
- * é buscado quando o filme ainda não está guardado. As notas vencem aos 7 dias.
+ * Diz se uma fonte precisa ser buscada: nunca buscada, ou buscada há 7 dias ou mais. Vale para o
+ * TMDb (catálogo, diretores e elenco com foto) e para as notas.
  *
  * @param movie - Documento guardado, se existir.
  * @param source - Fonte a conferir.
@@ -31,15 +31,14 @@ const LAST_RATING_FETCH: Record<RatingSource, (movie: Movie) => Date | undefined
  */
 function isStale(movie: Movie | undefined, source: SourceName, now: Date): boolean {
   if (!movie) return true;
-  if (source === 'tmdb') return false;
-  const fetchedAt = LAST_RATING_FETCH[source](movie);
+  const fetchedAt = source === 'tmdb' ? movie.tmdbFetchedAt : LAST_RATING_FETCH[source](movie);
   if (!fetchedAt) return true;
   return now.getTime() - fetchedAt.getTime() >= FRESHNESS_MS;
 }
 
 /**
- * Diz se alguma nota do filme venceu, com a mesma regra da busca: a OMDb só conta quando o filme
- * tem id do IMDb, porque sem ele não há o que pedir.
+ * Diz se alguma nota do filme venceu, para a rotina diária, que só atualiza notas. A OMDb só conta
+ * quando o filme tem id do IMDb, porque sem ele não há o que pedir.
  *
  * @param movie - Documento guardado.
  * @param now - Momento de referência.
