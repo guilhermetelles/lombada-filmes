@@ -51,6 +51,9 @@ object LombadaColors {
     /** Fundo de mensagens de erro. */
     val ErrorContainer = Color(0xFF5C1A1A)
 
+    /** Véu atrás do bottom sheet. */
+    val Scrim = Color(0x99050514)
+
     /** Snackbar. */
     val Inverse = Color(0xFFECE9F6)
 

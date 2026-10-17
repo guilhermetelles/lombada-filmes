@@ -3,18 +3,19 @@ package io.github.guilhermetelles.lombada.ui
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -23,7 +24,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import io.github.guilhermetelles.lombada.ui.components.LombadaButton
-import io.github.guilhermetelles.lombada.ui.list.ListPlaceholderScreen
+import io.github.guilhermetelles.lombada.ui.list.ListScreen
 import io.github.guilhermetelles.lombada.ui.onboarding.OnboardingFlow
 import io.github.guilhermetelles.lombada.ui.onboarding.WelcomeScreen
 import io.github.guilhermetelles.lombada.ui.session.SessionState
@@ -40,15 +41,17 @@ fun LombadaApp() {
     val state by session.state.collectAsStateWithLifecycle()
     val signingIn by session.signingIn.collectAsStateWithLifecycle()
     val signInError by session.signInError.collectAsStateWithLifecycle()
-    val snackbar = remember { SnackbarHostState() }
+    val snackbar = container.snackbar
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
     val showMessage: (String) -> Unit = { message -> scope.launch { snackbar.showSnackbar(message) } }
 
     Scaffold(
         containerColor = LombadaColors.Ground,
+        // Cada tela cuida dos próprios insets (barra de status, teclado, navegação).
+        contentWindowInsets = WindowInsets(0),
         snackbarHost = {
-            SnackbarHost(snackbar) { data ->
+            SnackbarHost(snackbar, modifier = Modifier.navigationBarsPadding().imePadding()) { data ->
                 Snackbar(
                     data,
                     containerColor = LombadaColors.Inverse,
@@ -80,7 +83,14 @@ fun LombadaApp() {
                         onSignOut = { session.signOut(context) }
                     )
 
-                is SessionState.Ready -> ListPlaceholderScreen(current.list, onSignOut = { session.signOut(context) })
+                is SessionState.Ready ->
+                    ListScreen(
+                        list = current.list,
+                        uid = current.uid,
+                        onSwitchList = {},
+                        onOpenEntry = {},
+                        onSignOut = { session.signOut(context) }
+                    )
 
                 is SessionState.Failed -> Failure(current.message, onSignOut = { session.signOut(context) })
             }
