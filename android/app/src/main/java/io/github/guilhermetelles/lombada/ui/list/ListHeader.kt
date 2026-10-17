@@ -101,11 +101,12 @@ fun ListTitle(name: String, description: String, onSwitch: () -> Unit) {
  *
  * @param mode Ordem atual.
  * @param onModeChange Nova ordem.
+ * @param secondLabel Rótulo da ordem por data.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SortBar(mode: SortMode, onModeChange: (SortMode) -> Unit) {
-    val options = listOf(SortMode.Ranking to "Ranking", SortMode.WatchedDate to "Ordem em que vimos")
+fun SortBar(mode: SortMode, onModeChange: (SortMode) -> Unit, secondLabel: String = "Ordem em que vimos") {
+    val options = listOf(SortMode.Ranking to "Ranking", SortMode.WatchedDate to secondLabel)
     SingleChoiceSegmentedButtonRow(
         modifier =
             Modifier

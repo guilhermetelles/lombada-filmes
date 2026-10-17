@@ -6,6 +6,18 @@ import kotlinx.serialization.Serializable
 @Serializable
 object ListRoute
 
+/** Relatórios, a segunda aba. */
+@Serializable
+object ReportsRoute
+
+/** "Vocês contra a crítica" completa. */
+@Serializable
+object CriticsRoute
+
+/** Consumo das APIs. */
+@Serializable
+object UsageRoute
+
 /**
  * Detalhe de um filme. Título, ano e capa vêm junto para a tela abrir na hora, antes do Firestore.
  *

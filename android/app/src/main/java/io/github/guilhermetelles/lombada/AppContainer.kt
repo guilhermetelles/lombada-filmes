@@ -14,6 +14,7 @@ import io.github.guilhermetelles.lombada.data.firestore.EntryRepository
 import io.github.guilhermetelles.lombada.data.firestore.ListRepository
 import io.github.guilhermetelles.lombada.data.firestore.MovieRepository
 import io.github.guilhermetelles.lombada.data.firestore.PersonRepository
+import io.github.guilhermetelles.lombada.data.firestore.UsageRepository
 import io.github.guilhermetelles.lombada.data.firestore.UserRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -51,6 +52,9 @@ class AppContainer(context: Context) {
 
     /** Fichas de diretores e atores. */
     val people = PersonRepository(db)
+
+    /** Consumo das APIs. */
+    val usage = UsageRepository(db)
 
     /** Escopo que sobrevive às telas, para gravações adiadas como a remoção com "Desfazer". */
     val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
