@@ -22,6 +22,7 @@ import kotlinx.coroutines.launch
  * @param onBack Voltar, no modo [adding].
  * @param onSignOut Sair da conta.
  * @param onDone Chamado quando a pessoa entra numa lista ou abre a criada.
+ * @param instance Muda a cada abertura do modo "Adicionar", para começar com os campos limpos.
  */
 @Composable
 fun OnboardingFlow(
@@ -31,11 +32,12 @@ fun OnboardingFlow(
     onMessage: (String) -> Unit,
     onBack: () -> Unit,
     onSignOut: () -> Unit,
-    onDone: () -> Unit = {}
+    onDone: () -> Unit = {},
+    instance: Int = 0
 ) {
     val container = appContainer()
     val viewModel =
-        viewModel(key = "onboarding-$uid-$adding") {
+        viewModel(key = "onboarding-$uid-$adding-$instance") {
             OnboardingViewModel(container, uid, onHoldNewList) { message ->
                 onMessage(message)
                 onDone()

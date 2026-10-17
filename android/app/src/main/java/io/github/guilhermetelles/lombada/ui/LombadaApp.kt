@@ -1,5 +1,6 @@
 package io.github.guilhermetelles.lombada.ui
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,7 +17,12 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -24,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import io.github.guilhermetelles.lombada.ui.components.LombadaButton
+import io.github.guilhermetelles.lombada.ui.lists.ListsSheet
 import io.github.guilhermetelles.lombada.ui.main.MainScreen
 import io.github.guilhermetelles.lombada.ui.onboarding.OnboardingFlow
 import io.github.guilhermetelles.lombada.ui.onboarding.WelcomeScreen
@@ -83,13 +90,7 @@ fun LombadaApp() {
                         onSignOut = { session.signOut(context) }
                     )
 
-                is SessionState.Ready ->
-                    MainScreen(
-                        list = current.list,
-                        uid = current.uid,
-                        onSwitchList = {},
-                        onSignOut = { session.signOut(context) }
-                    )
+                is SessionState.Ready -> ReadyApp(current, session, showMessage)
 
                 is SessionState.Failed -> Failure(current.message, onSignOut = { session.signOut(context) })
             }
@@ -117,5 +118,77 @@ private fun Failure(message: String, onSignOut: () -> Unit) {
             modifier = Modifier.padding(top = 88.dp, bottom = 16.dp)
         )
         LombadaButton("Sair da conta", onClick = onSignOut)
+    }
+}
+
+/** Como a pessoa chegou em "Adicionar uma lista". */
+private enum class AddingMode {
+    Join,
+    Create
+}
+
+/**
+ * App com lista aberta, mais "Suas listas" e o modo "Adicionar uma lista" por cima.
+ *
+ * @param ready Sessão com a lista ativa.
+ * @param session Sessão, para trocar de lista e sair.
+ * @param showMessage Mostra uma mensagem curta.
+ */
+@Composable
+private fun ReadyApp(ready: SessionState.Ready, session: SessionViewModel, showMessage: (String) -> Unit) {
+    val context = LocalContext.current
+    var sheetOpen by rememberSaveable { mutableStateOf(false) }
+    var adding by rememberSaveable { mutableStateOf<AddingMode?>(null) }
+    var addingCount by rememberSaveable { mutableIntStateOf(0) }
+
+    // Trocar de lista recomeça a navegação na lista nova.
+    key(ready.list.id) {
+        MainScreen(
+            list = ready.list,
+            uid = ready.uid,
+            onSwitchList = { sheetOpen = true },
+            onSignOut = { session.signOut(context) }
+        )
+    }
+    if (sheetOpen) {
+        ListsSheet(
+            uid = ready.uid,
+            active = ready.list,
+            lists = ready.lists,
+            onPick = {
+                sheetOpen = false
+                session.openList(it)
+            },
+            onJoin = {
+                sheetOpen = false
+                addingCount++
+                adding = AddingMode.Join
+            },
+            onCreate = {
+                sheetOpen = false
+                addingCount++
+                adding = AddingMode.Create
+            },
+            onDismiss = { sheetOpen = false }
+        )
+    }
+    if (adding != null) {
+        BackHandler { adding = null }
+        Box(
+            Modifier
+                .fillMaxSize()
+                .background(LombadaColors.Ground)
+        ) {
+            OnboardingFlow(
+                uid = ready.uid,
+                adding = true,
+                onHoldNewList = session::holdNewList,
+                onMessage = showMessage,
+                onBack = { adding = null },
+                onSignOut = {},
+                onDone = { adding = null },
+                instance = addingCount
+            )
+        }
     }
 }

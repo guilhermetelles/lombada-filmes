@@ -125,7 +125,8 @@ fun ChooseListScreen(
                         keyboardType = KeyboardType.Ascii,
                         imeAction = ImeAction.Go
                     ),
-                keyboardActions = KeyboardActions(onGo = { onJoin() })
+                keyboardActions = KeyboardActions(onGo = { onJoin() }),
+                visualTransformation = InviteCodeTransformation
             )
             LombadaButton("Entrar na lista", onClick = onJoin, busy = state.joining, modifier = Modifier.fillMaxWidth())
         }

@@ -15,7 +15,7 @@ import kotlinx.coroutines.launch
 /**
  * Estado dos dois cards de "Como vocês querem começar?" e da tela "Lista criada".
  *
- * @property code Código digitado, já formatado (`ABC-123`).
+ * @property code Código digitado, normalizado e sem traço (o campo mostra `ABC-123`).
  * @property codeError Erro do código, ou null.
  * @property joining Se a entrada está em andamento.
  * @property name Nome da lista nova.
@@ -69,7 +69,7 @@ class OnboardingViewModel(
      */
     fun onCodeChange(typed: String) {
         val code = InviteCode.normalize(typed).take(InviteCode.LENGTH)
-        _state.update { it.copy(code = InviteCode.format(code), codeError = null) }
+        _state.update { it.copy(code = code, codeError = null) }
     }
 
     /**
@@ -147,6 +147,7 @@ class OnboardingViewModel(
     /** Abre a lista recém-criada. */
     fun openCreated() {
         val created = _state.value.created ?: return
+        _state.value = OnboardingUiState()
         viewModelScope.launch {
             runCatching { container.users.visit(uid, created.listId) }
             onHoldNewList(false)

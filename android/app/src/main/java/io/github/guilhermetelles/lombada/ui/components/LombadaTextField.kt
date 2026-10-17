@@ -18,6 +18,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -39,6 +40,7 @@ import io.github.guilhermetelles.lombada.ui.theme.LombadaColors
  * @param keyboardOptions Teclado.
  * @param keyboardActions Ação do teclado.
  * @param textStyle Estilo do texto digitado.
+ * @param visualTransformation Formatação só visual, como o traço do código.
  */
 @Composable
 fun LombadaTextField(
@@ -53,7 +55,8 @@ fun LombadaTextField(
     minLines: Int = 1,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     keyboardActions: KeyboardActions = KeyboardActions.Default,
-    textStyle: TextStyle = MaterialTheme.typography.bodyLarge
+    textStyle: TextStyle = MaterialTheme.typography.bodyLarge,
+    visualTransformation: VisualTransformation = VisualTransformation.None
 ) {
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Text(
@@ -89,6 +92,7 @@ fun LombadaTextField(
             minLines = minLines,
             keyboardOptions = keyboardOptions,
             keyboardActions = keyboardActions,
+            visualTransformation = visualTransformation,
             shape = RoundedCornerShape(8.dp),
             colors =
                 OutlinedTextFieldDefaults.colors(

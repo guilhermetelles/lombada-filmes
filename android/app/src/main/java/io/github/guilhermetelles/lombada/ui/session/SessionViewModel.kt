@@ -73,8 +73,10 @@ class SessionViewModel(private val container: AppContainer) : ViewModel() {
 
     private fun decide(uid: String, profile: UserProfile, lists: List<MovieList>, holding: Boolean): SessionState {
         val ordered = orderByRecent(lists, profile.recentListIds)
-        val active = ordered.firstOrNull { it.id == profile.activeListId } ?: ordered.firstOrNull()
-        if (active == null || holding) return SessionState.NeedsList(uid, profile)
+        val current = ordered.firstOrNull { it.id == profile.activeListId }
+        // No primeiro acesso, a lista recém-criada espera a tela do código antes de abrir.
+        if (current == null && holding) return SessionState.NeedsList(uid, profile)
+        val active = current ?: ordered.firstOrNull() ?: return SessionState.NeedsList(uid, profile)
         if (active.id != profile.activeListId) {
             // A lista ativa sumiu (a pessoa saiu ou a lista foi apagada): abre a mais recente.
             viewModelScope.launch { runCatching { container.users.visit(uid, active.id) } }
