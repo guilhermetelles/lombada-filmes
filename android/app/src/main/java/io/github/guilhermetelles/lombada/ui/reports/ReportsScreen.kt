@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import io.github.guilhermetelles.lombada.domain.BechdelReport
 import io.github.guilhermetelles.lombada.domain.Formatting
 import io.github.guilhermetelles.lombada.domain.Reports
 import io.github.guilhermetelles.lombada.ui.appContainer
@@ -43,12 +44,16 @@ private val CALENDAR_SUBTITLE =
         append("quanto mais forte o amarelo, mais filmes.")
     }
 
+private const val BECHDEL_SUBTITLE =
+    "Duas mulheres com nome conversam entre si sobre algo que não seja um homem? " +
+        "Avaliações da comunidade do bechdeltest.com."
+
 private const val DIRECTORS_SUBTITLE =
     "Os 10 diretores com mais filmes na lista. Toque num nome para ver os filmes dele."
 
 /**
  * Relatórios: resumo, prévia de "Vocês contra a crítica", filmes por mês, diretores, atores,
- * gêneros, décadas e o acesso ao consumo das APIs. Tudo calculado da lista em memória.
+ * Teste de Bechdel, gêneros, décadas e o acesso ao consumo das APIs. Tudo calculado da lista em memória.
  *
  * @param listId Lista ativa.
  * @param onOpenMovie Abre um filme.
@@ -203,6 +208,8 @@ private fun Content(
         }
     }
 
+    state.bechdel?.let { BechdelCard(it) }
+
     ReportSection("Gêneros", AnnotatedString("Os 10 gêneros mais frequentes. Um filme pode contar em mais de um.")) {
         BarChart(state.genres)
     }
@@ -216,7 +223,8 @@ private fun Content(
     ) { SeeAll("Ver consumo", onOpenUsage) }
     Text(
         "Notas do IMDb, Rotten Tomatoes e Metacritic pela OMDb; nota do Letterboxd pelas páginas " +
-            "públicas do Letterboxd; catálogo, elenco e fichas pelo TMDb. Este app usa a API do TMDb, " +
+            "públicas do Letterboxd; Teste de Bechdel pelo bechdeltest.com; catálogo, elenco e fichas " +
+            "pelo TMDb. Este app usa a API do TMDb, " +
             "mas não é endossado nem certificado pelo TMDb.",
         style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.5.sp, lineHeight = 19.sp),
         color = LombadaColors.Paper3,
@@ -224,13 +232,76 @@ private fun Content(
     )
 }
 
+/**
+ * Card "Teste de Bechdel": quantos passam, quantos foram avaliados, as barras por critérios e os
+ * fatos de posição no ranking, 10 primeiros e avaliações duvidosas.
+ */
+@Composable
+private fun BechdelCard(report: BechdelReport) {
+    ReportSection("Teste de Bechdel", AnnotatedString(BECHDEL_SUBTITLE)) {
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            StatTile(report.passingPercent.toString(), "%", "passam nos 3 critérios", Modifier.weight(1f))
+            StatTile(report.rated.toString(), "/${report.total}", "filmes avaliados no site", Modifier.weight(1f))
+        }
+        Box(Modifier.padding(top = 14.dp)) { BarChart(report.distribution) }
+        Column(verticalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.padding(top = 12.dp)) {
+            val passing = report.passingAverageRank
+            val failing = report.failingAverageRank
+            if (passing != null && failing != null) {
+                Fact(
+                    "Quem passa fica em média em " to false,
+                    "#$passing" to true,
+                    " no ranking de vocês; quem não passa, em " to false,
+                    "#$failing" to true
+                )
+            }
+            if (report.topRated > 0) {
+                Fact(
+                    "Dos 10 primeiros do ranking, " to false,
+                    "${report.topPassing} de ${report.topRated}" to true,
+                    " avaliados passam" to false
+                )
+            }
+            if (report.dubious > 0) {
+                Fact(
+                    "${report.dubious}" to true,
+                    (
+                        if (report.dubious ==
+                            1
+                        ) {
+                            " avaliação é marcada como duvidosa"
+                        } else {
+                            " avaliações são marcadas como duvidosas"
+                        }
+                        ) +
+                        " pelo site" to false
+                )
+            }
+        }
+    }
+}
+
 @Composable
 private fun Fact(before: String, bold: String, after: String) {
+    Fact(before to false, bold to true, after to false)
+}
+
+/**
+ * Linha de fato com trechos em destaque.
+ *
+ * @param parts Trechos, cada um com se vai em destaque.
+ */
+@Composable
+private fun Fact(vararg parts: Pair<String, Boolean>) {
     Text(
         buildAnnotatedString {
-            append(before)
-            withStyle(SpanStyle(color = LombadaColors.Paper, fontWeight = FontWeight.SemiBold)) { append(bold) }
-            append(after)
+            parts.forEach { (text, bold) ->
+                if (bold) {
+                    withStyle(SpanStyle(color = LombadaColors.Paper, fontWeight = FontWeight.SemiBold)) { append(text) }
+                } else {
+                    append(text)
+                }
+            }
         },
         style = MaterialTheme.typography.bodyMedium.copy(lineHeight = 20.sp),
         color = LombadaColors.Paper2
