@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { beforeEach, describe, test } from 'node:test';
 import { movieRoute } from '../../api/movies/[tmdbId].js';
+import { MATCHED_FRESHNESS_MS, NOT_FOUND_FRESHNESS_MS } from '../../lib/bechdel/bechdel-freshness.js';
 import { FRESHNESS_MS } from '../../lib/movies/freshness.js';
 import type { Fetch } from '../../lib/types/sources.js';
 import { usageDay } from '../../lib/usage/usage-day.js';
@@ -11,9 +12,18 @@ import { getRequest, readErrorCode, withBearer } from '../support/requests.js';
 
 /** Corpo da resposta como o app recebe (datas em texto ISO). */
 type RatingBody = { value: number | null; fetchedAt: string };
+type BechdelBody = {
+  siteId: number | null;
+  url: string | null;
+  rating: number | null;
+  dubious: boolean;
+  disputes: number;
+  fetchedAt: string;
+};
 type MovieBody = {
   tmdbId: number;
   title: string;
+  bechdel?: BechdelBody;
   cast: { id: number; name: string; character: string | null; profilePath: string | null }[];
   ratings: { imdb?: RatingBody; letterboxd?: RatingBody; rottenTomatoes?: RatingBody; metacritic?: RatingBody };
 };
@@ -63,12 +73,14 @@ describe('GET /api/movies/{tmdbId}: frescor', () => {
       profilePath: movie.cast[0]?.profilePath,
     });
     assert.equal(movie.cast.length, 12);
-    assert.deepEqual(sources.calls, { tmdb: 1, omdb: 1, letterboxd: 1, bechdel: 0 });
+    // No bechdeltest.com: o índice, a página de redirecionamento e a página do filme.
+    assert.deepEqual(sources.calls, { tmdb: 1, omdb: 1, letterboxd: 1, bechdel: 3 });
     assert.equal((await dependencies.db.doc('movies/2756').get()).exists, true);
     assert.deepEqual(await usageToday(), {
       tmdb: { calls: 1 },
       letterboxd: { calls: 1 },
       omdb: { calls: 1, dailyLimit: 1000 },
+      bechdel: { calls: 2 },
     });
   });
 
@@ -110,7 +122,7 @@ describe('GET /api/movies/{tmdbId}: frescor', () => {
     assert.equal((await getAbyss()).status, 200);
     await getAbyss();
 
-    assert.deepEqual(sources.calls, { tmdb: 1, omdb: 0, letterboxd: 0, bechdel: 0 });
+    assert.deepEqual(sources.calls, { ...NO_CALLS, tmdb: 1 });
     assert.equal((await movie.get()).get('directors')[0].profilePath, '/9NAZnTjBQ9WcXAQEzZpKy4vdQto.jpg');
   });
 
@@ -239,5 +251,126 @@ describe('GET /api/movies/{tmdbId}: cópia resumida nas listas', () => {
     );
     assert.deepEqual((await entry('lists/L2/entries/E2').get()).get('movie'), updated);
     assert.equal((await entry('lists/L1/entries/E3').get()).get('movie.title'), 'The Matrix');
+  });
+});
+
+describe('GET /api/movies/{tmdbId}: Teste de Bechdel', () => {
+  /**
+   * Troca o índice do bechdeltest.com por um vazio, como se o filme não estivesse no site.
+   *
+   * @returns Quantas vezes o índice foi pedido.
+   */
+  const withEmptyIndex = () => {
+    const indexRequests = { count: 0 };
+    const fetch: Fetch = async (input, init) => {
+      const url = new URL(input instanceof Request ? input.url : input);
+      if (url.hostname === 'bechdeltest.com' && url.pathname === '/search/index.json') {
+        indexRequests.count++;
+        return Response.json([]);
+      }
+      return sources.fetch(input, init);
+    };
+    dependencies = createTestDependencies(fetch, () => clock);
+    return indexRequests;
+  };
+
+  test('The Abyss é casado pelo IMDb e gravado com critérios, duvidosa, contestações e URL', async () => {
+    const movie = await readMovie(await getAbyss());
+
+    const expected = {
+      siteId: 1478,
+      url: 'https://bechdeltest.com/view/1478/the_abyss/',
+      rating: 3,
+      dubious: false,
+      disputes: 1,
+      fetchedAt: clock.toISOString(),
+    };
+    assert.deepEqual(movie.bechdel, expected);
+    const saved = (await dependencies.db.doc('movies/2756').get()).get('bechdel');
+    assert.deepEqual({ ...saved, fetchedAt: saved.fetchedAt.toDate().toISOString() }, expected);
+  });
+
+  test('segunda abertura não faz pedido ao site', async () => {
+    await getAbyss();
+    forgetCalls();
+
+    const movie = await readMovie(await getAbyss());
+
+    assert.equal(movie.bechdel?.siteId, 1478);
+    assert.equal(sources.calls.bechdel, 0);
+    assert.equal((await usageToday())?.bechdel.cacheHits, 1);
+  });
+
+  test('casado: relê só a página depois de 30 dias, sem o índice; a atualização do TMDb mantém o valor', async () => {
+    await getAbyss();
+    advanceClock(FRESHNESS_MS);
+    forgetCalls();
+
+    const afterWeek = await readMovie(await getAbyss());
+    assert.equal(afterWeek.bechdel?.siteId, 1478);
+    assert.equal(sources.calls.tmdb, 1);
+    assert.equal(sources.calls.bechdel, 0);
+
+    advanceClock(MATCHED_FRESHNESS_MS - FRESHNESS_MS);
+    const afterMonth = await readMovie(await getAbyss());
+
+    // A página de redirecionamento e a página do filme; nenhum índice.
+    assert.equal(sources.calls.bechdel, 2);
+    assert.equal(afterMonth.bechdel?.fetchedAt, clock.toISOString());
+  });
+
+  test('fora do site: siteId null, e só procura de novo depois de 7 dias', async () => {
+    const indexRequests = withEmptyIndex();
+
+    const movie = await readMovie(await getAbyss());
+    assert.deepEqual(movie.bechdel, {
+      siteId: null,
+      url: null,
+      rating: null,
+      dubious: false,
+      disputes: 0,
+      fetchedAt: clock.toISOString(),
+    });
+
+    advanceClock(NOT_FOUND_FRESHNESS_MS - 1);
+    await getAbyss();
+    assert.equal(indexRequests.count, 1);
+
+    advanceClock(1);
+    await getAbyss();
+    assert.equal(indexRequests.count, 2);
+  });
+
+  test('site fora do ar: responde 200 sem o campo, e o erro vai para o consumo', async () => {
+    sources.failing.add('bechdel');
+
+    const response = await getAbyss();
+    const movie = await readMovie(response);
+
+    assert.equal(response.status, 200);
+    assert.equal(movie.bechdel, undefined);
+    assert.equal(movie.ratings.imdb?.value, 7.5);
+    assert.deepEqual((await usageToday())?.bechdel, { calls: 1, errors: 1 });
+  });
+
+  test('site fora do ar ou com formato mudado na atualização: o valor guardado continua valendo', async () => {
+    await getAbyss();
+    advanceClock(MATCHED_FRESHNESS_MS);
+    sources.failing.add('bechdel');
+
+    const offline = await readMovie(await getAbyss());
+    assert.equal(offline.bechdel?.rating, 3);
+
+    const changedFormat: Fetch = async (input, init) => {
+      const url = new URL(input instanceof Request ? input.url : input);
+      if (url.hostname === 'bechdeltest.com') return new Response('<html>página nova</html>');
+      return sources.fetch(input, init);
+    };
+    sources.failing.delete('bechdel');
+    dependencies = createTestDependencies(changedFormat, () => clock);
+    const response = await getAbyss();
+
+    assert.equal(response.status, 200);
+    assert.equal((await readMovie(response)).bechdel?.siteId, 1478);
   });
 });

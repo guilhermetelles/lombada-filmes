@@ -1,10 +1,20 @@
 import * as z from 'zod';
-import type { Movie, MovieSnapshot } from '../types/movie.js';
+import type { Bechdel, Movie, MovieSnapshot } from '../types/movie.js';
 import { firestoreDate } from './firestore.js';
 import { CastMemberSchema, DirectorSchema, PersonRefSchema } from './person.js';
 
 /** Campos comuns a toda nota: valor e data da busca. */
 const rating = { value: z.number().nullable(), fetchedAt: firestoreDate };
+
+/** movies/{tmdbId}.bechdel: Teste de Bechdel do bechdeltest.com. */
+export const BechdelSchema: z.ZodType<Bechdel> = z.object({
+  siteId: z.number().int().nullable(),
+  url: z.string().nullable(),
+  rating: z.number().int().min(0).max(3).nullable(),
+  dubious: z.boolean(),
+  disputes: z.number().int().nonnegative(),
+  fetchedAt: firestoreDate,
+});
 
 /** movies/{tmdbId}, validado ao ler. A anotação garante que o schema produz exatamente o tipo Movie. */
 export const MovieSchema: z.ZodType<Movie> = z.object({
@@ -25,6 +35,7 @@ export const MovieSchema: z.ZodType<Movie> = z.object({
     metacritic: z.object(rating).optional(),
   }),
   tmdbFetchedAt: firestoreDate,
+  bechdel: BechdelSchema.optional(),
 });
 
 /** Cópia resumida como está gravada em lists/{listId}/entries/{entryId}.movie. */

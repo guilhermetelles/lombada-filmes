@@ -17,6 +17,19 @@ export type MovieRatings = {
   metacritic?: Rating | undefined;
 };
 
+/**
+ * Teste de Bechdel segundo o bechdeltest.com. Filme que não está no site fica com `siteId`, `url` e
+ * `rating` null, `dubious` false e `disputes` 0.
+ */
+export type Bechdel = {
+  siteId: number | null;
+  url: string | null; // página do filme no site
+  rating: number | null; // quantos dos 3 critérios o filme passa
+  dubious: boolean; // o site marca a avaliação como duvidosa
+  disputes: number; // quantas pessoas contestaram a avaliação nos comentários
+  fetchedAt: Date; // quando a página do filme foi lida (ou a busca não achou o filme)
+};
+
 /** Documento movies/{tmdbId}. */
 export type Movie = {
   title: string;
@@ -30,6 +43,7 @@ export type Movie = {
   ids: { imdb: string | null; letterboxd: string | null };
   ratings: MovieRatings;
   tmdbFetchedAt: Date;
+  bechdel?: Bechdel | undefined; // ausente até a primeira busca; fica fora da cópia resumida
 };
 
 /**

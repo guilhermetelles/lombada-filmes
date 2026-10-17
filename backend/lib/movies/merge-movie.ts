@@ -21,7 +21,8 @@ export function mergeMovie(stored: Movie | undefined, fetched: FetchedSources, n
 }
 
 /**
- * Troca o catálogo inteiro pelo do TMDb e mantém as notas e o endereço do Letterboxd guardados.
+ * Troca o catálogo inteiro pelo do TMDb e mantém as notas, o endereço do Letterboxd e o Teste de
+ * Bechdel guardados.
  *
  * @param stored - Documento guardado, se existir.
  * @param tmdb - Filme vindo do TMDb.
@@ -41,6 +42,8 @@ function applyTmdb(stored: Movie | undefined, tmdb: TmdbMovie, now: Date): Movie
     ids: { imdb: tmdb.imdbId, letterboxd: stored?.ids.letterboxd ?? null },
     ratings: stored?.ratings ?? {},
     tmdbFetchedAt: now,
+    // Sem a chave quando nunca foi buscado: o Firestore recusa campo undefined.
+    ...(stored?.bechdel && { bechdel: stored.bechdel }),
   };
 }
 
