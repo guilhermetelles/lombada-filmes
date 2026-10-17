@@ -118,11 +118,6 @@ describe('TMDb: elenco', () => {
     assert.ok(cast.some((member) => member.id === 2712 && member.name === 'Michael Biehn'));
   });
 
-  test('getCast lê só os créditos e devolve o mesmo elenco de getMovie', async () => {
-    const client = tmdbClient();
-    assert.deepEqual(await client.getCast(2756), (await client.getMovie(2756)).cast);
-  });
-
   test('sem foto, profilePath fica null; quem tem dois papéis aparece uma vez', async () => {
     const credits = {
       cast: [
@@ -131,7 +126,9 @@ describe('TMDb: elenco', () => {
         { id: 2, name: 'Atriz', character: '', order: 2, profile_path: '/a.jpg' },
       ],
     };
-    assert.deepEqual(await tmdbClient(respondWith(credits)).getCast(1), [
+    const movie = await tmdbClient(respondWith({ id: 1, credits: { crew: [], ...credits } })).getMovie(1);
+
+    assert.deepEqual(movie.cast, [
       { id: 1, name: 'Ator', character: 'Papel A', profilePath: null },
       { id: 2, name: 'Atriz', character: null, profilePath: '/a.jpg' },
     ]);

@@ -48,9 +48,6 @@ export const TmdbMovieResponse = z.object({
 /** Resposta de /movie/{id} já validada. */
 export type TmdbMovieResponse = z.output<typeof TmdbMovieResponse>;
 
-/** Resposta de /movie/{id}/credits, só com o elenco (usada na recarga do elenco). */
-export const TmdbCreditsResponse = z.object({ cast: z.array(CastCredit).default([]) });
-
 /** Elenco de um filme já validado. */
 export type TmdbCastCredit = z.output<typeof CastCredit>;
 

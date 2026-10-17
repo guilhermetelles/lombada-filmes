@@ -1,6 +1,5 @@
 import type * as z from 'zod';
 import {
-  TmdbCreditsResponse,
   TmdbMovieResponse,
   TmdbPersonResponse,
   TmdbPersonSearchResponse,
@@ -8,7 +7,7 @@ import {
 } from '../../schemas/sources/tmdb.js';
 import type { Fetch, TmdbClient } from '../../types/sources.js';
 import { fetchJson } from '../shared/fetch-json.js';
-import { toCast, toTmdbMovie, toTmdbSearchResults } from './tmdb-mappers.js';
+import { toTmdbMovie, toTmdbSearchResults } from './tmdb-mappers.js';
 import { toTmdbPerson, toTmdbPersonSearchResults } from './tmdb-person-mapper.js';
 
 /** Endereço da API v3 do TMDb; o token vai no cabeçalho Authorization. */
@@ -65,19 +64,6 @@ function createTmdbClient({ token, fetch }: { token: string; fetch: Fetch }): Tm
     async getPerson(personId) {
       const path = `/person/${personId}?language=en-US&append_to_response=movie_credits,external_ids,translations`;
       return toTmdbPerson(await getFromTmdb(path, TmdbPersonResponse));
-    },
-
-    /**
-     * Busca só o elenco de um filme (usado na recarga do elenco, sem mexer no resto do filme).
-     *
-     * @param tmdbId - Id do filme no TMDb.
-     * @returns Os 12 primeiros dos créditos.
-     * @throws {NotFoundError} Se o TMDb não tiver o filme.
-     * @throws {SourceUnavailableError} Se o TMDb falhar ou responder fora do formato.
-     */
-    async getCast(tmdbId) {
-      const { cast } = await getFromTmdb(`/movie/${tmdbId}/credits`, TmdbCreditsResponse);
-      return toCast(cast);
     },
 
     /**

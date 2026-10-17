@@ -14,9 +14,6 @@ export const TmdbDetailsToRecord = z.looseObject({
   translations: z.looseObject({ translations: z.array(z.looseObject({ iso_639_1: z.string() })) }),
 });
 
-/** Resposta de /movie/{id}/credits que o script grava, só com o começo do elenco. */
-export const TmdbCreditsToRecord = z.looseObject({ cast: z.array(z.looseObject({ order: z.number() })) });
-
 /** Resposta de /search/movie que o script grava, só com os primeiros resultados. */
 export const TmdbSearchToRecord = z.looseObject({ results: z.array(z.looseObject({ id: z.number() })) });
 

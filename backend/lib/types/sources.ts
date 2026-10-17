@@ -63,12 +63,11 @@ export type LetterboxdRating = {
   url: string | null; // página do filme; null quando o Letterboxd não tem o filme
 };
 
-/** Cliente do TMDb: detalhes de filme, busca de filmes e de pessoas, detalhes de pessoa e elenco. */
+/** Cliente do TMDb: detalhes de filme, busca de filmes e de pessoas e detalhes de pessoa. */
 export type TmdbClient = {
   getMovie(tmdbId: number): Promise<TmdbMovie>;
   search(query: string): Promise<TmdbSearchResult[]>;
   getPerson(personId: number): Promise<TmdbPerson>;
-  getCast(tmdbId: number): Promise<CastMember[]>;
   searchPeople(query: string): Promise<TmdbPersonSearchResult[]>;
 };
 

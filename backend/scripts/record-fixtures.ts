@@ -7,7 +7,6 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import type * as z from 'zod';
 import { readEnv } from '../lib/config/env.js';
 import {
-  TmdbCreditsToRecord,
   TmdbDetailsToRecord,
   TmdbPersonSearchToRecord,
   TmdbPersonToRecord,
@@ -53,13 +52,6 @@ for (const [query, file] of [
   const params = new URLSearchParams({ query, language: 'pt-BR', include_adult: 'false' });
   save(file, await tmdb(`/search/person?${params}`, TmdbPersonSearchToRecord));
 }
-
-const credits = await tmdb('/movie/2756/credits', TmdbCreditsToRecord);
-save('tmdb-credits-2756.json', {
-  ...credits,
-  crew: [],
-  cast: [...credits.cast].sort((a, b) => a.order - b.order).slice(0, 15),
-});
 
 const search = await tmdb('/search/movie?query=abismo&language=pt-BR&include_adult=false', TmdbSearchToRecord);
 // Os 3 primeiros e o The Abyss, que os testes procuram (a ordem do TMDb muda com o tempo).

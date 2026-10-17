@@ -92,7 +92,7 @@ function excerpt(text: string | null, maxLength: number): string | null {
  * @param credits - Elenco dos créditos do filme.
  * @returns O elenco no formato de movies/{tmdbId}.cast.
  */
-export function toCast(credits: TmdbCastCredit[]): CastMember[] {
+function toCast(credits: TmdbCastCredit[]): CastMember[] {
   const ordered = [...credits].sort((a, b) => a.order - b.order);
   return uniqueBy(ordered, (credit) => credit.id)
     .slice(0, CAST_LIMIT)
