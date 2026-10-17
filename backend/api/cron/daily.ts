@@ -5,7 +5,9 @@ import { runDailyMaintenance } from '../../lib/maintenance/run-daily-maintenance
 
 /**
  * GET /api/cron/daily: rotina diária agendada em vercel.json (6h de Brasília). Atualiza as notas
- * vencidas de até 100 filmes (sem buscar o TMDb nem pessoas, que são atualizados ao abrir a página) e apaga os códigos de convite vencidos.
+ * vencidas de até 100 filmes (sem buscar o TMDb nem pessoas, que são atualizados ao abrir a página),
+ * atualiza o Teste de Bechdel pelo índice do site (e casa até 30 filmes novos) e apaga os códigos de
+ * convite vencidos.
  *
  * Responde 200 com o relatório, ou 401 sem o `Authorization: Bearer <CRON_SECRET>` que a Vercel manda.
  */

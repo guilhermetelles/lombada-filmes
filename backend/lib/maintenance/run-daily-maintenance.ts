@@ -3,17 +3,19 @@ import type { MaintenanceLimits, MaintenanceReport } from '../types/maintenance.
 import type { UsageRecorder } from '../types/usage.js';
 import { deleteExpiredInvites } from './delete-expired-invites.js';
 import { refreshStaleMovies } from './refresh-stale-movies.js';
+import { updateBechdel } from './update-bechdel.js';
 
-/** Limite do plano: no máximo 100 filmes por execução. */
-const DEFAULT_LIMITS: MaintenanceLimits = { movies: 100 };
+/** Limites do plano: no máximo 100 filmes com notas e 30 casamentos novos do Teste de Bechdel por execução. */
+const DEFAULT_LIMITS: MaintenanceLimits = { movies: 100, bechdelMatches: 30 };
 
 /**
- * Rotina diária: atualiza as notas vencidas (7 dias) e apaga os códigos de convite vencidos. Dados
- * do TMDb e fichas de pessoas ficam de fora: são atualizados quando alguém abre o filme ou a pessoa.
+ * Rotina diária: atualiza as notas vencidas (7 dias), atualiza o Teste de Bechdel (um índice por
+ * execução) e apaga os códigos de convite vencidos. Dados do TMDb e fichas de pessoas ficam de
+ * fora: são atualizados quando alguém abre o filme ou a pessoa.
  *
  * @param dependencies - Banco, clientes das fontes e relógio.
  * @param usage - Medidor de consumo da execução.
- * @param limits - Máximo de filmes por execução.
+ * @param limits - Máximo de filmes com notas e de casamentos do Teste de Bechdel por execução.
  * @returns O que foi feito.
  */
 async function runDailyMaintenance(
@@ -22,8 +24,9 @@ async function runDailyMaintenance(
   limits: MaintenanceLimits = DEFAULT_LIMITS,
 ): Promise<MaintenanceReport> {
   const movies = await refreshStaleMovies(dependencies, usage, limits.movies);
+  const bechdel = await updateBechdel(dependencies, usage, limits.bechdelMatches);
   const invitesDeleted = await deleteExpiredInvites(dependencies.db, dependencies.now());
-  return { movies, invitesDeleted };
+  return { movies, bechdel, invitesDeleted };
 }
 
 export { runDailyMaintenance };
