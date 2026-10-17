@@ -1,0 +1,2 @@
+# A regra data/ da raiz (export do Letterboxd) também pegava os pacotes data/ do app.
+!data/
