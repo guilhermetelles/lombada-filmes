@@ -24,7 +24,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import io.github.guilhermetelles.lombada.ui.components.LombadaButton
-import io.github.guilhermetelles.lombada.ui.list.ListScreen
+import io.github.guilhermetelles.lombada.ui.main.MainScreen
 import io.github.guilhermetelles.lombada.ui.onboarding.OnboardingFlow
 import io.github.guilhermetelles.lombada.ui.onboarding.WelcomeScreen
 import io.github.guilhermetelles.lombada.ui.session.SessionState
@@ -84,11 +84,10 @@ fun LombadaApp() {
                     )
 
                 is SessionState.Ready ->
-                    ListScreen(
+                    MainScreen(
                         list = current.list,
                         uid = current.uid,
                         onSwitchList = {},
-                        onOpenEntry = {},
                         onSignOut = { session.signOut(context) }
                     )
 

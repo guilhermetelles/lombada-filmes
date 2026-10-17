@@ -46,11 +46,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
-import io.github.guilhermetelles.lombada.data.backend.PersonSearchResult
 import io.github.guilhermetelles.lombada.data.model.Entry
 import io.github.guilhermetelles.lombada.data.model.MovieList
-import io.github.guilhermetelles.lombada.ui.appContainer
+import io.github.guilhermetelles.lombada.ui.main.MovieRoute
+import io.github.guilhermetelles.lombada.ui.main.PersonRoute
 import io.github.guilhermetelles.lombada.ui.search.SearchBar
 import io.github.guilhermetelles.lombada.ui.search.SearchViewModel
 import io.github.guilhermetelles.lombada.ui.search.searchResults
@@ -62,28 +61,33 @@ import sh.calvin.reorderable.rememberReorderableLazyListState
 
 private const val SCROLL_BUTTON_THRESHOLD_DP = 600
 
+// Itens antes das fitas: barra do app, nome da lista, busca, ordem e contagem.
+private const val LIST_HEADER_ITEMS = 5
+
 /**
  * Tela da lista: cabeçalho, ordem, as fitas e os botões de topo e fim.
  *
  * @param list Lista ativa.
- * @param uid Pessoa logada.
+ * @param viewModel Estado da lista, compartilhado com o detalhe e as folhas.
+ * @param searchViewModel Estado da busca, que continua ao voltar do detalhe.
  * @param onSwitchList Abre "Suas listas".
- * @param onOpenEntry Abre o detalhe do filme.
- * @param onSignOut Sair da conta.
+ * @param onOpenMovie Abre o detalhe de um filme.
  * @param onOpenPerson Abre a tela de uma pessoa achada na busca.
+ * @param onSignOut Sair da conta.
  */
 @Composable
 fun ListScreen(
     list: MovieList,
-    uid: String,
+    viewModel: ListViewModel,
+    searchViewModel: SearchViewModel,
     onSwitchList: () -> Unit,
-    onOpenEntry: (Entry) -> Unit,
-    onSignOut: () -> Unit,
-    onOpenPerson: (PersonSearchResult) -> Unit = {}
+    onOpenMovie: (MovieRoute) -> Unit,
+    onOpenPerson: (PersonRoute) -> Unit,
+    onSignOut: () -> Unit
 ) {
-    val container = appContainer()
-    val viewModel = viewModel(key = "list-${list.id}") { ListViewModel(container, list.id, uid) }
-    val searchViewModel = viewModel(key = "search-${list.id}") { SearchViewModel(container, list.id) }
+    val onOpenEntry: (Entry) -> Unit = { entry ->
+        onOpenMovie(MovieRoute(entry.tmdbId, entry.movie.title, entry.movie.year, entry.movie.posterPath))
+    }
     val state by viewModel.state.collectAsStateWithLifecycle()
     val search by searchViewModel.state.collectAsStateWithLifecycle()
     val lazyState = rememberLazyListState()
@@ -125,11 +129,11 @@ fun ListScreen(
                     tmdbIdsInList = state.entryByTmdbId,
                     preparingTmdbId = state.preparingTmdbId,
                     onOpenEntry = { entryId -> state.ranking.firstOrNull { it.id == entryId }?.let(onOpenEntry) },
-                    onOpenPerson = onOpenPerson,
+                    onOpenPerson = { person ->
+                        onOpenPerson(PersonRoute(person.personId, person.name, person.profilePath, person.department))
+                    },
                     onPickMovie = { movie ->
-                        val entryId = state.entryByTmdbId[movie.tmdbId]
-                        val entry = state.ranking.firstOrNull { it.id == entryId }
-                        if (entry != null) onOpenEntry(entry) else viewModel.startAdd(movie.tmdbId)
+                        onOpenMovie(MovieRoute(movie.tmdbId, movie.title, movie.year, movie.posterPath))
                     }
                 )
                 return@LazyColumn
@@ -217,47 +221,22 @@ fun ListScreen(
     }
 
     // Depois de adicionar: sai da busca, rola até a entrada nova e deixa a etiqueta colar.
-    LaunchedEffect(state.justAddedId, state.shown.size) {
+    LaunchedEffect(state.justAddedId, search.active, state.shown.size) {
         val newId = state.justAddedId ?: return@LaunchedEffect
-        searchViewModel.clear()
-        focusManager.clearFocus()
+        if (search.active) {
+            // Volta aqui quando a busca fechar e as fitas estiverem na lista.
+            searchViewModel.clear()
+            focusManager.clearFocus()
+            return@LaunchedEffect
+        }
         val index = state.shown.indexOfFirst { it.id == newId }
         if (index < 0) return@LaunchedEffect
-        val headerItems = lazyState.layoutInfo.totalItemsCount - state.shown.size - 1
         if (reducedMotion) {
-            lazyState.scrollToItem(index + headerItems)
+            lazyState.scrollToItem(index + LIST_HEADER_ITEMS)
         } else {
-            lazyState.animateScrollToItem(index + headerItems)
+            lazyState.animateScrollToItem(index + LIST_HEADER_ITEMS)
         }
         viewModel.consumeJustAdded()
-    }
-
-    state.adding?.let { draft ->
-        EntrySheet(
-            movie = draft.movie,
-            tmdbId = draft.tmdbId,
-            subtitle = "Entra como #${state.ranking.size + 1}; depois é só arrastar",
-            initialDate = null,
-            initialComment = "",
-            adding = true,
-            onSave = { date, comment -> viewModel.confirmAdd(draft, date, comment) },
-            onRemove = null,
-            onDismiss = viewModel::cancelAdd
-        )
-    }
-
-    state.editing?.let { entry ->
-        EntrySheet(
-            movie = entry.movie,
-            tmdbId = entry.tmdbId,
-            subtitle = "#${state.positions[entry.id]} na lista",
-            initialDate = entry.watchedOn,
-            initialComment = entry.comment,
-            adding = false,
-            onSave = { date, comment -> viewModel.save(entry, date, comment) },
-            onRemove = { viewModel.remove(entry) },
-            onDismiss = viewModel::closeEditor
-        )
     }
 }
 
