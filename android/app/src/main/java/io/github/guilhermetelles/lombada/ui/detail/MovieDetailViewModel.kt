@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -49,7 +50,12 @@ class MovieDetailViewModel(private val container: AppContainer, private val tmdb
 
     /** Estado da tela. */
     val state: StateFlow<MovieDetailUiState> =
-        combine(container.movies.observe(tmdbId), refresh) { movie, status -> MovieDetailUiState(movie, status) }
+        combine(
+            container.movies.observe(tmdbId).onStart {
+                emit(null)
+            },
+            refresh
+        ) { movie, status -> MovieDetailUiState(movie, status) }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), MovieDetailUiState())
 
     init {

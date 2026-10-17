@@ -79,7 +79,12 @@ fun MainScreen(list: MovieList, uid: String, onSwitchList: () -> Unit, onSignOut
             )
         }
         composable<PersonRoute> { entry: NavBackStackEntry ->
-            PersonScreen(route = entry.toRoute<PersonRoute>(), onBack = { navController.popBackStack() })
+            PersonScreen(
+                route = entry.toRoute<PersonRoute>(),
+                listId = list.id,
+                onBack = { navController.popBackStack() },
+                onOpenMovie = { navController.navigate(it) }
+            )
         }
     }
 

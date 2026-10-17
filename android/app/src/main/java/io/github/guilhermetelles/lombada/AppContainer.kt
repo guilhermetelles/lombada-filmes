@@ -13,6 +13,7 @@ import io.github.guilhermetelles.lombada.data.backend.IdTokenInterceptor
 import io.github.guilhermetelles.lombada.data.firestore.EntryRepository
 import io.github.guilhermetelles.lombada.data.firestore.ListRepository
 import io.github.guilhermetelles.lombada.data.firestore.MovieRepository
+import io.github.guilhermetelles.lombada.data.firestore.PersonRepository
 import io.github.guilhermetelles.lombada.data.firestore.UserRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -47,6 +48,9 @@ class AppContainer(context: Context) {
 
     /** Catálogo de filmes. */
     val movies = MovieRepository(db)
+
+    /** Fichas de diretores e atores. */
+    val people = PersonRepository(db)
 
     /** Escopo que sobrevive às telas, para gravações adiadas como a remoção com "Desfazer". */
     val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
