@@ -36,6 +36,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import io.github.guilhermetelles.lombada.data.model.MovieList
+import io.github.guilhermetelles.lombada.ui.about.AboutScreen
 import io.github.guilhermetelles.lombada.ui.appContainer
 import io.github.guilhermetelles.lombada.ui.detail.MovieDetailScreen
 import io.github.guilhermetelles.lombada.ui.list.EntrySheet
@@ -93,6 +94,7 @@ fun MainScreen(list: MovieList, uid: String, onSwitchList: () -> Unit, onSignOut
                     onSwitchList = onSwitchList,
                     onOpenMovie = { navController.navigate(it) },
                     onOpenPerson = { navController.navigate(it) },
+                    onAbout = { navController.navigate(AboutRoute) },
                     onSignOut = onSignOut
                 )
             }
@@ -131,6 +133,7 @@ fun MainScreen(list: MovieList, uid: String, onSwitchList: () -> Unit, onSignOut
                 }, onOpenMovie = { navController.navigate(it) })
             }
             composable<UsageRoute> { UsageScreen(onBack = { navController.popBackStack() }) }
+            composable<AboutRoute> { AboutScreen(onBack = { navController.popBackStack() }, onSignOut = onSignOut) }
         }
         if (showTabs) {
             Tabs(

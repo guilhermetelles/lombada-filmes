@@ -18,14 +18,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import kotlin.math.absoluteValue
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
@@ -80,7 +80,9 @@ fun RankSticker(
         }
     }
 
-    val fontSize = (size.value * if (position > 9) 0.47f else 0.56f).sp
+    // O número acompanha o tamanho fixo da etiqueta, e não a fonte do sistema: com fonte grande ele
+    // sairia do círculo. A posição continua no texto para o leitor de tela.
+    val fontSize = with(LocalDensity.current) { (size * if (position > 9) 0.47f else 0.56f).toSp() }
     Box(
         contentAlignment = Alignment.Center,
         modifier =
@@ -93,7 +95,7 @@ fun RankSticker(
                 }.size(size)
                 .shadow(3.dp, CircleShape)
                 .background(LombadaColors.Sticker, CircleShape)
-                .semantics { contentDescription = "Posição $position" }
+                .clearAndSetSemantics { contentDescription = "Posição $position" }
     ) {
         Text(
             text = position.toString(),

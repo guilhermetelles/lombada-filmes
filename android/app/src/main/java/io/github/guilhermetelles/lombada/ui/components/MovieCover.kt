@@ -17,6 +17,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.TextUnit
@@ -86,6 +87,8 @@ fun MovieCover(
                 .shadow(2.dp, shape)
                 .clip(shape)
                 .background(brush)
+                // Capa decorativa: o título já está ao lado; as iniciais não devem ser lidas.
+                .clearAndSetSemantics {}
     ) {
         Text(
             initialsOf(title),

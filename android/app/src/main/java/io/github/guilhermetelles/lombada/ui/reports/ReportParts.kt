@@ -165,7 +165,7 @@ fun BarChart(bars: List<Bar>, showPhotos: Boolean = false, onOpen: ((Bar) -> Uni
                     bar.label,
                     style = MaterialTheme.typography.bodyMedium,
                     color = LombadaColors.Paper2,
-                    maxLines = 1,
+                    maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.width(if (showPhotos) 104.dp else 116.dp)
                 )
@@ -201,10 +201,31 @@ fun CriticsTable(rows: List<CriticRow>, onOpen: (CriticRow) -> Unit) {
     val head = MaterialTheme.typography.labelMedium.copy(fontSize = 12.5.sp, color = LombadaColors.Paper3)
     Column {
         Row(modifier = Modifier.padding(bottom = 8.dp)) {
-            Text("Vocês", style = head, textAlign = TextAlign.Center, modifier = Modifier.width(54.dp))
+            Text(
+                "Vocês",
+                style = head,
+                textAlign = TextAlign.Center,
+                maxLines = 1,
+                softWrap = false,
+                modifier = Modifier.width(54.dp)
+            )
             Text("Filme", style = head, modifier = Modifier.weight(1f).padding(start = 6.dp))
-            Text("IMDb", style = head, textAlign = TextAlign.Center, modifier = Modifier.width(54.dp))
-            Text("Letterb.", style = head, textAlign = TextAlign.Center, modifier = Modifier.width(54.dp))
+            Text(
+                "IMDb",
+                style = head,
+                textAlign = TextAlign.Center,
+                maxLines = 1,
+                softWrap = false,
+                modifier = Modifier.width(54.dp)
+            )
+            Text(
+                "Letterb.",
+                style = head,
+                textAlign = TextAlign.Center,
+                maxLines = 1,
+                softWrap = false,
+                modifier = Modifier.width(54.dp)
+            )
         }
         rows.forEach { row ->
             HorizontalDivider(color = LombadaColors.Rule)

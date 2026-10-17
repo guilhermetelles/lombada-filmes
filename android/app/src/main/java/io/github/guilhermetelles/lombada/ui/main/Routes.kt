@@ -14,6 +14,10 @@ object ReportsRoute
 @Serializable
 object CriticsRoute
 
+/** Sobre o app: conta, atribuição do TMDb e licenças. */
+@Serializable
+object AboutRoute
+
 /** Consumo das APIs. */
 @Serializable
 object UsageRoute

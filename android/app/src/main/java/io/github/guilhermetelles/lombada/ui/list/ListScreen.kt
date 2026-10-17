@@ -73,6 +73,7 @@ private const val LIST_HEADER_ITEMS = 5
  * @param onSwitchList Abre "Suas listas".
  * @param onOpenMovie Abre o detalhe de um filme.
  * @param onOpenPerson Abre a tela de uma pessoa achada na busca.
+ * @param onAbout Abre "Sobre".
  * @param onSignOut Sair da conta.
  */
 @Composable
@@ -83,6 +84,7 @@ fun ListScreen(
     onSwitchList: () -> Unit,
     onOpenMovie: (MovieRoute) -> Unit,
     onOpenPerson: (PersonRoute) -> Unit,
+    onAbout: () -> Unit,
     onSignOut: () -> Unit
 ) {
     val onOpenEntry: (Entry) -> Unit = { entry ->
@@ -117,7 +119,7 @@ fun ListScreen(
             contentPadding = WindowInsets.navigationBars.asPaddingValues(),
             modifier = Modifier.fillMaxSize()
         ) {
-            item(key = "topbar") { LombadaTopBar { AccountMenu(onSignOut) } }
+            item(key = "topbar") { LombadaTopBar { AccountMenu(onAbout, onSignOut) } }
             item(key = "title") { ListTitle(list.name, list.description, onSwitchList) }
             stickyHeader(key = "search") {
                 SearchBar(search.query, searchViewModel::onQueryChange, searchViewModel::clear)
@@ -263,13 +265,17 @@ private fun rememberScrollButtons(lazyState: LazyListState) = with(LocalDensity.
 }
 
 @Composable
-private fun AccountMenu(onSignOut: () -> Unit) {
+private fun AccountMenu(onAbout: () -> Unit, onSignOut: () -> Unit) {
     var open by remember { mutableStateOf(false) }
     Box {
-        IconButton(onClick = {
-            open = true
-        }) { Icon(Icons.Filled.MoreVert, contentDescription = "Mais opções", tint = LombadaColors.Paper2) }
+        IconButton(onClick = { open = true }) {
+            Icon(Icons.Filled.MoreVert, contentDescription = "Mais opções", tint = LombadaColors.Paper2)
+        }
         DropdownMenu(expanded = open, onDismissRequest = { open = false }, containerColor = LombadaColors.ShelfHigh) {
+            DropdownMenuItem(text = { Text("Sobre") }, onClick = {
+                open = false
+                onAbout()
+            })
             DropdownMenuItem(text = { Text("Sair da conta") }, onClick = {
                 open = false
                 onSignOut()

@@ -4,8 +4,11 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -112,9 +115,12 @@ fun SortBar(mode: SortMode, onModeChange: (SortMode) -> Unit, secondLabel: Strin
             Modifier
                 .fillMaxWidth()
                 .padding(start = 20.dp, end = 20.dp, top = 14.dp, bottom = 10.dp)
+                // Com fonte grande, um rótulo quebra em duas linhas: os dois lados ficam da mesma altura.
+                .height(IntrinsicSize.Min)
     ) {
         options.forEachIndexed { index, (value, label) ->
             SegmentedButton(
+                modifier = Modifier.fillMaxHeight(),
                 selected = mode == value,
                 onClick = { onModeChange(value) },
                 shape = SegmentedButtonDefaults.itemShape(index, options.size),
