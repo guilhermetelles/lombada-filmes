@@ -26,6 +26,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -39,15 +40,20 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import io.github.guilhermetelles.lombada.data.backend.PersonSearchResult
 import io.github.guilhermetelles.lombada.data.model.Entry
 import io.github.guilhermetelles.lombada.data.model.MovieList
 import io.github.guilhermetelles.lombada.ui.appContainer
+import io.github.guilhermetelles.lombada.ui.search.SearchBar
+import io.github.guilhermetelles.lombada.ui.search.SearchViewModel
+import io.github.guilhermetelles.lombada.ui.search.searchResults
 import io.github.guilhermetelles.lombada.ui.theme.LombadaColors
 import io.github.guilhermetelles.lombada.ui.theme.rememberReducedMotion
 import kotlinx.coroutines.launch
@@ -64,7 +70,7 @@ private const val SCROLL_BUTTON_THRESHOLD_DP = 600
  * @param onSwitchList Abre "Suas listas".
  * @param onOpenEntry Abre o detalhe do filme.
  * @param onSignOut Sair da conta.
- * @param searchBar Barra de busca, que fica presa no topo ao rolar.
+ * @param onOpenPerson Abre a tela de uma pessoa achada na busca.
  */
 @Composable
 fun ListScreen(
@@ -73,15 +79,18 @@ fun ListScreen(
     onSwitchList: () -> Unit,
     onOpenEntry: (Entry) -> Unit,
     onSignOut: () -> Unit,
-    searchBar: (@Composable () -> Unit)? = null
+    onOpenPerson: (PersonSearchResult) -> Unit = {}
 ) {
     val container = appContainer()
     val viewModel = viewModel(key = "list-${list.id}") { ListViewModel(container, list.id, uid) }
+    val searchViewModel = viewModel(key = "search-${list.id}") { SearchViewModel(container, list.id) }
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val search by searchViewModel.state.collectAsStateWithLifecycle()
     val lazyState = rememberLazyListState()
     val scope = rememberCoroutineScope()
     val haptic = LocalHapticFeedback.current
     val reducedMotion = rememberReducedMotion()
+    val focusManager = LocalFocusManager.current
     var expanded by rememberSaveable { mutableStateOf(setOf<String>()) }
     val dragEnabled = state.sortMode == SortMode.Ranking
 
@@ -106,7 +115,25 @@ fun ListScreen(
         ) {
             item(key = "topbar") { LombadaTopBar { AccountMenu(onSignOut) } }
             item(key = "title") { ListTitle(list.name, list.description, onSwitchList) }
-            if (searchBar != null) stickyHeader(key = "search") { searchBar() }
+            stickyHeader(key = "search") {
+                SearchBar(search.query, searchViewModel::onQueryChange, searchViewModel::clear)
+            }
+            if (search.active) {
+                searchResults(
+                    state = search,
+                    positions = state.positions,
+                    tmdbIdsInList = state.entryByTmdbId,
+                    preparingTmdbId = state.preparingTmdbId,
+                    onOpenEntry = { entryId -> state.ranking.firstOrNull { it.id == entryId }?.let(onOpenEntry) },
+                    onOpenPerson = onOpenPerson,
+                    onPickMovie = { movie ->
+                        val entryId = state.entryByTmdbId[movie.tmdbId]
+                        val entry = state.ranking.firstOrNull { it.id == entryId }
+                        if (entry != null) onOpenEntry(entry) else viewModel.startAdd(movie.tmdbId)
+                    }
+                )
+                return@LazyColumn
+            }
             item(key = "sort") { SortBar(state.sortMode, viewModel::setSortMode) }
             item(key = "meta") {
                 ListMeta(state.ranking.size, state.sortMode, state.newestFirst, viewModel::toggleDateDirection)
@@ -131,6 +158,7 @@ fun ListScreen(
                                 },
                                 onOpen = { onOpenEntry(entry) },
                                 onEdit = { viewModel.openEditor(entry.id) },
+                                stickOnAppear = entry.id == state.justAddedId,
                                 onMove = if (dragEnabled) { delta -> viewModel.moveBy(entry.id, delta) } else null,
                                 dragHandle =
                                     if (dragEnabled) {
@@ -169,8 +197,8 @@ fun ListScreen(
 
         val buttons by rememberScrollButtons(lazyState)
         ScrollButtons(
-            showTop = buttons.first,
-            showBottom = buttons.second,
+            showTop = buttons.first && !search.active,
+            showBottom = buttons.second && !search.active,
             onTop = {
                 scope.launch { if (reducedMotion) lazyState.scrollToItem(0) else lazyState.animateScrollToItem(0) }
             },
@@ -185,6 +213,36 @@ fun ListScreen(
                     .align(Alignment.BottomEnd)
                     .navigationBarsPadding()
                     .padding(end = 16.dp, bottom = 16.dp)
+        )
+    }
+
+    // Depois de adicionar: sai da busca, rola até a entrada nova e deixa a etiqueta colar.
+    LaunchedEffect(state.justAddedId, state.shown.size) {
+        val newId = state.justAddedId ?: return@LaunchedEffect
+        searchViewModel.clear()
+        focusManager.clearFocus()
+        val index = state.shown.indexOfFirst { it.id == newId }
+        if (index < 0) return@LaunchedEffect
+        val headerItems = lazyState.layoutInfo.totalItemsCount - state.shown.size - 1
+        if (reducedMotion) {
+            lazyState.scrollToItem(index + headerItems)
+        } else {
+            lazyState.animateScrollToItem(index + headerItems)
+        }
+        viewModel.consumeJustAdded()
+    }
+
+    state.adding?.let { draft ->
+        EntrySheet(
+            movie = draft.movie,
+            tmdbId = draft.tmdbId,
+            subtitle = "Entra como #${state.ranking.size + 1}; depois é só arrastar",
+            initialDate = null,
+            initialComment = "",
+            adding = true,
+            onSave = { date, comment -> viewModel.confirmAdd(draft, date, comment) },
+            onRemove = null,
+            onDismiss = viewModel::cancelAdd
         )
     }
 

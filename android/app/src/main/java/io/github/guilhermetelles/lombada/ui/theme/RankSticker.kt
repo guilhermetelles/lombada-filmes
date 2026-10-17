@@ -47,15 +47,22 @@ fun stickerTilt(id: String): Float = ((id.hashCode() * 37L).absoluteValue % 13 -
  * @param id Id estável do item, que fixa a inclinação.
  * @param modifier Modificador do Compose.
  * @param size Diâmetro; 34dp na lista, 26dp nas linhas menores.
+ * @param stickOnAppear Se cola com animação já na primeira exibição, como numa entrada recém-adicionada.
  */
 @Composable
-fun RankSticker(position: Int, id: String, modifier: Modifier = Modifier, size: Dp = 34.dp) {
+fun RankSticker(
+    position: Int,
+    id: String,
+    modifier: Modifier = Modifier,
+    size: Dp = 34.dp,
+    stickOnAppear: Boolean = false
+) {
     val tilt = remember(id) { stickerTilt(id) }
     val reducedMotion = rememberReducedMotion()
     val rotation = remember(id) { Animatable(0f) }
     val scale = remember(id) { Animatable(1f) }
     val alpha = remember(id) { Animatable(1f) }
-    var shownPosition by remember(id) { mutableIntStateOf(position) }
+    var shownPosition by remember(id) { mutableIntStateOf(if (stickOnAppear) 0 else position) }
 
     LaunchedEffect(position) {
         // Na primeira exibição a etiqueta já está colada; só anima quando o número muda.

@@ -61,6 +61,7 @@ import io.github.guilhermetelles.lombada.ui.theme.RankSticker
  * @param onEdit Abre a folha de edição.
  * @param dragHandle Alça de arrasto, ou null quando arrastar está desligado.
  * @param modifier Modificador do Compose.
+ * @param stickOnAppear Se a etiqueta é "colada" com animação já na primeira vez (entrada nova).
  * @param onMove Move a entrada por um número de posições, para o leitor de tela; null sem arrastar.
  */
 @OptIn(ExperimentalLayoutApi::class)
@@ -75,6 +76,7 @@ fun EntryRow(
     onEdit: () -> Unit,
     dragHandle: (@Composable () -> Unit)?,
     modifier: Modifier = Modifier,
+    stickOnAppear: Boolean = false,
     onMove: ((Int) -> Unit)? = null
 ) {
     val movie = entry.movie
@@ -118,7 +120,12 @@ fun EntryRow(
         ) {
             Box(modifier = Modifier.width(68.dp)) {
                 MovieCover(movie.title, movie.posterPath, entry.tmdbId, Modifier.fillMaxWidth())
-                RankSticker(position = position, id = entry.id, modifier = Modifier.offset((-9).dp, (-9).dp))
+                RankSticker(
+                    position = position,
+                    id = entry.id,
+                    stickOnAppear = stickOnAppear,
+                    modifier = Modifier.offset((-9).dp, (-9).dp)
+                )
             }
             Column(verticalArrangement = Arrangement.spacedBy(5.dp), modifier = Modifier.weight(1f)) {
                 Text(
