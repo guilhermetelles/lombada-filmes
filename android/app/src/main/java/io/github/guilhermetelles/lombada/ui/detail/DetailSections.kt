@@ -17,6 +17,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.OpenInNew
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -25,8 +26,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
@@ -39,6 +44,7 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
+import io.github.guilhermetelles.lombada.data.model.Bechdel
 import io.github.guilhermetelles.lombada.data.model.CastMember
 import io.github.guilhermetelles.lombada.domain.Formatting
 import io.github.guilhermetelles.lombada.domain.Standing
@@ -222,6 +228,150 @@ fun ScoreCard(
                 modifier = Modifier.padding(start = 4.dp).size(16.dp)
             )
         }
+    }
+}
+
+/** Os três critérios do Teste de Bechdel, na ordem em que o site os aplica. */
+private val BECHDEL_CRITERIA =
+    listOf("Tem pelo menos duas mulheres com nome", "Elas conversam entre si", "Sobre algo que não seja um homem")
+
+/**
+ * Seção "Teste de Bechdel": etiqueta "Passa" ou "Não passa" com quantos critérios o filme
+ * cumpre, os três critérios, a nota sobre a fonte (com os avisos de avaliação duvidosa e de
+ * contestações) e o link para a página do filme no bechdeltest.com.
+ *
+ * @param bechdel Avaliação; a seção só deve ser chamada para filmes avaliados no site.
+ * @param onOpen Abre a página do filme no site.
+ */
+@Composable
+fun BechdelSection(bechdel: Bechdel, onOpen: (String) -> Unit) {
+    val rating = bechdel.rating ?: return
+    val siteId = bechdel.siteId ?: return
+    val passes = bechdel.passes
+    Column(modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 24.dp)) {
+        SectionTitle("Teste de Bechdel", Modifier.padding(bottom = 8.dp))
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            modifier = Modifier.padding(bottom = 12.dp).semantics(mergeDescendants = true) {}
+        ) {
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier =
+                    Modifier
+                        .heightIn(min = 26.dp)
+                        .background(
+                            if (passes) LombadaColors.Sticker else LombadaColors.ShelfHigh,
+                            MaterialTheme.shapes.small
+                        ).padding(horizontal = 10.dp)
+            ) {
+                Text(
+                    if (passes) "Passa" else "Não passa",
+                    style = MaterialTheme.typography.labelLarge.copy(fontSize = 13.5.sp, fontWeight = FontWeight.Bold),
+                    color = if (passes) LombadaColors.StickerInk else LombadaColors.Paper
+                )
+            }
+            Text(
+                "$rating de ${Bechdel.CRITERIA} critérios",
+                style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp),
+                color = LombadaColors.Paper2
+            )
+        }
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            BECHDEL_CRITERIA.forEachIndexed { index, criterion ->
+                BechdelCriterion(criterion, met = index < rating)
+            }
+        }
+        val notes =
+            listOfNotNull(
+                "Avaliação da comunidade do bechdeltest.com.",
+                "O site marca esta avaliação como duvidosa.".takeIf { bechdel.dubious },
+                when {
+                    bechdel.disputes == 1 -> "Uma pessoa contestou a avaliação nos comentários do site."
+
+                    bechdel.disputes > 1 ->
+                        "${bechdel.disputes} pessoas contestaram a avaliação nos comentários do site."
+
+                    else -> null
+                }
+            )
+        Text(
+            notes.joinToString(" "),
+            style = MaterialTheme.typography.bodySmall.copy(fontSize = 13.5.sp, lineHeight = 20.sp),
+            color = LombadaColors.Paper3,
+            modifier = Modifier.padding(top = 12.dp)
+        )
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier =
+                Modifier
+                    .heightIn(min = 48.dp)
+                    .clickable(role = Role.Button) { onOpen(MovieLinks.bechdel(bechdel.url, siteId)) }
+        ) {
+            Text(
+                "Ver no Bechdel Test",
+                style = MaterialTheme.typography.labelMedium.copy(fontSize = 13.sp, fontWeight = FontWeight.SemiBold),
+                color = LombadaColors.Sticker
+            )
+            Icon(
+                Icons.AutoMirrored.Filled.OpenInNew,
+                contentDescription = null,
+                tint = LombadaColors.Sticker,
+                modifier = Modifier.padding(start = 4.dp).size(16.dp)
+            )
+        }
+    }
+}
+
+@Composable
+private fun BechdelCriterion(criterion: String, met: Boolean) {
+    val rule = LombadaColors.Rule
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+        modifier = Modifier.clearAndSetSemantics { contentDescription = "$criterion: ${if (met) "sim" else "não"}" }
+    ) {
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier =
+                Modifier
+                    .size(24.dp)
+                    .then(
+                        if (met) {
+                            Modifier.background(LombadaColors.ShelfHigh, CircleShape)
+                        } else {
+                            // Círculo tracejado, como o `border: 1px dashed` do mock.
+                            Modifier.drawBehind {
+                                val stroke = 1.dp.toPx()
+                                drawCircle(
+                                    color = rule,
+                                    radius = (size.minDimension - stroke) / 2,
+                                    style =
+                                        Stroke(
+                                            width = stroke,
+                                            pathEffect = PathEffect.dashPathEffect(
+                                                floatArrayOf(3.dp.toPx(), 3.dp.toPx())
+                                            )
+                                        )
+                                )
+                            }
+                        }
+                    )
+        ) {
+            if (met) {
+                Icon(
+                    Icons.Filled.Check,
+                    contentDescription = null,
+                    tint = LombadaColors.Sticker,
+                    modifier = Modifier.size(16.dp)
+                )
+            }
+        }
+        Text(
+            criterion,
+            style = MaterialTheme.typography.bodyLarge.copy(fontSize = 15.sp),
+            color = if (met) LombadaColors.Paper else LombadaColors.Paper3
+        )
     }
 }
 

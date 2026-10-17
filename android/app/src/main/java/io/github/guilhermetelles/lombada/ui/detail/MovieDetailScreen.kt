@@ -59,8 +59,8 @@ import io.github.guilhermetelles.lombada.ui.theme.RankSticker
 import java.time.ZoneId
 
 /**
- * Detalhe do filme: capa, fatos, diretores, a nota de vocês, as quatro notas, sinopse, elenco e o
- * comentário, com "Editar registro" ou "Adicionar à lista" no rodapé.
+ * Detalhe do filme: capa, fatos, diretores, a nota de vocês, as quatro notas, sinopse, Teste de
+ * Bechdel, elenco e o comentário, com "Editar registro" ou "Adicionar à lista" no rodapé.
  *
  * @param route Filme aberto, com título, ano e capa para a tela abrir na hora.
  * @param ranking Entradas da lista ativa, na ordem do ranking.
@@ -120,6 +120,7 @@ fun MovieDetailScreen(
             standing?.let { StandingCard(it) }
             Scores(route.tmdbId, title, year, movie, entry, onOpen = uri::openUri)
             Synopsis(movie, loading = movie == null && refreshing)
+            movie?.bechdel?.takeIf { it.isRated }?.let { BechdelSection(it, onOpen = uri::openUri) }
             if (movie == null || movie.cast.isNotEmpty() || refreshing) {
                 CastRow(
                     cast = movie?.cast.orEmpty(),

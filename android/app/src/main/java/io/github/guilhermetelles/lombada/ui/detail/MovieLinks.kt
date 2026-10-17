@@ -65,4 +65,13 @@ object MovieLinks {
      * @return URL.
      */
     fun imdbPerson(imdbId: String): String = "https://www.imdb.com/name/$imdbId/"
+
+    /**
+     * Página do filme no bechdeltest.com; sem o endereço salvo, o site redireciona pelo id.
+     *
+     * @param url Endereço salvo.
+     * @param siteId Id do filme no site.
+     * @return URL.
+     */
+    fun bechdel(url: String?, siteId: Int): String = url ?: "https://bechdeltest.com/view/$siteId/"
 }
