@@ -10,7 +10,7 @@ App Android pessoal, que mantém um ranking compartilhado dos filmes que um grup
 | `backend/`  | Chaves das APIs, busca de filmes e notas, listas e convites, consumo das APIs | Vercel Functions, Node 24 + TypeScript                |
 | `firebase/` | Regras e índices do Firestore, login com Google, emuladores                   | Firebase (projeto `lombada-db`, `southamerica-east1`) |
 
-O app lê e grava a lista direto no Firestore, protegido pelas regras. O backend cuida do que precisa de segredo ou de privilégio: falar com TMDb, OMDb e Letterboxd, criar listas e validar códigos de convite.
+O app lê e grava a lista direto no Firestore, protegido pelas regras. O backend cuida do que precisa de segredo ou de privilégio: falar com TMDb, OMDb, Letterboxd e bechdeltest.com, criar listas e validar códigos de convite.
 
 ## API do backend
 
@@ -23,14 +23,14 @@ As rotas do app exigem `Authorization: Bearer <ID token do Firebase Auth>`. Erro
 | `GET /api/me` | Devolve o uid de quem chamou |
 | `GET /api/search?q=` | Busca filmes no TMDb (pt-BR) |
 | `GET /api/search/people?q=` | Busca atores e diretores no TMDb (até 5, com títulos conhecidos) |
-| `GET /api/movies/{tmdbId}` | Filme com as quatro notas, diretores e elenco (nome e foto), buscando de novo o que tem mais de 7 dias |
+| `GET /api/movies/{tmdbId}` | Filme com as quatro notas, diretores e elenco (nome e foto), buscando de novo o que tem mais de 7 dias, e o Teste de Bechdel do bechdeltest.com (`bechdel`; página relida aos 30 dias, filme fora do site procurado de novo aos 7) |
 | `GET /api/people/{personId}` | Diretor ou ator (biografia, nascimento, foto, filmes dirigidos e atuados), buscado só quando a tela é aberta e de novo depois de 30 dias |
 | `POST /api/lists` | Cria uma lista e o primeiro código de convite |
 | `POST /api/lists/join` | Entra numa lista com um código (`{ code }`) |
 | `POST /api/lists/{listId}/invites` | Gera um código de convite novo (7 dias) |
 | `POST /api/lists/{listId}/leave` | Sai da lista; a última pessoa a sair apaga a lista |
 | `DELETE /api/lists/{listId}` | A dona apaga a lista, as entradas e os convites |
-| `GET /api/cron/daily` | Rotina diária da Vercel (6h de Brasília): atualiza as notas com mais de 7 dias (só Letterboxd e OMDb; TMDb e pessoas são atualizados ao abrir a página) e apaga convites vencidos. Exige `Authorization: Bearer <CRON_SECRET>` em vez do ID token |
+| `GET /api/cron/daily` | Rotina diária da Vercel (6h de Brasília): atualiza as notas com mais de 7 dias (só Letterboxd e OMDb; TMDb e pessoas são atualizados ao abrir a página), atualiza o Teste de Bechdel pelo índice do bechdeltest.com (um download por execução; casa até 30 filmes novos) e apaga convites vencidos. Exige `Authorization: Bearer <CRON_SECRET>` em vez do ID token |
 
 Para chamar as rotas na mão, `cd backend && npm run login-page` abre em http://localhost:5173 uma página de login com Google que mostra o uid e um ID token.
 
@@ -62,8 +62,8 @@ npm test            # sobe os emuladores do Firebase (precisa de Java 11+)
 Só no backend:
 
 ```bash
-npm run check:firestore   # lê o lombada-db de verdade com a conta de serviço do .env
-npm run record:fixtures   # regrava as respostas das APIs usadas nos testes
+npm run check:firestore   # lê o lombada-db de verdade com a conta de serviço do .env e resume o Teste de Bechdel de cada lista
+npm run record:fixtures   # regrava as respostas das APIs usadas nos testes (-- bechdel regrava só as do bechdeltest.com)
 npm run login-page        # página local de login com Google (uid e ID token)
 npm run seed:original-list:emulator   # ensaio da carga da lista original no emulador
 npm run seed:original-list            # carga da lista original no lombada-db (já feita; pode rodar de novo sem duplicar)
