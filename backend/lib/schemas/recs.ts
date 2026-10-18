@@ -40,3 +40,8 @@ export const RecsDocSchema: z.ZodType<RecsDoc> = z.object({
   items: z.array(RecItemSchema).max(30),
   trending: z.array(RecItemSchema).max(15),
 });
+
+/** Resposta pedida ao Gemini nos motivos das sugestões: um motivo por filme. */
+export const RecReasonsReplySchema = z.object({
+  reasons: z.array(z.object({ tmdbId: z.number().int(), reason: z.string() })),
+});

@@ -1,7 +1,8 @@
-import * as z from 'zod';
+import type * as z from 'zod';
 import { candidateGenres } from '../discover/score-candidates.js';
 import { SourceUnavailableError } from '../errors/app-errors.js';
 import { logger } from '../logging/logger.js';
+import { RecReasonsReplySchema } from '../schemas/recs.js';
 import { GEMINI_MODELS } from '../sources/gemini/gemini-models.js';
 import { NAME_PLACEHOLDER, scrubNames } from '../sources/gemini/scrub-names.js';
 import type { GeminiClient } from '../types/sources.js';
@@ -19,14 +20,6 @@ const MAX_COMMENT_LENGTH = 500;
 
 /** Palavras-chave do candidato enviadas, no máximo. */
 const MAX_KEYWORDS = 8;
-
-/**
- * Resposta pedida ao Gemini: um motivo por filme. Fica aqui enquanto lib/schemas/recs.ts (de outro
- * dono) não recebe o schema; é o único schema do motor de sugestões.
- */
-const RecReasonsReplySchema = z.object({
-  reasons: z.array(z.object({ tmdbId: z.number().int(), reason: z.string() })),
-});
 
 /** Instrução de sistema dos motivos. */
 const SYSTEM = [
