@@ -1,12 +1,18 @@
 import type { TmdbCastCredit, TmdbMovieResponse, TmdbSearchResponse } from '../../schemas/sources/tmdb.js';
 import type { CastMember, Director } from '../../types/person.js';
-import type { TmdbMovie, TmdbSearchResult } from '../../types/sources.js';
+import type { TmdbMovie, TmdbMovieExtras, TmdbSearchResult } from '../../types/sources.js';
 
 /** Tamanho do trecho de sinopse nos resultados de busca. */
 const OVERVIEW_EXCERPT_LENGTH = 200;
 
 /** Quantas pessoas do elenco guardar por filme, na ordem dos créditos. */
 const CAST_LIMIT = 12;
+
+/** Quantas palavras-chave guardar por filme. */
+const KEYWORDS_LIMIT = 25;
+
+/** Quantas recomendações do TMDb guardar por filme. */
+const RECS_LIMIT = 10;
 
 /**
  * Converte a resposta de detalhes do TMDb no filme do app. O TMDb deixa a tradução em inglês vazia
@@ -29,6 +35,38 @@ export function toTmdbMovie(response: TmdbMovieResponse): TmdbMovie {
     synopsis: { pt: response.overview, en: english?.overview ?? null },
     posterPath: response.poster_path,
     imdbId: response.external_ids?.imdb_id ?? null,
+    extras: toTmdbExtras(response),
+  };
+}
+
+/**
+ * Tira da resposta de detalhes os campos extras da versão 0.3: título e slogan no Brasil,
+ * orçamento e bilheteria (0 vira null, porque o TMDb usa 0 para "não sei"), classificação
+ * indicativa no Brasil, saga, palavras-chave, recomendações, streaming por assinatura no Brasil,
+ * popularidade e nota.
+ *
+ * @param response - Resposta validada de /movie/{id}.
+ * @returns Os campos extras no formato de movies/{tmdbId}.
+ */
+export function toTmdbExtras(response: TmdbMovieResponse): TmdbMovieExtras {
+  const brazilReleases = response.release_dates?.results.find((result) => result.iso_3166_1 === 'BR');
+  const certBR = brazilReleases?.release_dates.find((release) => release.certification)?.certification ?? null;
+  const providers = response['watch/providers']?.results.BR?.flatrate ?? [];
+  return {
+    titlePt: response.title,
+    tagline: response.tagline,
+    budget: response.budget || null,
+    revenue: response.revenue || null,
+    certBR,
+    collection: response.belongs_to_collection
+      ? { id: response.belongs_to_collection.id, name: response.belongs_to_collection.name }
+      : null,
+    keywords: (response.keywords?.keywords ?? []).map((keyword) => keyword.name).slice(0, KEYWORDS_LIMIT),
+    recs: (response.recommendations?.results ?? []).map((result) => result.id).slice(0, RECS_LIMIT),
+    providersBR: [...new Set(providers.map((provider) => provider.provider_name))],
+    popularity: response.popularity,
+    vote: response.vote_count > 0 ? response.vote_average : null,
+    votes: response.vote_count,
   };
 }
 

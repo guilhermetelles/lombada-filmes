@@ -1,0 +1,683 @@
+{
+ "head": {
+  "vars": [
+   "tmdb",
+   "kind",
+   "awardLabel",
+   "catLabel",
+   "forLabel",
+   "year",
+   "article"
+  ]
+ },
+ "results": {
+  "bindings": [
+   {
+    "kind": {
+     "type": "literal",
+     "value": "nom"
+    },
+    "article": {
+     "type": "uri",
+     "value": "https://en.wikipedia.org/wiki/One_Battle_After_Another"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "1054867"
+    },
+    "awardLabel": {
+     "xml:lang": "pt",
+     "type": "literal",
+     "value": "Golden Globe Award de melhor atriz em comédia ou musical"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "nom"
+    },
+    "article": {
+     "type": "uri",
+     "value": "https://en.wikipedia.org/wiki/One_Battle_After_Another"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "1054867"
+    },
+    "awardLabel": {
+     "xml:lang": "pt",
+     "type": "literal",
+     "value": "Golden Globe Award de melhor ator em comédia ou musical"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "nom"
+    },
+    "article": {
+     "type": "uri",
+     "value": "https://en.wikipedia.org/wiki/One_Battle_After_Another"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "1054867"
+    },
+    "awardLabel": {
+     "xml:lang": "pt",
+     "type": "literal",
+     "value": "Golden Globe Award de melhor ator coadjuvante em cinema"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "nom"
+    },
+    "article": {
+     "type": "uri",
+     "value": "https://en.wikipedia.org/wiki/One_Battle_After_Another"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "1054867"
+    },
+    "awardLabel": {
+     "xml:lang": "pt",
+     "type": "literal",
+     "value": "Globo de Ouro de melhor banda sonora original"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "win"
+    },
+    "article": {
+     "type": "uri",
+     "value": "https://en.wikipedia.org/wiki/One_Battle_After_Another"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "1054867"
+    },
+    "awardLabel": {
+     "xml:lang": "pt",
+     "type": "literal",
+     "value": "Golden Globe Award de melhor atriz coadjuvante em cinema"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "win"
+    },
+    "article": {
+     "type": "uri",
+     "value": "https://en.wikipedia.org/wiki/One_Battle_After_Another"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "1054867"
+    },
+    "awardLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Globo de Ouro de melhor roteiro"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "win"
+    },
+    "article": {
+     "type": "uri",
+     "value": "https://en.wikipedia.org/wiki/One_Battle_After_Another"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "1054867"
+    },
+    "awardLabel": {
+     "xml:lang": "pt",
+     "type": "literal",
+     "value": "Golden Globe Award de melhor direção"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "win"
+    },
+    "article": {
+     "type": "uri",
+     "value": "https://en.wikipedia.org/wiki/One_Battle_After_Another"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "1054867"
+    },
+    "awardLabel": {
+     "xml:lang": "pt",
+     "type": "literal",
+     "value": "Golden Globe Award de melhor comédia ou musical"
+    }
+   },
+   {
+    "article": {
+     "type": "uri",
+     "value": "https://en.wikipedia.org/wiki/The_Twilight_Saga:_Breaking_Dawn_%E2%80%93_Part_2"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "50620"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "win"
+    },
+    "article": {
+     "type": "uri",
+     "value": "https://en.wikipedia.org/wiki/One_Battle_After_Another"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "1054867"
+    },
+    "awardLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Oscar de melhor filme"
+    },
+    "year": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+     "type": "literal",
+     "value": "2026"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "nom"
+    },
+    "article": {
+     "type": "uri",
+     "value": "https://en.wikipedia.org/wiki/The_Abyss"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "2756"
+    },
+    "awardLabel": {
+     "xml:lang": "pt",
+     "type": "literal",
+     "value": "Óscar de melhor fotografia"
+    },
+    "year": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+     "type": "literal",
+     "value": "1990"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "nom"
+    },
+    "article": {
+     "type": "uri",
+     "value": "https://en.wikipedia.org/wiki/The_Abyss"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "2756"
+    },
+    "awardLabel": {
+     "xml:lang": "pt",
+     "type": "literal",
+     "value": "Oscar de melhor direção de arte"
+    },
+    "year": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+     "type": "literal",
+     "value": "1990"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "nom"
+    },
+    "article": {
+     "type": "uri",
+     "value": "https://en.wikipedia.org/wiki/The_Abyss"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "2756"
+    },
+    "awardLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Oscar de melhor mixagem de som"
+    },
+    "year": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+     "type": "literal",
+     "value": "1990"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "nom"
+    },
+    "article": {
+     "type": "uri",
+     "value": "https://en.wikipedia.org/wiki/The_Abyss"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "2756"
+    },
+    "awardLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Oscar de melhores efeitos visuais"
+    },
+    "year": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+     "type": "literal",
+     "value": "1990"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "nom"
+    },
+    "article": {
+     "type": "uri",
+     "value": "https://en.wikipedia.org/wiki/One_Battle_After_Another"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "1054867"
+    },
+    "awardLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Óscar de melhor ator"
+    },
+    "year": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+     "type": "literal",
+     "value": "2026"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "nom"
+    },
+    "article": {
+     "type": "uri",
+     "value": "https://en.wikipedia.org/wiki/One_Battle_After_Another"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "1054867"
+    },
+    "awardLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Oscar de melhor ator coadjuvante"
+    },
+    "year": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+     "type": "literal",
+     "value": "2026"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "nom"
+    },
+    "article": {
+     "type": "uri",
+     "value": "https://en.wikipedia.org/wiki/One_Battle_After_Another"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "1054867"
+    },
+    "awardLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Oscar de melhor atriz coadjuvante"
+    },
+    "year": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+     "type": "literal",
+     "value": "2026"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "nom"
+    },
+    "article": {
+     "type": "uri",
+     "value": "https://en.wikipedia.org/wiki/One_Battle_After_Another"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "1054867"
+    },
+    "awardLabel": {
+     "xml:lang": "pt",
+     "type": "literal",
+     "value": "Óscar de melhor fotografia"
+    },
+    "year": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+     "type": "literal",
+     "value": "2026"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "nom"
+    },
+    "article": {
+     "type": "uri",
+     "value": "https://en.wikipedia.org/wiki/One_Battle_After_Another"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "1054867"
+    },
+    "awardLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Oscar de melhor trilha sonora"
+    },
+    "year": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+     "type": "literal",
+     "value": "2026"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "nom"
+    },
+    "article": {
+     "type": "uri",
+     "value": "https://en.wikipedia.org/wiki/One_Battle_After_Another"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "1054867"
+    },
+    "awardLabel": {
+     "xml:lang": "pt",
+     "type": "literal",
+     "value": "Oscar de melhor direção de arte"
+    },
+    "year": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+     "type": "literal",
+     "value": "2026"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "nom"
+    },
+    "article": {
+     "type": "uri",
+     "value": "https://en.wikipedia.org/wiki/One_Battle_After_Another"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "1054867"
+    },
+    "awardLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Oscar de melhor mixagem de som"
+    },
+    "year": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+     "type": "literal",
+     "value": "2026"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "nom"
+    },
+    "article": {
+     "type": "uri",
+     "value": "https://en.wikipedia.org/wiki/One_Battle_After_Another"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "1054867"
+    },
+    "awardLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Oscar de melhor filme"
+    },
+    "year": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+     "type": "literal",
+     "value": "2026"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "win"
+    },
+    "article": {
+     "type": "uri",
+     "value": "https://en.wikipedia.org/wiki/The_Abyss"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "2756"
+    },
+    "awardLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Oscar de melhores efeitos visuais"
+    },
+    "year": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+     "type": "literal",
+     "value": "1990"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "win"
+    },
+    "article": {
+     "type": "uri",
+     "value": "https://en.wikipedia.org/wiki/One_Battle_After_Another"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "1054867"
+    },
+    "awardLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Oscar de melhor filme"
+    },
+    "year": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+     "type": "literal",
+     "value": "2026"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "win"
+    },
+    "article": {
+     "type": "uri",
+     "value": "https://en.wikipedia.org/wiki/One_Battle_After_Another"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "1054867"
+    },
+    "awardLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Oscar de melhor diretor"
+    },
+    "year": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+     "type": "literal",
+     "value": "2026"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "win"
+    },
+    "article": {
+     "type": "uri",
+     "value": "https://en.wikipedia.org/wiki/One_Battle_After_Another"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "1054867"
+    },
+    "awardLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Oscar de melhor roteiro adaptado"
+    },
+    "year": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+     "type": "literal",
+     "value": "2026"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "win"
+    },
+    "article": {
+     "type": "uri",
+     "value": "https://en.wikipedia.org/wiki/One_Battle_After_Another"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "1054867"
+    },
+    "awardLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Oscar de melhor edição"
+    },
+    "year": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+     "type": "literal",
+     "value": "2026"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "win"
+    },
+    "article": {
+     "type": "uri",
+     "value": "https://en.wikipedia.org/wiki/One_Battle_After_Another"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "1054867"
+    },
+    "awardLabel": {
+     "xml:lang": "pt",
+     "type": "literal",
+     "value": "Oscar de Melhor Seleção de Elenco"
+    },
+    "year": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+     "type": "literal",
+     "value": "2026"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "win"
+    },
+    "article": {
+     "type": "uri",
+     "value": "https://en.wikipedia.org/wiki/One_Battle_After_Another"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "1054867"
+    },
+    "awardLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Oscar de melhor ator coadjuvante"
+    },
+    "year": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+     "type": "literal",
+     "value": "2026"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "win"
+    },
+    "article": {
+     "type": "uri",
+     "value": "https://en.wikipedia.org/wiki/One_Battle_After_Another"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "1054867"
+    },
+    "awardLabel": {
+     "xml:lang": "en",
+     "type": "literal",
+     "value": "Amanda Award for Best Foreign Feature Film"
+    },
+    "year": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+     "type": "literal",
+     "value": "2026"
+    }
+   }
+  ]
+ }
+}

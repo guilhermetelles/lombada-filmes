@@ -1,7 +1,8 @@
 /**
  * Grava respostas reais das fontes em test/fixtures/, para os testes rodarem sem rede.
  * Uso: npm run record:fixtures (lê TMDB_TOKEN e OMDB_KEY do .env da raiz). Para regravar só algumas
- * fontes, passe os nomes: npm run record:fixtures -- bechdel (tmdb, omdb, letterboxd, bechdel).
+ * fontes, passe os nomes: npm run record:fixtures -- bechdel (tmdb, omdb, letterboxd, bechdel,
+ * wikidata, wikipedia).
  * As respostas são enxugadas ao que o código lê; nenhuma delas contém as chaves.
  */
 import { mkdirSync, writeFileSync } from 'node:fs';
@@ -14,8 +15,11 @@ import {
   TmdbPersonToRecord,
   TmdbSearchToRecord,
 } from '../lib/schemas/fixtures.js';
+import { TmdbExtrasToRecord } from '../lib/schemas/sources/fixtures.js';
 import { BECHDEL_USER_AGENT } from '../lib/sources/bechdel/bechdel-client.js';
 import { LETTERBOXD_USER_AGENT } from '../lib/sources/letterboxd/letterboxd-client.js';
+import { buildAwardsQuery } from '../lib/sources/wikidata/awards-query.js';
+import { WIKIMEDIA_USER_AGENT } from '../lib/sources/wikidata/wikidata-client.js';
 import type { SourceName } from '../lib/types/sources.js';
 
 process.loadEnvFile(new URL('../../.env', import.meta.url));
@@ -35,12 +39,19 @@ const tmdb = async <T extends z.ZodType>(path: string, schema: T) => {
 };
 
 if (records('tmdb')) {
-  const details = await tmdb(
-    '/movie/2756?language=pt-BR&append_to_response=credits,external_ids,translations',
-    TmdbDetailsToRecord,
-  );
+  const append = 'credits,external_ids,translations,keywords,recommendations,watch/providers,release_dates';
+  const details = await tmdb(`/movie/2756?language=pt-BR&append_to_response=${append}`, TmdbDetailsToRecord);
+  const extras = TmdbExtrasToRecord.parse(details);
   save('tmdb-movie-2756.json', {
     ...details,
+    // 12 recomendações para os testes conferirem o corte nas 10 primeiras; só id e título.
+    recommendations: {
+      results: extras.recommendations.results.slice(0, 12).map(({ id, title }) => ({ id, title })),
+    },
+    release_dates: {
+      results: extras.release_dates.results.filter((result) => ['BR', 'US'].includes(result.iso_3166_1)),
+    },
+    'watch/providers': { results: { BR: extras['watch/providers'].results.BR ?? {} } },
     credits: {
       crew: details.credits.crew.filter((person) => person.job === 'Director'),
       // 15 para os testes conferirem o corte nos 12 primeiros.
@@ -129,6 +140,46 @@ if (records('bechdel')) {
   save('bechdel-index.json', `${JSON.stringify(index.filter(([siteId]) => kept.has(siteId)))}\n`);
   save('bechdel-1478-redirect.html', await (await bechdel('/view/1478/')).text());
   save('bechdel-1478.html', await (await bechdel('/view/1478/the_abyss/')).text());
+}
+
+/** The Abyss, Breaking Dawn – Part 2 e One Battle After Another: os filmes conferidos no passo 13. */
+const AWARD_MOVIES = [2756, 50620, 1054867];
+
+/** James Cameron, Kristen Stewart e Robert Pattinson. */
+const AWARD_PEOPLE = [2710, 37917, 11288];
+
+/** Uma consulta SPARQL ao Wikidata, com a resposta inteira. */
+const sparql = async (query: string) => {
+  const response = await fetch(`https://query.wikidata.org/sparql?${new URLSearchParams({ query, format: 'json' })}`, {
+    headers: { accept: 'application/sparql-results+json', 'user-agent': WIKIMEDIA_USER_AGENT },
+  });
+  if (!response.ok) throw new Error(`Wikidata respondeu ${response.status}`);
+  return response.json();
+};
+
+if (records('wikidata')) {
+  save('wikidata-movies.json', await sparql(buildAwardsQuery(AWARD_MOVIES, 'P4947', true)));
+  save('wikidata-people.json', await sparql(buildAwardsQuery(AWARD_PEOPLE, 'P4985', false)));
+}
+
+if (records('wikipedia')) {
+  // Os títulos dos artigos são os sitelinks que a consulta de filmes devolve.
+  const titles = ['The Abyss', 'The Twilight Saga: Breaking Dawn – Part 2', 'One Battle After Another'];
+  const params = new URLSearchParams({
+    action: 'query',
+    prop: 'categories',
+    titles: titles.join('|'),
+    cllimit: 'max',
+    clshow: '!hidden',
+    redirects: '1',
+    format: 'json',
+    formatversion: '2',
+  });
+  const response = await fetch(`https://en.wikipedia.org/w/api.php?${params}`, {
+    headers: { accept: 'application/json', 'user-agent': WIKIMEDIA_USER_AGENT },
+  });
+  if (!response.ok) throw new Error(`Wikipedia respondeu ${response.status}`);
+  save('wikipedia-categories.json', await response.json());
 }
 
 console.log('fixtures gravadas em test/fixtures/');

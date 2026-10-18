@@ -75,4 +75,34 @@ function oldestRatingFetch(movie: Movie): Date {
   return new Date(Math.min(...times));
 }
 
-export { FRESHNESS_MS, isStale, needsRefresh, oldestRatingFetch };
+/**
+ * Campos extras (curiosidades, onde assistir, prêmios) são buscados de novo só depois de 30 dias:
+ * mudam pouco, e a rotina enrich cobre os filmes das listas e da fila.
+ */
+const EXTRA_FRESHNESS_MS = 30 * DAY_MS;
+
+/**
+ * Diz se os campos extras de movies/{tmdbId} (TMDb extra, resumo de prêmios e bilheteria da OMDb)
+ * precisam ser buscados: nunca buscados, ou buscados há 30 dias ou mais.
+ *
+ * @param movie - Documento guardado.
+ * @param now - Momento de referência.
+ * @returns true se `extraFetchedAt` faltar ou tiver vencido.
+ */
+function isExtraStale(movie: Movie, now: Date): boolean {
+  return !movie.extraFetchedAt || now.getTime() - movie.extraFetchedAt.getTime() >= EXTRA_FRESHNESS_MS;
+}
+
+/**
+ * Diz se os prêmios (Wikidata e Wikipedia) precisam ser buscados: nunca buscados, ou buscados há 30
+ * dias ou mais. Vale para filmes e pessoas.
+ *
+ * @param document - Filme ou pessoa guardados.
+ * @param now - Momento de referência.
+ * @returns true se `awards` faltar ou tiver vencido.
+ */
+function isAwardsStale(document: Pick<Movie, 'awards'>, now: Date): boolean {
+  return !document.awards || now.getTime() - document.awards.fetchedAt.getTime() >= EXTRA_FRESHNESS_MS;
+}
+
+export { EXTRA_FRESHNESS_MS, FRESHNESS_MS, isAwardsStale, isExtraStale, isStale, needsRefresh, oldestRatingFetch };

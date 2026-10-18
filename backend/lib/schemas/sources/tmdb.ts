@@ -25,10 +25,37 @@ const CastCredit = z.object({
   profile_path: optionalText,
 });
 
-/** Resposta de /movie/{id}?append_to_response=credits,external_ids,translations. */
+/** Data de estreia num país, em release_dates; a classificação vem vazia quando o país não tem. */
+const ReleaseDate = z.object({ certification: optionalText });
+
+/** Serviços de um país em watch/providers; só a assinatura (flatrate) interessa. */
+const CountryProviders = z.object({
+  flatrate: z.array(z.object({ provider_name: z.string() })).default([]),
+});
+
+/**
+ * Resposta de /movie/{id}?append_to_response=credits,external_ids,translations,keywords,
+ * recommendations,watch/providers,release_dates. Os campos extras (versão 0.3) são opcionais para
+ * aceitar respostas montadas nos testes sem eles.
+ */
 export const TmdbMovieResponse = z.object({
   id: z.number(),
   title: optionalText,
+  tagline: optionalText,
+  budget: z.number().nullish(),
+  revenue: z.number().nullish(),
+  popularity: z.number().default(0),
+  vote_average: z.number().default(0),
+  vote_count: z.number().default(0),
+  belongs_to_collection: z.object({ id: z.number(), name: z.string() }).nullish(),
+  keywords: z.object({ keywords: z.array(z.object({ name: z.string() })).default([]) }).optional(),
+  recommendations: z.object({ results: z.array(z.object({ id: z.number() })).default([]) }).optional(),
+  'watch/providers': z.object({ results: z.record(z.string(), CountryProviders).default({}) }).optional(),
+  release_dates: z
+    .object({
+      results: z.array(z.object({ iso_3166_1: z.string(), release_dates: z.array(ReleaseDate).default([]) })),
+    })
+    .optional(),
   original_title: optionalText,
   overview: optionalText,
   poster_path: optionalText,
