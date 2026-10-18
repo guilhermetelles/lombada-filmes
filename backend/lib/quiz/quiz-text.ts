@@ -112,7 +112,7 @@ export function joinPt(items: readonly string[]): string {
 
 /**
  * Esconde com ▇▇▇ as palavras dos títulos (original e em português) que aparecem no texto, inclusive
- * com até 3 letras a mais (plural, gênero). Palavras com menos de 4 letras e as comuns ficam.
+ * com até 3 letras a mais (plural, gênero) ou com 's. Palavras com menos de 4 letras e as comuns ficam.
  *
  * @param text - Trecho verbatim do comentário.
  * @param titles - Títulos do filme.
@@ -129,7 +129,10 @@ export function maskTitleWords(text: string, titles: readonly string[]): string 
   let masked = text;
   for (const word of words) {
     const safe = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    masked = masked.replace(new RegExp(`(^|[^\\p{L}])(${safe}\\p{L}{0,3})(?=$|[^\\p{L}])`, 'giu'), `$1${TITLE_MASK}`);
+    masked = masked.replace(
+      new RegExp(`(^|[^\\p{L}])(${safe}(?:['’]s|\\p{L}{0,3}))(?=$|[^\\p{L}])`, 'giu'),
+      `$1${TITLE_MASK}`,
+    );
   }
   return masked;
 }
