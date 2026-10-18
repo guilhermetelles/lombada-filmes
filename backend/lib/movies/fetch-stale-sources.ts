@@ -12,13 +12,17 @@ type FetchContext = {
   sources: SourceClients;
   usage: UsageRecorder;
   ratingsOnly: boolean; // rotina diária: com documento guardado, deixa o TMDb de fora
+  forceExtras?: boolean | undefined; // campos extras vencidos: busca TMDb e OMDb mesmo frescos
 };
 
 /**
  * Busca só as fontes vencidas. O TMDb vem primeiro porque dá o id do IMDb que a OMDb precisa;
  * Letterboxd e OMDb vão em paralelo. Com `ratingsOnly` e documento guardado, o TMDb fica de fora.
+ * Com `forceExtras` (campos extras vencidos), TMDb e OMDb são buscados mesmo frescos, porque
+ * trazem os campos extras (curiosidades, onde assistir, resumo de prêmios, bilheteria).
  *
- * @param context - Filme, documento guardado, momento, clientes, medidor de consumo e se busca só notas.
+ * @param context - Filme, documento guardado, momento, clientes, medidor de consumo, se busca só notas
+ *   e se força os campos extras.
  * @returns O que cada fonte trouxe; fica de fora o que estava fresco ou falhou.
  * @throws {NotFoundError} Se não houver documento guardado e o TMDb não tiver o filme.
  * @throws {SourceUnavailableError} Se não houver documento guardado e o TMDb falhar.
@@ -44,11 +48,12 @@ export async function fetchStaleSources(context: FetchContext): Promise<FetchedS
 }
 
 /**
- * Busca uma fonte se ela estiver vencida. Fonte fresca conta como acerto de cache. Fonte que falha
+ * Busca uma fonte se ela estiver vencida (ou, com `forceExtras`, se for TMDb ou OMDb). Fonte fresca
+ * conta como acerto de cache. Fonte que falha
  * é registrada no log e fica de fora (a nota guardada continua valendo), a menos que seja
  * obrigatória.
  *
- * @param context - Documento guardado, momento e medidor de consumo.
+ * @param context - Documento guardado, momento, medidor de consumo e se força os campos extras.
  * @param source - Fonte a buscar.
  * @param fetchSource - Chamada à fonte.
  * @param options - `required`: repassa a falha em vez de seguir sem a fonte.
@@ -56,12 +61,13 @@ export async function fetchStaleSources(context: FetchContext): Promise<FetchedS
  * @throws O erro da fonte, quando ela é obrigatória.
  */
 async function fetchIfStale<T>(
-  { tmdbId, stored, now, usage }: FetchContext,
+  { tmdbId, stored, now, usage, forceExtras }: FetchContext,
   source: WeeklySource,
   fetchSource: () => Promise<T>,
   { required = false } = {},
 ): Promise<T | undefined> {
-  if (!isStale(stored, source, now)) {
+  const forced = forceExtras === true && source !== 'letterboxd';
+  if (!forced && !isStale(stored, source, now)) {
     usage.count(source, 'cacheHits');
     return undefined;
   }
