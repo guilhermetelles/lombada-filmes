@@ -38,27 +38,34 @@ data class QuizMedia(
 )
 
 /**
- * Pergunta do dia em `lists/{listId}/quizzes/{dia}`, sem a resposta (que fica em `quizKeys`).
+ * Pergunta em `lists/{listId}/quizzes/{id}`, sem a resposta (que fica em `quizKeys`). O id é o dia
+ * na pergunta diária e `inicio-NN` nas do evento de início (que valem em qualquer dia).
  *
- * @property day Dia `AAAA-MM-DD`, no fuso de Brasília.
+ * @property id Id do documento: o dia `AAAA-MM-DD`, ou `inicio-01` … `inicio-10`.
+ * @property day Dia `AAAA-MM-DD`, no fuso de Brasília (no evento, o dia em que foi criada).
  * @property type Tipo: `diretor`, `ano`, `trecho`, `poster`, `ranking`, `mes`, `personagem`, `emoji`,
  *   `sinopse`, `bechdel`, `bilheteria` ou `premio`.
  * @property prompt Enunciado.
  * @property options Alternativas.
  * @property media Mídia, quando o tipo usa.
  * @property createdAt Quando foi gerada.
+ * @property event Evento a que pertence (`inicio`), ou null na pergunta do dia.
+ * @property eventIndex Número no evento, de 1 a 10; null na pergunta do dia.
  */
 data class QuizDoc(
+    val id: String,
     val day: String,
     val type: String,
     val prompt: String,
     val options: List<QuizOption>,
     val media: QuizMedia?,
-    val createdAt: Instant?
+    val createdAt: Instant?,
+    val event: String? = null,
+    val eventIndex: Int? = null
 )
 
 /**
- * Resposta de um membro em `quizzes/{dia}/answers/{uid}`. Só é legível depois de responder.
+ * Resposta de um membro em `quizzes/{id}/answers/{uid}`. Só é legível depois de responder.
  *
  * @property uid Quem respondeu.
  * @property optionId Alternativa escolhida.
