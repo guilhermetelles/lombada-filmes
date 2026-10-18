@@ -39,7 +39,9 @@ beforeEach(async () => {
 async function interpret(body: unknown, client: GeminiClient = gemini.client, token: string | null = idToken) {
   const dependencies = createTestDependencies(fakeSources().fetch, () => clock, { gemini: client });
   // null = sem token (undefined acionaria o valor padrão do parâmetro).
-  const response = await interpretRoute(() => dependencies)(jsonRequest('/api/search/interpret', body, token ?? undefined));
+  const response = await interpretRoute(() => dependencies)(
+    jsonRequest('/api/search/interpret', body, token ?? undefined),
+  );
   return { response, dependencies };
 }
 
