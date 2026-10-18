@@ -2,12 +2,15 @@ package io.github.guilhermetelles.lombada.data.firestore
 
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.firestore.DocumentSnapshot
+import com.google.firebase.firestore.FieldPath
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.snapshots
 import io.github.guilhermetelles.lombada.data.model.UserProfile
 import io.github.guilhermetelles.lombada.domain.RecentLists
+import java.time.Instant
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.tasks.await
 
@@ -84,6 +87,33 @@ class UserRepository(private val db: FirebaseFirestore) {
         save(uid, recent, current.activeListId.takeIf { it != listId } ?: recent.firstOrNull())
     }
 
+    /**
+     * Acompanha quando a pessoa abriu a Atividade de uma lista pela última vez.
+     *
+     * @param uid Pessoa logada.
+     * @param listId Lista.
+     * @return Fluxo com o instante, ou null se nunca abriu.
+     */
+    fun observeFeedSeenAt(uid: String, listId: String): Flow<Instant?> =
+        observe(uid).map { it?.feedSeenAt?.get(listId) }.distinctUntilChanged()
+
+    /**
+     * Marca a Atividade da lista como vista agora (zera o contador do sino). Chamar ao abrir a Atividade.
+     * As regras exigem `updatedAt` na mesma gravação.
+     *
+     * @param uid Pessoa logada.
+     * @param listId Lista.
+     */
+    suspend fun markFeedSeen(uid: String, listId: String) {
+        document(uid)
+            .update(
+                FieldPath.of("feedSeenAt", listId),
+                FieldValue.serverTimestamp(),
+                FieldPath.of("updatedAt"),
+                FieldValue.serverTimestamp()
+            ).await()
+    }
+
     private suspend fun save(uid: String, recent: List<String>, activeListId: String?) {
         document(uid)
             .update(
@@ -106,7 +136,12 @@ class UserRepository(private val db: FirebaseFirestore) {
             displayName = getString("displayName").orEmpty(),
             photoUrl = getString("photoUrl"),
             recentListIds = RecentLists.parse(getString("recentListIds")),
-            activeListId = getString("activeListId")
+            activeListId = getString("activeListId"),
+            feedSeenAt =
+                (get("feedSeenAt") as? Map<*, *>)
+                    .orEmpty()
+                    .mapNotNull { (key, value) -> (key as? String)?.let { id -> value.asInstant()?.let { id to it } } }
+                    .toMap()
         )
     }
 }
