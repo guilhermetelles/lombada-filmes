@@ -158,33 +158,37 @@ class BackendClient(private val api: BackendApi) {
     suspend fun notifyTest(): Int = call { api.notifyTest().sent }
 
     /**
-     * Busca avançada no TMDb, ordenada pela compatibilidade com a lista.
+     * Busca avançada no TMDb: primeiro os filmes com mais palavras-chave pedidas, depois pela
+     * compatibilidade com a lista.
      *
      * @param listId Lista.
      * @param filters Filtros; listas vazias não vão no pedido.
+     * @param keywords Parâmetro `kw` (ids de palavras-chave do TMDb separados por vírgula), ou null.
      * @param page Página, a partir de 1.
      * @return Os filmes e a paginação.
      * @throws BackendException Em qualquer falha.
      */
-    suspend fun discover(listId: String, filters: Filters, page: Int = 1): DiscoverResponse = call {
-        api.discover(
-            listId = listId,
-            mood = filters.mood.joinedOrNull(),
-            dur = filters.dur.joinedOrNull(),
-            dec = filters.dec.joinedOrNull(),
-            genre = filters.genre.joinedOrNull(),
-            theme = filters.theme.joinedOrNull(),
-            svc = filters.svc.joinedOrNull(),
-            fit = filters.fit.takeIf { it },
-            page = page
-        )
-    }
+    suspend fun discover(listId: String, filters: Filters, keywords: String? = null, page: Int = 1): DiscoverResponse =
+        call {
+            api.discover(
+                listId = listId,
+                mood = filters.mood.joinedOrNull(),
+                dur = filters.dur.joinedOrNull(),
+                dec = filters.dec.joinedOrNull(),
+                genre = filters.genre.joinedOrNull(),
+                theme = filters.theme.joinedOrNull(),
+                svc = filters.svc.joinedOrNull(),
+                fit = filters.fit.takeIf { it },
+                kw = keywords,
+                page = page
+            )
+        }
 
     /**
      * Interpreta um texto livre como filtros da busca avançada.
      *
      * @param text De 2 a 200 caracteres.
-     * @return Os filtros e uma frase explicando.
+     * @return Os filtros, uma frase explicando e as palavras-chave do TMDb.
      * @throws BackendException `RATE_LIMITED` (429) acima de 30 por pessoa por dia, entre outras.
      */
     suspend fun interpret(text: String): InterpretResponse = call { api.interpret(InterpretRequest(text)) }

@@ -84,6 +84,7 @@ interface BackendApi {
         @Query("theme") theme: String?,
         @Query("svc") svc: String?,
         @Query("fit") fit: Boolean?,
+        @Query("kw") kw: String?,
         @Query("page") page: Int?
     ): DiscoverResponse
 

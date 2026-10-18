@@ -88,6 +88,37 @@ class DiscoverFiltersTest {
     }
 
     @Test
+    fun `página com palavras-chave entra com as que têm mais palavras primeiro`() {
+        fun item(id: Int, score: Double, matched: List<Int>) =
+            DiscoverItem(tmdbId = id, title = "Filme $id", score = score, matchedKeywords = matched)
+        val page = listOf(item(1, 90.0, emptyList()), item(2, 40.0, listOf(7, 8)), item(3, 80.0, listOf(7)))
+        assertEquals(listOf(2, 3, 1), DiscoverResults.append(emptyList(), page).map { it.tmdbId })
+    }
+
+    @Test
+    fun `filtros do texto somam aos ligados, sem repetir, e o fit fica se qualquer um tiver`() {
+        val manual = Filters(genre = listOf("Comédia"), dec = listOf("1990"), fit = true)
+        val understood = Filters(genre = listOf("Terror", "Comédia"), svc = listOf("Netflix"), fit = false)
+        assertEquals(
+            Filters(
+                genre = listOf("Comédia", "Terror"),
+                dec = listOf("1990"),
+                svc = listOf("Netflix"),
+                fit = true
+            ),
+            DiscoverFilters.union(manual, understood)
+        )
+        assertTrue(DiscoverFilters.union(Filters(), Filters(fit = true)).fit)
+        assertEquals(manual, DiscoverFilters.union(manual, Filters()))
+    }
+
+    @Test
+    fun `palavras-chave contam como filtros`() {
+        assertEquals("com 3 filtros", DiscoverFilters.filtersLabel(Filters(dec = listOf("1990")), keywordCount = 2))
+        assertEquals("com 1 filtro", DiscoverFilters.filtersLabel(Filters(), keywordCount = 1))
+    }
+
+    @Test
     fun `posição na lista dos que já são entradas`() {
         val positions = mapOf("e7" to 3)
         assertEquals(

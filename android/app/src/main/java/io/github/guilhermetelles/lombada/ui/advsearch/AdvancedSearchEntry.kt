@@ -29,6 +29,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Key
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -60,10 +61,12 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import io.github.guilhermetelles.lombada.data.model.DiscoverItem
 import io.github.guilhermetelles.lombada.domain.DiscoverFilters
+import io.github.guilhermetelles.lombada.domain.DiscoverKeywords
 import io.github.guilhermetelles.lombada.domain.DiscoverResults
 import io.github.guilhermetelles.lombada.domain.FilterGroup
 import io.github.guilhermetelles.lombada.domain.FilterOption
 import io.github.guilhermetelles.lombada.domain.Formatting
+import io.github.guilhermetelles.lombada.domain.Keyword
 import io.github.guilhermetelles.lombada.domain.RecsLines
 import io.github.guilhermetelles.lombada.ui.appContainer
 import io.github.guilhermetelles.lombada.ui.components.LombadaButton
@@ -82,8 +85,9 @@ import kotlin.math.roundToInt
 
 /**
  * Busca avançada, aberta pela busca da lista e pela aba Sugestões: texto livre interpretado pelo
- * Gemini em filtros (mostrados como chips que dá para tirar), os grupos de filtros e os resultados
- * do TMDb pela compatibilidade, com os filmes da lista marcados com a posição. Cada resultado abre
+ * Gemini em filtros e palavras-chave somados aos já ligados (mostrados como chips que dá para
+ * tirar), os grupos de filtros e os resultados do TMDb (mais palavras-chave primeiro, depois pela
+ * compatibilidade), com os filmes da lista marcados com a posição. Cada resultado abre
  * a página do filme. Ponto de entrada do pacote, registrado no `MainScreen`.
  *
  * @param context Lista, pessoa logada e navegação.
@@ -107,7 +111,7 @@ fun AdvancedSearchEntry(context: ScreenContext) {
         contentPadding = PaddingValues(bottom = 24.dp)
     ) {
         item {
-            TopBar(showClear = hasFilters || state.text.isNotEmpty(), onBack = context.back, onClear = viewModel::clear)
+            TopBar(showClear = state.hasAnything, onBack = context.back, onClear = viewModel::clear)
         }
         item {
             FreeText(
@@ -133,12 +137,14 @@ fun AdvancedSearchEntry(context: ScreenContext) {
                 )
             }
         }
-        if (state.interpretedText != null && hasFilters) {
+        if (state.interpretedText != null && (hasFilters || state.keywords.isNotEmpty())) {
             item {
                 Understood(
                     explanation = state.explanation,
                     active = DiscoverFilters.active(state.filters),
-                    onRemove = viewModel::toggle
+                    keywords = state.keywords,
+                    onRemove = viewModel::toggle,
+                    onRemoveKeyword = viewModel::removeKeyword
                 )
             }
         }
@@ -160,7 +166,7 @@ fun AdvancedSearchEntry(context: ScreenContext) {
                         state.results.size,
                         "filme",
                         "filmes"
-                    )} ${DiscoverFilters.filtersLabel(state.filters)}, " +
+                    )} ${DiscoverFilters.filtersLabel(state.filters, state.keywords.size)}, " +
                         "pela compatibilidade"
                 }
             Text(
@@ -200,6 +206,7 @@ fun AdvancedSearchEntry(context: ScreenContext) {
                     ResultRow(
                         item = item,
                         position = DiscoverResults.position(item, listState.positions),
+                        matched = DiscoverKeywords.matchedLine(state.keywords, item.matchedKeywords),
                         onOpen = { context.navigate(MovieRoute(item.tmdbId, item.title, item.year, item.posterPath)) }
                     )
                 }
@@ -220,8 +227,8 @@ fun AdvancedSearchEntry(context: ScreenContext) {
         }
         item {
             Text(
-                "Filmes do TMDb no Brasil. Humores e temas viram gêneros e palavras-chave do TMDb; a " +
-                    "compatibilidade vem do gosto aprendido com o ranking de vocês.",
+                "Filmes do TMDb no Brasil. Humores, temas e o que a frase cita viram gêneros e " +
+                    "palavras-chave do TMDb; a compatibilidade vem do gosto aprendido com o ranking de vocês.",
                 style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.5.sp, lineHeight = 19.sp),
                 color = LombadaColors.Paper3,
                 modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 24.dp)
@@ -244,7 +251,7 @@ private fun TopBar(showClear: Boolean, onBack: () -> Unit, onClear: () -> Unit) 
             style = MaterialTheme.typography.titleLarge.copy(fontSize = 18.sp),
             modifier = Modifier.padding(start = 4.dp).weight(1f).semantics { heading() }
         )
-        if (showClear) LombadaButton("Limpar", onClick = onClear, style = LombadaButtonStyle.Text)
+        if (showClear) LombadaButton("Limpar tudo", onClick = onClear, style = LombadaButtonStyle.Text)
     }
 }
 
@@ -276,7 +283,13 @@ private fun FreeText(text: String, interpreting: Boolean, onTextChange: (String)
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun Understood(explanation: String?, active: List<FilterOption>, onRemove: (FilterOption) -> Unit) {
+private fun Understood(
+    explanation: String?,
+    active: List<FilterOption>,
+    keywords: List<Keyword>,
+    onRemove: (FilterOption) -> Unit,
+    onRemoveKeyword: (Keyword) -> Unit
+) {
     Column(
         modifier =
             Modifier
@@ -325,14 +338,38 @@ private fun Understood(explanation: String?, active: List<FilterOption>, onRemov
                     modifier = Modifier.heightIn(min = 48.dp)
                 )
             }
+            keywords.forEach { keyword -> KeywordChip(keyword, onRemove = { onRemoveKeyword(keyword) }) }
         }
         Text(
-            "Toque num filtro para tirar; os grupos abaixo mostram tudo o que está ligado.",
+            "Toque num filtro ou numa palavra-chave para tirar; os grupos abaixo mostram os filtros ligados.",
             style = MaterialTheme.typography.bodySmall,
             color = LombadaColors.Paper3,
             modifier = Modifier.padding(top = 4.dp)
         )
     }
+}
+
+@Composable
+private fun KeywordChip(keyword: Keyword, onRemove: () -> Unit) {
+    InputChip(
+        selected = true,
+        onClick = onRemove,
+        label = { Text(keyword.label) },
+        leadingIcon = {
+            Icon(Icons.Filled.Key, contentDescription = "Palavra-chave", modifier = Modifier.size(18.dp))
+        },
+        trailingIcon = {
+            Icon(Icons.Filled.Close, contentDescription = "Tirar", modifier = Modifier.size(18.dp))
+        },
+        colors =
+            InputChipDefaults.inputChipColors(
+                selectedContainerColor = LombadaColors.Tonal,
+                selectedLabelColor = LombadaColors.Paper,
+                selectedLeadingIconColor = LombadaColors.Sticker,
+                selectedTrailingIconColor = LombadaColors.Paper2
+            ),
+        modifier = Modifier.heightIn(min = 48.dp)
+    )
 }
 
 @Composable
@@ -397,7 +434,7 @@ private fun FitSwitch(checked: Boolean, onToggle: () -> Unit) {
 }
 
 @Composable
-private fun ResultRow(item: DiscoverItem, position: Int?, onOpen: () -> Unit) {
+private fun ResultRow(item: DiscoverItem, position: Int?, matched: String?, onOpen: () -> Unit) {
     Row(
         horizontalArrangement = Arrangement.spacedBy(14.dp),
         modifier =
@@ -432,6 +469,7 @@ private fun ResultRow(item: DiscoverItem, position: Int?, onOpen: () -> Unit) {
             RecsLines.meta(null, item.runtime, item.genres).takeIf { it.isNotEmpty() }?.let {
                 Text(it, style = MaterialTheme.typography.bodySmall, color = LombadaColors.Paper3)
             }
+            matched?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = LombadaColors.Paper3) }
             if (position == null && item.reason.isNotBlank()) {
                 Text(item.reason.trim(), style = MaterialTheme.typography.bodySmall, color = LombadaColors.Paper2)
             }
