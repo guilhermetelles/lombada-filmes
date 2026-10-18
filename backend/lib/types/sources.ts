@@ -3,13 +3,15 @@
  * Quando a fonte não tem o filme, as notas vêm null: é uma resposta válida, que também vale 7 dias.
  */
 
+import type * as z from 'zod';
+import type { AwardItem } from './awards.js';
 import type { CastMember, Director, Person, PersonDepartment } from './person.js';
 
 /** Fontes externas, também usadas como chave do consumo em usage/{dia}. */
-export type SourceName = 'tmdb' | 'omdb' | 'letterboxd' | 'bechdel';
+export type SourceName = 'tmdb' | 'omdb' | 'letterboxd' | 'bechdel' | 'wikidata' | 'wikipedia' | 'gemini';
 
-/** Fontes com prazo de 7 dias por filme: o TMDb e as notas (o Teste de Bechdel tem prazos próprios). */
-export type WeeklySource = Exclude<SourceName, 'bechdel'>;
+/** Fontes com prazo de 7 dias por filme: o TMDb e as notas (as outras têm prazos próprios). */
+export type WeeklySource = Extract<SourceName, 'tmdb' | 'omdb' | 'letterboxd'>;
 
 /** Assinatura do fetch, injetado nos clientes (o global em produção, um falso nos testes). */
 export type Fetch = typeof globalThis.fetch;
@@ -109,10 +111,47 @@ export type BechdelClient = {
   getMoviePage(siteId: number): Promise<BechdelPage>;
 };
 
+/** Prêmios por id do TMDb (filme ou pessoa); quem não tem prêmio fica fora do mapa. */
+export type AwardsById = Map<number, AwardItem[]>;
+
+/** Cliente do Wikidata: prêmios (P166) e indicações (P1411) por id do TMDb, em lote (SPARQL). */
+export type WikidataClient = {
+  awardsByTmdbIds(tmdbIds: number[]): Promise<AwardsById>;
+  personAwardsByTmdbIds(personIds: number[]): Promise<AwardsById>;
+};
+
+/** Filme procurado nas páginas da Framboesa de Ouro da Wikipedia. */
+export type RazzieLookup = {
+  tmdbId: number;
+  title: string; // em inglês, como em movies/{tmdbId}.title
+  year: number | null;
+};
+
+/** Cliente da Wikipedia: indicações e vitórias na Framboesa de Ouro, casadas por título e ano. */
+export type WikipediaClient = {
+  razzieByTitles(movies: RazzieLookup[]): Promise<AwardsById>;
+};
+
+/** Pedido de texto estruturado ao Gemini. */
+export type GeminiRequest<T> = {
+  model: string; // uma das versões fixas de GEMINI_MODELS
+  system?: string | undefined;
+  prompt: string;
+  schema: z.ZodType<T>; // formato da resposta; vira o JSON Schema pedido ao modelo e valida o que volta
+};
+
+/** Cliente do Gemini: gera JSON validado. Os comentários vão só como texto, sem nomes. */
+export type GeminiClient = {
+  generateJson<T>(request: GeminiRequest<T>): Promise<T>;
+};
+
 /** Os clientes das fontes, como as rotas recebem. */
 export type SourceClients = {
   tmdb: TmdbClient;
   omdb: OmdbClient;
   letterboxd: LetterboxdClient;
   bechdel: BechdelClient;
+  wikidata: WikidataClient;
+  wikipedia: WikipediaClient;
+  gemini: GeminiClient;
 };

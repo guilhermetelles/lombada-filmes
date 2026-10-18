@@ -2,15 +2,42 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "regions": ["gru1"],
   "outputDirectory": "public",
-  "crons": [
+  "rewrites": [
+    { "source": "/api/me/devices", "destination": "/api/router?route=me-devices" },
+    { "source": "/api/me/notify", "destination": "/api/router?route=me-notify" },
+    { "source": "/api/me/notify-test", "destination": "/api/router?route=me-notify-test" },
+    { "source": "/api/discover", "destination": "/api/router?route=discover" },
+    { "source": "/api/search/interpret", "destination": "/api/router?route=search-interpret" },
+    { "source": "/api/lists/:listId/queue", "destination": "/api/router?route=queue-add&listId=:listId" },
     {
-      "path": "/api/cron/daily",
-      "schedule": "0 9 * * *"
-    }
+      "source": "/api/lists/:listId/queue/:tmdbId",
+      "destination": "/api/router?route=queue-remove&listId=:listId&tmdbId=:tmdbId"
+    },
+    { "source": "/api/lists/:listId/events", "destination": "/api/router?route=list-events&listId=:listId" },
+    {
+      "source": "/api/lists/:listId/quiz/:day/answer",
+      "destination": "/api/router?route=quiz-answer&listId=:listId&day=:day"
+    },
+    { "source": "/api/cron/enrich", "destination": "/api/router?route=cron-enrich" },
+    { "source": "/api/cron/recs", "destination": "/api/router?route=cron-recs" },
+    { "source": "/api/cron/quiz-and-month", "destination": "/api/router?route=cron-quiz-and-month" },
+    { "source": "/api/cron/notify-09", "destination": "/api/router?route=cron-notify-09" },
+    { "source": "/api/cron/notify-12", "destination": "/api/router?route=cron-notify-12" },
+    { "source": "/api/cron/notify-19", "destination": "/api/router?route=cron-notify-19" },
+    { "source": "/api/cron/notify-21", "destination": "/api/router?route=cron-notify-21" }
+  ],
+  "crons": [
+    { "path": "/api/cron/enrich", "schedule": "0 7 * * *" },
+    { "path": "/api/cron/recs", "schedule": "0 8 * * *" },
+    { "path": "/api/cron/quiz-and-month", "schedule": "30 8 * * *" },
+    { "path": "/api/cron/daily", "schedule": "0 9 * * *" },
+    { "path": "/api/cron/notify-09", "schedule": "0 12 * * *" },
+    { "path": "/api/cron/notify-12", "schedule": "0 15 * * *" },
+    { "path": "/api/cron/notify-19", "schedule": "0 22 * * *" },
+    { "path": "/api/cron/notify-21", "schedule": "0 0 * * *" }
   ],
   "functions": {
-    "api/cron/daily.ts": {
-      "maxDuration": 300
-    }
+    "api/cron/daily.ts": { "maxDuration": 300 },
+    "api/router.ts": { "maxDuration": 300 }
   }
 }

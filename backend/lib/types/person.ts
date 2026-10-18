@@ -1,3 +1,5 @@
+import type { Awards } from './awards.js';
+
 /** Pessoas do TMDb (quem dirige e quem atua nos filmes) e o documento people/{tmdbPersonId}. */
 
 /** Referência a uma pessoa dentro de um filme: id de pessoa do TMDb e nome. */
@@ -58,4 +60,5 @@ export type Person = {
   actedCount: number; // filmes em que atuou, sem repetição e sem imagens de arquivo
   acted: ActedMovie[]; // os mais votados, até 20; o app cruza com a lista
   fetchedAt: Date;
+  awards?: Awards | undefined; // gravado pela rotina enrich
 };

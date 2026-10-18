@@ -1,3 +1,4 @@
+import type { Awards } from './awards.js';
 import type { CastMember, Director, PersonRef } from './person.js';
 import type { LetterboxdRating, OmdbRatings, Synopsis, TmdbMovie } from './sources.js';
 
@@ -30,6 +31,19 @@ export type Bechdel = {
   fetchedAt: Date; // quando a página do filme foi lida (ou a busca não achou o filme)
 };
 
+/** Coleção (saga) do TMDb a que o filme pertence. */
+export type MovieCollection = {
+  id: number;
+  name: string;
+};
+
+/** Onde assistir no Brasil por assinatura, com os serviços da busca anterior para notar o que chegou. */
+export type ProvidersBR = {
+  flatrate: string[];
+  previous: string[];
+  fetchedAt: Date;
+};
+
 /** Documento movies/{tmdbId}. */
 export type Movie = {
   title: string;
@@ -44,6 +58,22 @@ export type Movie = {
   ratings: MovieRatings;
   tmdbFetchedAt: Date;
   bechdel?: Bechdel | undefined; // ausente até a primeira busca; fica fora da cópia resumida
+  // Campos extras da versão 0.3, buscados pela rotina enrich (frescor de 30 dias por extraFetchedAt).
+  titlePt?: string | null | undefined; // título no Brasil (TMDb pt-BR)
+  tagline?: string | null | undefined; // slogan em pt-BR
+  budget?: number | null | undefined; // US$
+  revenue?: number | null | undefined; // bilheteria mundial, US$
+  boxOfficeUS?: number | null | undefined; // OMDb BoxOffice, US$
+  certBR?: string | null | undefined; // classificação indicativa no Brasil
+  collection?: MovieCollection | null | undefined;
+  keywords?: string[] | undefined; // até 25, em inglês (nomes do TMDb)
+  recs?: number[] | undefined; // até 10 ids do TMDb (recomendações do TMDb)
+  providersBR?: ProvidersBR | undefined;
+  awards?: Awards | undefined;
+  popularity?: number | undefined;
+  vote?: number | null | undefined;
+  votes?: number | undefined;
+  extraFetchedAt?: Date | undefined;
 };
 
 /**
