@@ -141,6 +141,25 @@ describe('POST /api/lists/{listId}/quiz/{dia}/answer', () => {
     assert.equal(await read(`lists/${LIST_ID}/quizzes/2026-10-17/answers/${ana.uid}`), undefined);
   });
 
+  test('pergunta do evento de início: vale em qualquer dia, pontua no mês atual e não vai para a Atividade', async () => {
+    const eventQuiz = dependencies.db.doc(`lists/${LIST_ID}/quizzes/inicio-03`);
+    await seedQuiz('2026-10-17');
+    const seeded = (await dependencies.db.doc(`lists/${LIST_ID}/quizzes/2026-10-17`).get()).data();
+    await eventQuiz.set({ ...seeded, event: 'inicio', eventIndex: 3 });
+    await dependencies.db
+      .doc(`lists/${LIST_ID}/quizKeys/inicio-03`)
+      .set({ rightOptionId: 'b', explanation: EXPLANATION });
+
+    const response = await answer(ana, 'b', 'inicio-03');
+    assert.equal(response.status, 200);
+    assert.equal(((await response.json()) as { correct: boolean }).correct, true);
+    assert.deepEqual(await read(`lists/${LIST_ID}/scores/2026-10`), { points: { [ana.uid]: 10 } });
+    const feed = await dependencies.db.collection(`lists/${LIST_ID}/feed`).get();
+    assert.equal(feed.size, 0);
+    assert.equal((await answer(ana, 'a', 'inicio-03')).status, 409);
+    assert.equal((await answer(ana, 'b', 'inicio-11')).status, 400);
+  });
+
   test('23h de Brasília ainda é o mesmo dia (02h UTC do dia seguinte)', async () => {
     clock = new Date('2026-10-19T02:00:00Z');
     const response = await answer(ana, 'b');

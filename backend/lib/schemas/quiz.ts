@@ -56,6 +56,8 @@ export const QuizDocSchema: z.ZodType<QuizDoc> = z.object({
   options: z.array(QuizOptionSchema).min(2).max(4),
   media: QuizMediaSchema.optional(),
   createdAt: firestoreDate,
+  event: z.literal('inicio').optional(),
+  eventIndex: z.number().int().min(1).max(10).optional(),
 });
 
 /** lists/{listId}/quizKeys/{dia}, validado ao ler. */

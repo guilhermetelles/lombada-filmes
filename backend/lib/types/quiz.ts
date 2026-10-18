@@ -49,6 +49,8 @@ export type QuizDoc = {
   options: QuizOption[];
   media?: QuizMedia | undefined;
   createdAt: Date;
+  event?: 'inicio' | undefined; // pergunta do evento de início (id inicio-NN), sem trava de dia
+  eventIndex?: number | undefined; // posição no evento, de 1 a 10
 };
 
 /** Documento lists/{listId}/quizKeys/{dia}: gabarito, que ninguém lê pelo app. */

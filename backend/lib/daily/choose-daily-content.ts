@@ -61,10 +61,11 @@ const COMPOSERS: Record<DailyTopic, DailyComposer> = {
  * @param types - Assuntos que a pessoa ligou.
  * @param uid - Pessoa.
  * @param day - Dia de Brasília, AAAA-MM-DD.
+ * @param excluded - Assuntos que ficam de fora, como o quiz, que tem aviso próprio.
  * @returns Os assuntos, sem repetição.
  */
-function topicOrder(types: NotifyTypes, uid: string, day: string): DailyTopic[] {
-  const enabled = (topic: DailyTopic) => types[TOPIC_PREFERENCE[topic]];
+function topicOrder(types: NotifyTypes, uid: string, day: string, excluded: readonly DailyTopic[] = []): DailyTopic[] {
+  const enabled = (topic: DailyTopic) => types[TOPIC_PREFERENCE[topic]] && !excluded.includes(topic);
   const rotation = FALLBACK_TOPICS.filter(enabled);
   const topicOfDay = pickSeeded(rotation, `${day}:${uid}:assunto`);
   return [...new Set([...PRIORITY_TOPICS.filter(enabled), ...(topicOfDay ? [topicOfDay] : []), ...rotation])];
@@ -80,14 +81,16 @@ export type ChosenContent = { content: DailyContent; list: DailyList };
  * @param base - Dependências, consumo, pessoa, dia e momento.
  * @param lists - Listas da pessoa, já lidas.
  * @param types - Assuntos que a pessoa ligou.
+ * @param excluded - Assuntos que ficam de fora.
  * @returns O conteúdo e a lista, ou null se nenhum assunto tiver o que dizer.
  */
 async function chooseDailyContent(
   base: Omit<DailyContext, 'list'>,
   lists: readonly DailyList[],
   types: NotifyTypes,
+  excluded: readonly DailyTopic[] = [],
 ): Promise<ChosenContent | null> {
-  const order = topicOrder(types, base.uid, base.day);
+  const order = topicOrder(types, base.uid, base.day, excluded);
   for (const list of lists) {
     for (const topic of order) {
       try {

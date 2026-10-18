@@ -164,9 +164,12 @@ describe('rotinas notify-*', () => {
     });
     await quiz.collection('answers').doc(BIA).set({ optionId: 'a', correct: true, answeredAt: clock });
 
-    const { report, item, push } = await runAndRead();
+    const report = await run();
+    const item = await feedItem('quiz-2026-10-18');
+    const push = fcm.sent.at(-1);
 
-    assert.equal(report.sent, 1);
+    // Só o quiz está ligado: a pergunta sai no aviso próprio e o assunto do dia fica sem conteúdo.
+    assert.deepEqual([report.quizSent, report.sent, report.noContent], [1, 0, 1]);
     assert.deepEqual(
       { type: item?.type, kind: item?.kind, title: item?.title, body: item?.body, route: item?.route },
       {
@@ -179,11 +182,37 @@ describe('rotinas notify-*', () => {
     );
     assert.deepEqual(push?.notification, { title: 'Quiz do dia', body: 'Quem dirigiu The Abyss? Bia já respondeu.' });
     assert.deepEqual(push?.android?.notification, { channelId: 'quiz' });
-    assert.equal(push?.data?.feedId, `daily-${ANA}-2026-10-18`);
+    assert.equal(push?.data?.feedId, 'quiz-2026-10-18');
     assert.equal(push?.data?.route, JSON.stringify({ name: 'quizPlay', args: { day: '2026-10-18' } }));
 
-    const log = (await notifyLogDocument(dependencies.db, ANA, '2026-10-18').get()).data();
+    const log = (await notifyLogDocument(dependencies.db, ANA, '2026-10-18-quiz').get()).data();
     assert.deepEqual([log?.type, log?.listId, log?.sentAt.getTime()], ['daily.quiz', LIST, clock.getTime()]);
+  });
+
+  test('quiz e mais um assunto sorteado no mesmo dia, cada um com o próprio aviso', async () => {
+    await prefsOfAna({ quiz: true, memory: true });
+    await putEntry('e-speed', SPEED, 'Speed', 'a1', { watchedOn: '2025-10-20', comment: 'Ônibus que não pode parar.' });
+    await dependencies.db.doc(`lists/${LIST}/quizzes/2026-10-18`).set({
+      day: '2026-10-18',
+      type: 'ano',
+      prompt: 'Em que ano saiu Speed?',
+      options: [
+        { id: 'a', label: '1994' },
+        { id: 'b', label: '1996' },
+      ],
+      createdAt: clock,
+    });
+
+    const report = await run();
+    assert.deepEqual([report.quizSent, report.sent], [1, 1]);
+    assert.deepEqual(
+      fcm.sent.map((message) => message.notification?.title),
+      ['Quiz do dia', 'Há 1 ano, sobre Speed'],
+    );
+
+    // Rodar de novo não reenvia nenhum dos dois.
+    await run();
+    assert.equal(fcm.sent.length, 2);
   });
 
   test('quiz já respondido, sem outro tipo ligado: nada sai', async () => {

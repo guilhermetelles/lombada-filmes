@@ -5,10 +5,11 @@ import { requireMember } from '../lists/list-access.js';
 import { listDocument } from '../lists/list-repository.js';
 import { readMemberProfile } from '../lists/member-profiles.js';
 import { logger } from '../logging/logger.js';
-import { brazilDay } from '../time/brazil-day.js';
+import { brazilDay, brazilMonth } from '../time/brazil-day.js';
 import type { Dependencies } from '../types/dependencies.js';
 import type { List } from '../types/list.js';
 import type { QuizAnswerResult, QuizOptionId } from '../types/quiz.js';
+import { isLaunchQuizId } from './launch-event.js';
 import { answersCollection, POINTS_PER_HIT, quizDocument, quizKeyDocument } from './quiz-repository.js';
 
 /** O que responder: quem, em qual lista, de qual dia e qual alternativa. */
@@ -23,7 +24,7 @@ type AnswerRequest = { uid: string; listId: string; day: string; optionId: QuizO
  * @param dependencies - Banco, Auth e relógio.
  * @param request - Quem responde, a lista, o dia e a alternativa.
  * @returns Se acertou, a alternativa certa, a explicação e as respostas dos outros.
- * @throws {NotTodayError} Se o dia não for hoje em Brasília.
+ * @throws {NotTodayError} Se o dia não for hoje em Brasília (as perguntas do evento de início valem em qualquer dia).
  * @throws {InvalidInputError} Se a alternativa não existir na pergunta.
  * @throws {NotFoundError} Se a lista não existir, ou se não houver pergunta (ou gabarito) no dia.
  * @throws {ForbiddenError} Se a pessoa não for integrante.
@@ -32,7 +33,8 @@ type AnswerRequest = { uid: string; listId: string; day: string; optionId: QuizO
 async function answerQuiz(dependencies: Dependencies, request: AnswerRequest): Promise<QuizAnswerResult> {
   const { db, now } = dependencies;
   const { uid, listId, day, optionId } = request;
-  if (day !== brazilDay(now())) throw new NotTodayError('só dá para responder a pergunta de hoje');
+  const launch = isLaunchQuizId(day);
+  if (!launch && day !== brazilDay(now())) throw new NotTodayError('só dá para responder a pergunta de hoje');
 
   const answers = answersCollection(db, listId, day);
   const { list, result } = await db.runTransaction(async (transaction) => {
@@ -51,7 +53,7 @@ async function answerQuiz(dependencies: Dependencies, request: AnswerRequest): P
     transaction.create(answers.doc(uid), { optionId, correct, answeredAt: now() });
     if (correct) {
       transaction.set(
-        db.doc(`lists/${listId}/scores/${day.slice(0, 7)}`),
+        db.doc(`lists/${listId}/scores/${brazilMonth(now())}`),
         { points: { [uid]: FieldValue.increment(POINTS_PER_HIT) } },
         { merge: true },
       );
@@ -64,7 +66,8 @@ async function answerQuiz(dependencies: Dependencies, request: AnswerRequest): P
     return { list, result: { correct, rightOptionId: key.rightOptionId, explanation: key.explanation, others } };
   });
 
-  await writeResultFeed(dependencies, list, request, result.correct);
+  // As 10 do evento de início não vão para a Atividade, para não encher a tela.
+  if (!launch) await writeResultFeed(dependencies, list, request, result.correct);
   return result;
 }
 

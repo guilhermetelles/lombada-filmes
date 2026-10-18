@@ -1,5 +1,6 @@
 import * as z from 'zod';
 import { INVITE_CODE_LENGTH, normalizeInviteCode } from '../lists/invite-codes.js';
+import { LAUNCH_QUIZ_ID } from '../quiz/launch-event.js';
 import { BrazilDaySchema } from './dates.js';
 import { DecSchema, DurSchema, MoodSchema, ThemeSchema } from './discover.js';
 import { NotifyPrefsSchema } from './notify.js';
@@ -164,7 +165,10 @@ export const ListEventsBody = z.object({
 });
 
 /** POST /api/lists/{listId}/quiz/{dia}/answer: caminho. */
-export const QuizAnswerParams = z.object({ listId: ListParams.shape.listId, day: BrazilDaySchema });
+export const QuizAnswerParams = z.object({
+  listId: ListParams.shape.listId,
+  day: z.union([BrazilDaySchema, z.string().regex(LAUNCH_QUIZ_ID)], 'dia deve ser AAAA-MM-DD ou inicio-01 a inicio-10'),
+});
 
 /** POST /api/lists/{listId}/quiz/{dia}/answer: corpo. */
 export const QuizAnswerBody = z.object({ optionId: QuizOptionIdSchema });
