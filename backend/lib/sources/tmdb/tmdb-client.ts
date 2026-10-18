@@ -1,5 +1,6 @@
 import type * as z from 'zod';
 import {
+  TmdbCollectionResponse,
   TmdbMovieResponse,
   TmdbPersonResponse,
   TmdbPersonSearchResponse,
@@ -7,7 +8,7 @@ import {
 } from '../../schemas/sources/tmdb.js';
 import type { Fetch, TmdbClient } from '../../types/sources.js';
 import { fetchJson } from '../shared/fetch-json.js';
-import { toTmdbMovie, toTmdbSearchResults } from './tmdb-mappers.js';
+import { toTmdbCollection, toTmdbMovie, toTmdbSearchResults } from './tmdb-mappers.js';
 import { toTmdbPerson, toTmdbPersonSearchResults } from './tmdb-person-mapper.js';
 
 /** Endereço da API v3 do TMDb; o token vai no cabeçalho Authorization. */
@@ -20,7 +21,7 @@ const MOVIE_APPEND = 'credits,external_ids,translations,keywords,recommendations
  * Cria o cliente do TMDb.
  *
  * @param options - Token de leitura do TMDb e o fetch a usar.
- * @returns Cliente com detalhes de filme, busca de filmes e de pessoas, detalhes de pessoa e elenco.
+ * @returns Cliente com detalhes de filme, busca de filmes e de pessoas, detalhes de pessoa e coleções.
  */
 function createTmdbClient({ token, fetch }: { token: string; fetch: Fetch }): TmdbClient {
   const getFromTmdb = <Schema extends z.ZodType>(path: string, schema: Schema) =>
@@ -42,6 +43,20 @@ function createTmdbClient({ token, fetch }: { token: string; fetch: Fetch }): Tm
     async getMovie(tmdbId) {
       const path = `/movie/${tmdbId}?language=pt-BR&append_to_response=${MOVIE_APPEND}`;
       return toTmdbMovie(await getFromTmdb(path, TmdbMovieResponse));
+    },
+
+    /**
+     * Busca uma coleção (saga) com os filmes dela, em pt-BR. Quem chama mede o consumo com
+     * usage.track, como nos outros métodos.
+     *
+     * @param collectionId - Id da coleção no TMDb (movies/{tmdbId}.collection.id).
+     * @returns A saga, com os filmes na ordem do TMDb e a data de estreia de cada um.
+     * @throws {NotFoundError} Se o TMDb não tiver a coleção.
+     * @throws {SourceUnavailableError} Se o TMDb falhar ou responder fora do formato.
+     */
+    async getCollection(collectionId) {
+      const path = `/collection/${collectionId}?language=pt-BR`;
+      return toTmdbCollection(await getFromTmdb(path, TmdbCollectionResponse));
     },
 
     /**

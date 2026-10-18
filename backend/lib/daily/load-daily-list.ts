@@ -5,14 +5,14 @@ import { MovieSchema } from '../schemas/movie.js';
 import type { List } from '../types/list.js';
 import type { Movie } from '../types/movie.js';
 import type { DailyList } from './daily-content.js';
-import { isDay } from './day-math.js';
 
 /** Quantos documentos pedir por getAll. */
 const GET_ALL_CHUNK = 300;
 
 /**
  * Lê o que a notificação diária usa de uma lista: as entradas na ordem do ranking e os filmes
- * delas. A data de estreia vem do campo `release` (AAAA-MM-DD) de movies/{tmdbId}, quando existir.
+ * delas. A data de estreia vem de `release` (AAAA-MM-DD, validado pelo MovieSchema) de
+ * movies/{tmdbId}, quando existir.
  * Filme fora do formato fica de fora, registrado no log.
  *
  * @param db - Firestore.
@@ -38,8 +38,8 @@ async function loadDailyList(db: Firestore, listId: string, list: List): Promise
         continue;
       }
       movies.set(tmdbId, parsed.data);
-      const release: unknown = snapshot.get('release');
-      if (isDay(release)) releases.set(tmdbId, release);
+      const { release } = parsed.data;
+      if (release) releases.set(tmdbId, release);
     }
   }
   return { listId, list, entries, movies, releases };

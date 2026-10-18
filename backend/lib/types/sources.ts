@@ -6,6 +6,7 @@ import type { TmdbDiscoverClient } from '../discover/tmdb-discover-client.js';
 
 import type * as z from 'zod';
 import type { AwardItem } from './awards.js';
+import type { MovieRecInfo } from './movie.js';
 import type { CastMember, Director, Person, PersonDepartment } from './person.js';
 
 /** Fontes externas, também usadas como chave do consumo em usage/{dia}. */
@@ -44,10 +45,26 @@ export type TmdbMovieExtras = {
   collection: { id: number; name: string } | null;
   keywords: string[]; // até 25, em inglês
   recs: number[]; // até 10 ids do TMDb
+  recsInfo: MovieRecInfo[]; // os mesmos ids de recs, com título, ano e pôster
+  release: string | null; // AAAA-MM-DD, release_date do TMDb
   providersBR: string[]; // streaming por assinatura no Brasil (flatrate)
   popularity: number;
   vote: number | null; // média do TMDb; null sem votos
   votes: number;
+};
+
+/** Um filme de uma coleção (saga) do TMDb. */
+export type TmdbCollectionPart = {
+  tmdbId: number;
+  title: string;
+  release: string | null; // AAAA-MM-DD; null quando o TMDb ainda não tem data
+};
+
+/** Coleção (saga) do TMDb com os filmes dela. */
+export type TmdbCollection = {
+  id: number;
+  name: string;
+  parts: TmdbCollectionPart[];
 };
 
 /** Um resultado da busca do TMDb, resumido para a lista de busca. */
@@ -107,9 +124,10 @@ export type BechdelPage = {
   disputes: number; // comentários que contestam a avaliação
 };
 
-/** Cliente do TMDb: detalhes de filme, busca de filmes e de pessoas e detalhes de pessoa. */
+/** Cliente do TMDb: detalhes de filme, busca de filmes e de pessoas, detalhes de pessoa e coleções. */
 export type TmdbClient = {
   getMovie(tmdbId: number): Promise<TmdbMovie>;
+  getCollection(collectionId: number): Promise<TmdbCollection>;
   search(query: string): Promise<TmdbSearchResult[]>;
   getPerson(personId: number): Promise<TmdbPerson>;
   searchPeople(query: string): Promise<TmdbPersonSearchResult[]>;

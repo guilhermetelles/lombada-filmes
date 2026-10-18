@@ -1,6 +1,7 @@
 import * as z from 'zod';
-import type { Bechdel, Movie, MovieCollection, MovieSnapshot, ProvidersBR } from '../types/movie.js';
+import type { Bechdel, Movie, MovieCollection, MovieRecInfo, MovieSnapshot, ProvidersBR } from '../types/movie.js';
 import { AwardsSchema } from './awards.js';
+import { BrazilDaySchema } from './dates.js';
 import { firestoreDate } from './firestore.js';
 import { CastMemberSchema, DirectorSchema, PersonRefSchema } from './person.js';
 
@@ -19,6 +20,14 @@ export const BechdelSchema: z.ZodType<Bechdel> = z.object({
 
 /** movies/{tmdbId}.collection: saga do TMDb. */
 export const MovieCollectionSchema: z.ZodType<MovieCollection> = z.object({ id: z.number().int(), name: z.string() });
+
+/** Um item de movies/{tmdbId}.recsInfo: filme recomendado pelo TMDb, resumido. */
+export const MovieRecInfoSchema: z.ZodType<MovieRecInfo> = z.object({
+  tmdbId: z.number().int(),
+  title: z.string(),
+  year: z.number().int().nullable(),
+  posterPath: z.string().nullable(),
+});
 
 /** movies/{tmdbId}.providersBR: streaming por assinatura no Brasil. */
 export const ProvidersBRSchema: z.ZodType<ProvidersBR> = z.object({
@@ -56,6 +65,8 @@ export const MovieSchema: z.ZodType<Movie> = z.object({
   collection: MovieCollectionSchema.nullable().optional(),
   keywords: z.array(z.string()).max(25).optional(),
   recs: z.array(z.number().int()).max(10).optional(),
+  recsInfo: z.array(MovieRecInfoSchema).max(10).optional(),
+  release: BrazilDaySchema.nullable().optional(),
   providersBR: ProvidersBRSchema.optional(),
   awards: AwardsSchema.optional(),
   popularity: z.number().optional(),

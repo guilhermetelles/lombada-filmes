@@ -44,9 +44,11 @@ if (records('tmdb')) {
   const extras = TmdbExtrasToRecord.parse(details);
   save('tmdb-movie-2756.json', {
     ...details,
-    // 12 recomendações para os testes conferirem o corte nas 10 primeiras; só id e título.
+    // 12 recomendações para os testes conferirem o corte nas 10 primeiras; só o que recsInfo usa.
     recommendations: {
-      results: extras.recommendations.results.slice(0, 12).map(({ id, title }) => ({ id, title })),
+      results: extras.recommendations.results
+        .slice(0, 12)
+        .map(({ id, title, poster_path, release_date }) => ({ id, title, poster_path, release_date })),
     },
     release_dates: {
       results: extras.release_dates.results.filter((result) => ['BR', 'US'].includes(result.iso_3166_1)),

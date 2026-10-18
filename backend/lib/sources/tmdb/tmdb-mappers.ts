@@ -1,6 +1,14 @@
-import type { TmdbCastCredit, TmdbMovieResponse, TmdbSearchResponse } from '../../schemas/sources/tmdb.js';
+import {
+  releaseDay,
+  releaseYear,
+  type TmdbCastCredit,
+  type TmdbCollectionResponse,
+  type TmdbMovieResponse,
+  type TmdbSearchResponse,
+} from '../../schemas/sources/tmdb.js';
+import type { MovieRecInfo } from '../../types/movie.js';
 import type { CastMember, Director } from '../../types/person.js';
-import type { TmdbMovie, TmdbMovieExtras, TmdbSearchResult } from '../../types/sources.js';
+import type { TmdbCollection, TmdbMovie, TmdbMovieExtras, TmdbSearchResult } from '../../types/sources.js';
 
 /** Tamanho do trecho de sinopse nos resultados de busca. */
 const OVERVIEW_EXCERPT_LENGTH = 200;
@@ -27,7 +35,7 @@ export function toTmdbMovie(response: TmdbMovieResponse): TmdbMovie {
     // O TMDb deixa a tradução em inglês vazia quando o original já é em inglês; daí o
     // original_title como reserva.
     title: english?.title ?? response.original_title ?? response.title ?? `TMDb ${response.id}`,
-    year: response.release_date,
+    year: releaseYear.parse(response.release_date),
     directors: findDirectors(response),
     cast: toCast(response.credits?.cast ?? []),
     runtime: response.runtime && response.runtime > 0 ? response.runtime : null,
@@ -42,8 +50,8 @@ export function toTmdbMovie(response: TmdbMovieResponse): TmdbMovie {
 /**
  * Tira da resposta de detalhes os campos extras da versão 0.3: título e slogan no Brasil,
  * orçamento e bilheteria (0 vira null, porque o TMDb usa 0 para "não sei"), classificação
- * indicativa no Brasil, saga, palavras-chave, recomendações, streaming por assinatura no Brasil,
- * popularidade e nota.
+ * indicativa no Brasil, saga, palavras-chave, recomendações (ids e resumo para a fileira de
+ * parecidos), data de estreia, streaming por assinatura no Brasil, popularidade e nota.
  *
  * @param response - Resposta validada de /movie/{id}.
  * @returns Os campos extras no formato de movies/{tmdbId}.
@@ -52,6 +60,7 @@ export function toTmdbExtras(response: TmdbMovieResponse): TmdbMovieExtras {
   const brazilReleases = response.release_dates?.results.find((result) => result.iso_3166_1 === 'BR');
   const certBR = brazilReleases?.release_dates.find((release) => release.certification)?.certification ?? null;
   const providers = response['watch/providers']?.results.BR?.flatrate ?? [];
+  const recommendations = (response.recommendations?.results ?? []).slice(0, RECS_LIMIT);
   return {
     titlePt: response.title,
     tagline: response.tagline,
@@ -62,11 +71,31 @@ export function toTmdbExtras(response: TmdbMovieResponse): TmdbMovieExtras {
       ? { id: response.belongs_to_collection.id, name: response.belongs_to_collection.name }
       : null,
     keywords: (response.keywords?.keywords ?? []).map((keyword) => keyword.name).slice(0, KEYWORDS_LIMIT),
-    recs: (response.recommendations?.results ?? []).map((result) => result.id).slice(0, RECS_LIMIT),
+    recs: recommendations.map((result) => result.id),
+    recsInfo: recommendations.map(toRecInfo),
+    release: releaseDay.parse(response.release_date),
     providersBR: [...new Set(providers.map((provider) => provider.provider_name))],
     popularity: response.popularity,
     vote: response.vote_count > 0 ? response.vote_average : null,
     votes: response.vote_count,
+  };
+}
+
+/**
+ * Converte a resposta de /collection/{id} na saga com os filmes dela.
+ *
+ * @param response - Resposta validada de /collection/{id}.
+ * @returns A saga, com os filmes na ordem do TMDb.
+ */
+export function toTmdbCollection(response: TmdbCollectionResponse): TmdbCollection {
+  return {
+    id: response.id,
+    name: response.name,
+    parts: response.parts.map((part) => ({
+      tmdbId: part.id,
+      title: part.title ?? part.original_title ?? `TMDb ${part.id}`,
+      release: part.release_date,
+    })),
   };
 }
 
@@ -85,6 +114,22 @@ export function toTmdbSearchResults(response: TmdbSearchResponse): TmdbSearchRes
     posterPath: result.poster_path,
     overview: excerpt(result.overview, OVERVIEW_EXCERPT_LENGTH),
   }));
+}
+
+/**
+ * Resume uma recomendação do TMDb para a fileira de parecidos. O título vem em pt-BR quando o TMDb
+ * tem tradução (o pedido de detalhes é em pt-BR).
+ *
+ * @param result - Uma recomendação validada.
+ * @returns Id, título, ano e pôster.
+ */
+function toRecInfo(result: NonNullable<TmdbMovieResponse['recommendations']>['results'][number]): MovieRecInfo {
+  return {
+    tmdbId: result.id,
+    title: result.title ?? result.original_title ?? `TMDb ${result.id}`,
+    year: result.release_date,
+    posterPath: result.poster_path,
+  };
 }
 
 /**

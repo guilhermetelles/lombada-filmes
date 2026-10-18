@@ -76,6 +76,8 @@ function applyTmdbExtras(stored: Movie | undefined, extras: TmdbMovieExtras, now
     collection: extras.collection,
     keywords: extras.keywords,
     recs: extras.recs,
+    recsInfo: extras.recsInfo,
+    release: extras.release,
     providersBR: { flatrate: extras.providersBR, previous: previousProviders(stored, extras, now), fetchedAt: now },
     popularity: extras.popularity,
     vote: extras.vote,

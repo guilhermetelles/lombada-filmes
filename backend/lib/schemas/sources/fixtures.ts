@@ -8,7 +8,16 @@ import * as z from 'zod';
 /** Campos extras de /movie/{id} que o script corta: recomendações, datas de estreia e streaming. */
 export const TmdbExtrasToRecord = z.looseObject({
   keywords: z.looseObject({ keywords: z.array(z.looseObject({ name: z.string() })) }),
-  recommendations: z.looseObject({ results: z.array(z.looseObject({ id: z.number(), title: z.string().optional() })) }),
+  recommendations: z.looseObject({
+    results: z.array(
+      z.looseObject({
+        id: z.number(),
+        title: z.string().optional(),
+        poster_path: z.string().nullish(),
+        release_date: z.string().optional(),
+      }),
+    ),
+  }),
   release_dates: z.looseObject({ results: z.array(z.looseObject({ iso_3166_1: z.string() })) }),
   'watch/providers': z.looseObject({ results: z.record(z.string(), z.unknown()) }),
 });
