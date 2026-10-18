@@ -92,6 +92,7 @@ data class Bechdel(
  * @property collection Coleção (saga) do TMDb.
  * @property keywords Até 25 palavras-chave do TMDb, em inglês.
  * @property recs Até 10 ids de filmes recomendados pelo TMDb.
+ * @property recsInfo Título, ano e capa dos mesmos filmes de [recs], para a fileira de parecidos.
  * @property providersBR Streaming por assinatura no Brasil.
  * @property awards Prêmios e indicações.
  * @property popularity Popularidade no TMDb.
@@ -128,6 +129,7 @@ data class Movie(
     val collection: MovieCollection? = null,
     val keywords: List<String> = emptyList(),
     val recs: List<Int> = emptyList(),
+    val recsInfo: List<MovieRecInfo> = emptyList(),
     val providersBR: ProvidersBR? = null,
     val awards: Awards? = null,
     val popularity: Double? = null,
@@ -145,3 +147,13 @@ data class Movie(
         directors = directors.take(8).map { PersonRef(it.id, it.name) }
     )
 }
+
+/**
+ * Um filme recomendado pelo TMDb, em `movies/{tmdbId}.recsInfo`.
+ *
+ * @property tmdbId Filme.
+ * @property title Título (em português quando o TMDb tem).
+ * @property year Ano.
+ * @property posterPath Capa.
+ */
+data class MovieRecInfo(val tmdbId: Int, val title: String, val year: Int?, val posterPath: String?)

@@ -229,7 +229,7 @@ class BackendClient(private val api: BackendApi) {
      * @param day Dia `AAAA-MM-DD` em Brasília; precisa ser hoje.
      * @param optionId Alternativa escolhida.
      * @return Se acertou, a certa, a explicação e as respostas de quem já respondeu.
-     * @throws BackendException Com `status` 409 se já respondeu e `INVALID_INPUT` se o dia não é hoje.
+     * @throws BackendException `ALREADY_ANSWERED` (409) se já respondeu e `NOT_TODAY` (400) se o dia não é hoje.
      */
     suspend fun answerQuiz(listId: String, day: String, optionId: String): QuizAnswerResponse =
         call { api.answerQuiz(listId, day, QuizAnswerRequest(optionId)) }

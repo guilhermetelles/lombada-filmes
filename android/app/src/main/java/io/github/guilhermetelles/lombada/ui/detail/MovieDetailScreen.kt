@@ -53,6 +53,7 @@ import io.github.guilhermetelles.lombada.data.model.Entry
 import io.github.guilhermetelles.lombada.data.model.Movie
 import io.github.guilhermetelles.lombada.data.model.PersonRef
 import io.github.guilhermetelles.lombada.domain.Curiosities
+import io.github.guilhermetelles.lombada.domain.FilmInfo
 import io.github.guilhermetelles.lombada.domain.Formatting
 import io.github.guilhermetelles.lombada.domain.MoviePage
 import io.github.guilhermetelles.lombada.domain.SimilarFilms
@@ -97,8 +98,13 @@ fun MovieDetailScreen(route: MovieRoute, context: ScreenContext) {
     val refreshing = state.refresh == RefreshStatus.Refreshing
     val onOpenPerson: (PersonRoute) -> Unit = { context.navigate(it) }
     val similar =
-        remember(movie?.recs, ranking, state.similarInfo) {
-            SimilarFilms.of(route.tmdbId, movie?.recs.orEmpty(), ranking, state.similarInfo)
+        remember(movie?.recs, movie?.recsInfo, ranking, state.similarInfo) {
+            // recsInfo do próprio filme cobre os parecidos que ainda não estão em movies/ nem nas sugestões.
+            val fromRecs =
+                movie?.recsInfo.orEmpty().associate {
+                    it.tmdbId to FilmInfo(it.tmdbId, it.title, it.year, it.posterPath)
+                }
+            SimilarFilms.of(route.tmdbId, movie?.recs.orEmpty(), ranking, fromRecs + state.similarInfo)
         }
     val curiosities = remember(movie) { movie?.let(Curiosities::of) }
     val scroll = rememberScrollState()

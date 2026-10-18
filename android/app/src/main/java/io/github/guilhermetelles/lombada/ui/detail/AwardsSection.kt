@@ -152,6 +152,9 @@ private fun AwardLine(item: AwardItem, razzie: Boolean) {
                         append("A fonte não diz a categoria")
                     }
                 }
+                item.work?.trim()?.takeIf { it.isNotEmpty() }?.let {
+                    withStyle(SpanStyle(color = LombadaColors.Paper3)) { append(", por $it") }
+                }
                 item.year?.let {
                     withStyle(SpanStyle(color = LombadaColors.Paper3)) { append("  $it") }
                 }

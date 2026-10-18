@@ -41,6 +41,7 @@ import io.github.guilhermetelles.lombada.data.model.Entry
 import io.github.guilhermetelles.lombada.domain.BrazilDay
 import io.github.guilhermetelles.lombada.domain.DuelPair
 import io.github.guilhermetelles.lombada.domain.Formatting
+import io.github.guilhermetelles.lombada.events.ListEventType
 import io.github.guilhermetelles.lombada.ui.appContainer
 import io.github.guilhermetelles.lombada.ui.components.MovieCover
 import io.github.guilhermetelles.lombada.ui.feed.EmptyState
@@ -146,7 +147,10 @@ private fun swap(
 ) {
     val keys = DuelPair.swapKeys(ranking, top.id, bottom.id) ?: return
     val old = ranking.filter { it.id in keys }.associate { it.id to it.rankKey }
-    keys.forEach { (id, key) -> container.entries.move(context.list.id, id, key, context.uid) }
+    keys.forEach { (id, key) ->
+        container.entries.move(context.list.id, id, key, context.uid)
+        context.listViewModel.recordEvent(ListEventType.Moved, id)
+    }
     context.back()
     container.appScope.launch {
         val text =

@@ -70,7 +70,8 @@ internal fun Map<*, *>.toAwards(): Awards = Awards(
                 category = item.string("cat"),
                 kind = item.string("kind")?.takeIf { it == AwardItem.KIND_WIN || it == AwardItem.KIND_NOMINATION }
                     ?: return@mapNotNull null,
-                year = item.int("year")
+                year = item.int("year"),
+                work = item.string("for")
             )
         },
     summary = string("summary"),

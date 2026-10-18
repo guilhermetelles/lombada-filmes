@@ -85,12 +85,10 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.transformLatest
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withTimeoutOrNull
 
 private const val TRANSITION_MS = 300
 
 // Quanto sair da conta espera o backend tirar o token antes de seguir sem ele.
-private const val SIGN_OUT_TIMEOUT_MS = 5_000L
 
 /**
  * App com uma lista aberta: as cinco abas, a navegação entre as telas e as folhas de registrar e
@@ -123,15 +121,12 @@ fun MainScreen(list: MovieList, uid: String, onSwitchList: () -> Unit, onSignOut
     val unseenFlow = remember(list.id, uid) { unseenFeedCount(container, list.id, uid) }
     val unseenCount by unseenFlow.collectAsStateWithLifecycle(initialValue = 0L)
     val pendingPush by PushRouter.pending.collectAsStateWithLifecycle()
-    // Sair da conta tira antes o token do backend, enquanto ainda há sessão para autenticar.
+    // O token do aparelho sai do backend no SessionViewModel.signOut; aqui só se esquece a sincronização.
     val signOut: () -> Unit =
         remember(onSignOut) {
             {
-                container.appScope.launch {
-                    withTimeoutOrNull(SIGN_OUT_TIMEOUT_MS) { DeviceRegistration(container.backend).unregister() }
-                    StartupSync.forget()
-                    onSignOut()
-                }
+                StartupSync.forget()
+                onSignOut()
             }
         }
     val context =

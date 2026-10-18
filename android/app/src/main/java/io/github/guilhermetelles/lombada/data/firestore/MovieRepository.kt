@@ -10,6 +10,7 @@ import io.github.guilhermetelles.lombada.data.model.CastMember
 import io.github.guilhermetelles.lombada.data.model.Director
 import io.github.guilhermetelles.lombada.data.model.Movie
 import io.github.guilhermetelles.lombada.data.model.MovieCollection
+import io.github.guilhermetelles.lombada.data.model.MovieRecInfo
 import io.github.guilhermetelles.lombada.data.model.ProvidersBR
 import io.github.guilhermetelles.lombada.data.model.Rating
 import kotlinx.coroutines.flow.Flow
@@ -107,6 +108,15 @@ class MovieRepository(private val db: FirebaseFirestore) {
                 },
             keywords = (get("keywords") as? List<*>).orEmpty().filterIsInstance<String>(),
             recs = (get("recs") as? List<*>).orEmpty().filterIsInstance<Number>().map { it.toInt() },
+            recsInfo =
+                (get("recsInfo") as? List<*>).orEmpty().filterIsInstance<Map<*, *>>().mapNotNull { item ->
+                    MovieRecInfo(
+                        tmdbId = item.int("tmdbId") ?: return@mapNotNull null,
+                        title = item.string("title") ?: return@mapNotNull null,
+                        year = item.int("year"),
+                        posterPath = item.string("posterPath")
+                    )
+                },
             providersBR =
                 (get("providersBR") as? Map<*, *>)?.let { item ->
                     ProvidersBR(item.strings("flatrate"), item.strings("previous"), item["fetchedAt"].asInstant())

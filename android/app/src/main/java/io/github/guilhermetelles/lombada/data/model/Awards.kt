@@ -9,8 +9,15 @@ import java.time.Instant
  * @property category Categoria, quando a fonte informa.
  * @property kind [KIND_WIN] ou [KIND_NOMINATION].
  * @property year Ano da cerimônia, quando a fonte informa.
+ * @property work Por qual filme (prêmios de pessoas), quando a fonte informa; `for` no Firestore.
  */
-data class AwardItem(val org: String, val category: String?, val kind: String, val year: Int?) {
+data class AwardItem(
+    val org: String,
+    val category: String?,
+    val kind: String,
+    val year: Int?,
+    val work: String? = null
+) {
     /** Se é vitória, e não só indicação. */
     val isWin: Boolean get() = kind == KIND_WIN
 
