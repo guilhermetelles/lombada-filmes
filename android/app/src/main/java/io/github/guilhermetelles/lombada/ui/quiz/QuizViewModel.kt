@@ -49,7 +49,8 @@ data class QuizHistoryItem(val quiz: QuizDoc, val answers: DayAnswers, val right
  * @property today Pergunta de hoje, ou null antes da rotina.
  * @property todayAnswers Respostas de hoje.
  * @property scores Placar do mês, ou null antes da primeira resposta.
- * @property history Perguntas dos dias anteriores, da mais nova para a mais antiga (sem as do evento).
+ * @property history Perguntas dos dias anteriores e as do evento de início já respondidas, da mais nova
+ *   para a mais antiga (as do evento entram pelo dia em que a pessoa respondeu).
  * @property event Perguntas do evento de início e as próprias respostas.
  */
 data class QuizTabState(
@@ -105,7 +106,28 @@ class QuizViewModel(
                 }
             }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), QuizTabState())
 
-    private fun history(today: String): Flow<List<QuizHistoryItem>> = container.quiz
+    private fun history(today: String): Flow<List<QuizHistoryItem>> =
+        combine(dailyHistory(today), eventHistory()) { daily, event ->
+            // Chave de ordem: o dia da pergunta, ou o dia em que a pessoa respondeu a do evento.
+            (daily + event).sortedWith(
+                compareByDescending<QuizHistoryItem> { historyDay(it) }.thenByDescending { it.quiz.eventIndex ?: 0 }
+            )
+        }
+
+    private fun historyDay(item: QuizHistoryItem): String = if (item.quiz.event == null) {
+        item.quiz.day
+    } else {
+        item.answers.mine?.answeredAt?.let { BrazilDay.of(it).toString() } ?: item.quiz.day
+    }
+
+    // Perguntas do evento já respondidas, com as respostas de todos e a certa quando dá para saber.
+    private fun eventHistory(): Flow<List<QuizHistoryItem>> = observeQuizEvent(container.quiz, listId, uid)
+        .map { event -> event.items.filter { it.mine != null }.map { it.quiz } }
+        .distinctUntilChanged()
+        .flatMapLatest { quizzes -> historyItems(quizzes) }
+        .catch { emit(emptyList()) }
+
+    private fun dailyHistory(today: String): Flow<List<QuizHistoryItem>> = container.quiz
         // As do evento também têm `day`: busca a mais para sobrar o bastante depois de tirá-las.
         .observeRecent(listId, HISTORY_SIZE + 1 + QuizEvent.SIZE)
         .map { quizzes ->
@@ -113,19 +135,20 @@ class QuizViewModel(
                 .take(HISTORY_SIZE.toInt())
         }
         .distinctUntilChanged()
-        .flatMapLatest { quizzes ->
-            if (quizzes.isEmpty()) {
-                flowOf(emptyList())
-            } else {
-                combine(
-                    quizzes.map { quiz ->
-                        observeDayAnswers(container.quiz, listId, quiz.id, uid).map { answers ->
-                            val remembered = cache.read(listId, quiz.id)?.rightOptionId
-                            QuizHistoryItem(quiz, answers, QuizRules.rightOption(remembered, answers.all))
-                        }
-                    }
-                ) { it.toList() }
-            }
-        }.onStart { emit(emptyList()) }
+        .flatMapLatest { quizzes -> historyItems(quizzes) }
+        .onStart { emit(emptyList()) }
         .catch { emit(emptyList()) }
+
+    private fun historyItems(quizzes: List<QuizDoc>): Flow<List<QuizHistoryItem>> = if (quizzes.isEmpty()) {
+        flowOf(emptyList())
+    } else {
+        combine(
+            quizzes.map { quiz ->
+                observeDayAnswers(container.quiz, listId, quiz.id, uid).map { answers ->
+                    val remembered = cache.read(listId, quiz.id)?.rightOptionId
+                    QuizHistoryItem(quiz, answers, QuizRules.rightOption(remembered, answers.all))
+                }
+            }
+        ) { it.toList() }
+    }
 }

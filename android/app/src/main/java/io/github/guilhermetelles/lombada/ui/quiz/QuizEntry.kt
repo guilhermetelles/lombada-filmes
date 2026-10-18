@@ -68,9 +68,12 @@ fun QuizEntry(context: ScreenContext) {
             color = LombadaColors.Paper2,
             modifier = Modifier.padding(horizontal = 20.dp)
         )
-        EventSection(state.event) { id ->
-            val type = state.event.items.firstOrNull { it.quiz.id == id }?.quiz?.type
-            context.navigate(QuizPlayRoute(day = id, type = type))
+        // Quem respondeu as 10 não vê mais o card: elas passam para "Últimas perguntas".
+        if (!state.event.progress.done) {
+            EventSection(state.event) { id ->
+                val type = state.event.items.firstOrNull { it.quiz.id == id }?.quiz?.type
+                context.navigate(QuizPlayRoute(day = id, type = type))
+            }
         }
         TodaySection(state, list, context.uid) { context.navigate(QuizPlayRoute(day = state.clock.day)) }
         SectionCard(
@@ -87,7 +90,7 @@ fun QuizEntry(context: ScreenContext) {
         }
         SectionCard(
             title = "Últimas perguntas",
-            subtitle = "A resposta de cada dia aparece depois que você responde."
+            subtitle = "A resposta de cada pergunta aparece depois que você responde."
         ) {
             if (state.history.isEmpty()) {
                 Text(
@@ -216,7 +219,10 @@ private fun HistoryRow(item: QuizHistoryItem, list: MovieList, uid: String, onOp
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
-                listOfNotNull(dayLabel(quiz.day), QuizRules.typeTitle(quiz.type)).joinToString(" · "),
+                listOfNotNull(
+                    if (quiz.event == null) dayLabel(quiz.day) else "Início de uso do app",
+                    QuizRules.typeTitle(quiz.type)
+                ).joinToString(" · "),
                 style = MaterialTheme.typography.labelMedium,
                 color = LombadaColors.Paper3,
                 modifier = Modifier.weight(1f)

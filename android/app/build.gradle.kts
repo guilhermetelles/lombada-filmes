@@ -14,8 +14,8 @@ android {
         // Os dois celulares da dupla estão no Android 13 e 16.
         minSdk = 33
         targetSdk = 37
-        versionCode = 6
-        versionName = "0.3.2"
+        versionCode = 7
+        versionName = "0.3.3"
 
         buildConfigField("String", "BACKEND_URL", "\"https://lombada-lovat.vercel.app/\"")
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
