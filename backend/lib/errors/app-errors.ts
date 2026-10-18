@@ -58,6 +58,18 @@ export class ConflictError extends AppError {
   readonly code = 'conflict';
 }
 
+/** A pessoa já respondeu a pergunta do quiz deste dia (409). */
+export class AlreadyAnsweredError extends AppError {
+  readonly status = 409;
+  readonly code = 'already_answered';
+}
+
+/** A resposta do quiz é para um dia que não é hoje no fuso de Brasília (400). */
+export class NotTodayError extends AppError {
+  readonly status = 400;
+  readonly code = 'not_today';
+}
+
 /** A pessoa passou do limite diário da rota, como o da interpretação de texto livre (429). */
 export class RateLimitedError extends AppError {
   readonly status = 429;

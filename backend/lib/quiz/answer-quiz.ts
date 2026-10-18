@@ -1,5 +1,5 @@
 import { FieldValue } from 'firebase-admin/firestore';
-import { ConflictError, InvalidInputError, NotFoundError } from '../errors/app-errors.js';
+import { AlreadyAnsweredError, InvalidInputError, NotFoundError, NotTodayError } from '../errors/app-errors.js';
 import { writeFeedItem } from '../feed/write-feed-item.js';
 import { requireMember } from '../lists/list-access.js';
 import { listDocument } from '../lists/list-repository.js';
@@ -23,15 +23,16 @@ type AnswerRequest = { uid: string; listId: string; day: string; optionId: QuizO
  * @param dependencies - Banco, Auth e relógio.
  * @param request - Quem responde, a lista, o dia e a alternativa.
  * @returns Se acertou, a alternativa certa, a explicação e as respostas dos outros.
- * @throws {InvalidInputError} Se o dia não for hoje em Brasília, ou se a alternativa não existir na pergunta.
+ * @throws {NotTodayError} Se o dia não for hoje em Brasília.
+ * @throws {InvalidInputError} Se a alternativa não existir na pergunta.
  * @throws {NotFoundError} Se a lista não existir, ou se não houver pergunta (ou gabarito) no dia.
  * @throws {ForbiddenError} Se a pessoa não for integrante.
- * @throws {ConflictError} Se a pessoa já tiver respondido.
+ * @throws {AlreadyAnsweredError} Se a pessoa já tiver respondido.
  */
 async function answerQuiz(dependencies: Dependencies, request: AnswerRequest): Promise<QuizAnswerResult> {
   const { db, now } = dependencies;
   const { uid, listId, day, optionId } = request;
-  if (day !== brazilDay(now())) throw new InvalidInputError('só dá para responder a pergunta de hoje');
+  if (day !== brazilDay(now())) throw new NotTodayError('só dá para responder a pergunta de hoje');
 
   const answers = answersCollection(db, listId, day);
   const { list, result } = await db.runTransaction(async (transaction) => {
@@ -40,7 +41,8 @@ async function answerQuiz(dependencies: Dependencies, request: AnswerRequest): P
     const key = (await transaction.get(quizKeyDocument(db, listId, day))).data();
     if (!quiz || !key) throw new NotFoundError('não há pergunta neste dia');
     const given = await transaction.get(answers);
-    if (given.docs.some((answer) => answer.id === uid)) throw new ConflictError('você já respondeu a pergunta de hoje');
+    if (given.docs.some((answer) => answer.id === uid))
+      throw new AlreadyAnsweredError('você já respondeu a pergunta de hoje');
     if (!quiz.options.some((option) => option.id === optionId)) {
       throw new InvalidInputError('optionId não é uma alternativa da pergunta');
     }

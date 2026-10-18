@@ -44,6 +44,8 @@ export type ErrorCode =
   | 'forbidden'
   | 'not_found'
   | 'conflict'
+  | 'already_answered'
+  | 'not_today'
   | 'invite_expired'
   | 'rate_limited'
   | 'source_unavailable'

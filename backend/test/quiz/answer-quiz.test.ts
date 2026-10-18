@@ -127,6 +127,7 @@ describe('POST /api/lists/{listId}/quiz/{dia}/answer', () => {
     const again = await answer(ana, 'a');
 
     assert.equal(again.status, 409);
+    assert.equal(((await again.json()) as { error: { code: string } }).error.code, 'already_answered');
     assert.equal((await read(`lists/${LIST_ID}/quizzes/${TODAY}/answers/${ana.uid}`))?.optionId, 'b');
     assert.deepEqual(await read(`lists/${LIST_ID}/scores/2026-10`), { points: { [ana.uid]: 10 } });
   });
@@ -136,6 +137,7 @@ describe('POST /api/lists/{listId}/quiz/{dia}/answer', () => {
     const response = await answer(ana, 'b', '2026-10-17');
 
     assert.equal(response.status, 400);
+    assert.equal(((await response.json()) as { error: { code: string } }).error.code, 'not_today');
     assert.equal(await read(`lists/${LIST_ID}/quizzes/2026-10-17/answers/${ana.uid}`), undefined);
   });
 
