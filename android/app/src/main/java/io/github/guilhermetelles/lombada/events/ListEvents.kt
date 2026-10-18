@@ -44,8 +44,11 @@ class ListEvents(context: Context) {
     }
 
     companion object {
-        /** Espera antes de enviar, para juntar os eventos próximos num lote. */
-        const val FLUSH_DELAY_MINUTES = 10L
+        /**
+         * Espera antes de enviar, para juntar os eventos próximos num lote. Curta para o aviso chegar
+         * logo; o backend já agrupa os avisos (1 a cada 15 minutos, com a mesma tag).
+         */
+        const val FLUSH_DELAY_MINUTES = 1L
 
         /**
          * Nome do envio único de uma lista.
