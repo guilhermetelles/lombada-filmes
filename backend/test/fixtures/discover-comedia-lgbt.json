@@ -1,0 +1,410 @@
+{
+  "page": 1,
+  "results": [
+    {
+      "adult": false,
+      "backdrop_path": "/5En0fmDagt3Pk8d7P3uTwfeQceg.jpg",
+      "genre_ids": [
+        18,
+        35,
+        36
+      ],
+      "id": 490132,
+      "title": "Green Book: O Guia",
+      "original_language": "en",
+      "original_title": "Green Book",
+      "overview": "Quando Tony Lip, um segurança ítalo-americano, é contratado como motorista do Dr. Don Shirley, um pianista negro de classe alta, durante uma turnê pelo sul dos Estados Unidos, eles devem seguir o \"O Guia\" para leva-los aos poucos estabelecimentos que eram seguros para os afro-americanos. Confrontados com o racismo, o perigo, assim como pela humanidade e o humor inesperados, eles são forçados a deixar de lado as diferenças para sobreviver e prosperar nessa jornada.",
+      "popularity": 41.4745,
+      "poster_path": "/u9dldwRwQjTZGlIxKaAtAPLAjOv.jpg",
+      "release_date": "2018-12-31",
+      "softcore": false,
+      "video": false,
+      "vote_average": 8.224,
+      "vote_count": 13382
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/j4TnCy7lNPrE8mX5n5ydCoLA7xW.jpg",
+      "genre_ids": [
+        35
+      ],
+      "id": 621587,
+      "title": "Quem Fizer Ganha",
+      "original_language": "en",
+      "original_title": "Next Goal Wins",
+      "overview": "O técnico holandês Thomas Rongen recebe a tarefa quase impossível de transformar o time de futebol da Samoa Americana – considerado um dos piores do mundo – em um time de elite.",
+      "popularity": 32.8342,
+      "poster_path": "/m5Sip7xT5u4Sd2ARf4Ij1wGUfo0.jpg",
+      "release_date": "2023-12-14",
+      "softcore": false,
+      "video": false,
+      "vote_average": 6.4,
+      "vote_count": 616
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/d1n2ySWSanU34eEsluRjfrjRq52.jpg",
+      "genre_ids": [
+        35,
+        27,
+        10749
+      ],
+      "id": 1240889,
+      "title": "Acampamento Miasma: Adolescência, Sexo e Morte",
+      "original_language": "en",
+      "original_title": "Teenage Sex and Death at Camp Miasma",
+      "overview": "Após anos de sequências desleixadas, a franquia Camp Miasma é entregue a uma jovem diretora entusiasmada para ser revitalizada. Mas ao visitar a estrela do filme original, hoje uma atriz reclusa e envolta em mistério, as duas mergulham em um mundo ensanguentado de desejo, medo e delírio.",
+      "popularity": 30.3827,
+      "poster_path": "/mAwGTx2EOdiY6AiWauGICPUrELg.jpg",
+      "release_date": "2026-08-13",
+      "softcore": false,
+      "video": false,
+      "vote_average": 6.2,
+      "vote_count": 318
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/iSskYDN193CJfTbSpFfscSwZ9Sx.jpg",
+      "genre_ids": [
+        36,
+        35,
+        18
+      ],
+      "id": 375262,
+      "title": "A Favorita",
+      "original_language": "en",
+      "original_title": "The Favourite",
+      "overview": "Na Inglaterra do século XVIII, Sarah Churchill, a Duquesa de Marlborough (Rachel Weisz) exerce sua influência na corte como confidente, conselheira e amante secreta da Rainha Ana (Olivia Colman). Seu posto privilegiado, no entanto, é ameaçado pela chegada de Abigail (Emma Stone), nova criada que logo se torna a queridinha da majestade e agarra com unhas e dentes a oportunidade única.",
+      "popularity": 29.1403,
+      "poster_path": "/uBOytbDGmdiUVt3NNXx5HaoL3fn.jpg",
+      "release_date": "2019-01-24",
+      "softcore": false,
+      "video": false,
+      "vote_average": 7.477,
+      "vote_count": 6092
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/qrnwOY3hpu3oVUUYKRgWJxTtMQ3.jpg",
+      "genre_ids": [
+        35,
+        10749
+      ],
+      "id": 930094,
+      "title": "Vermelho, Branco e Sangue Azul",
+      "original_language": "en",
+      "original_title": "Red, White & Royal Blue",
+      "overview": "Depois que uma altercação entre Alex, o filho do presidente, e o príncipe Henry da Grã-Bretanha em um evento real se torna assunto de tabloide, sua rivalidade de longa data agora ameaça abrir uma brecha nas relações EUA/Britânica. Quando os rivais são forçados a uma trégua encenada, seu relacionamento gelado começa a derreter e o atrito entre eles desencadeia algo mais profundo do que jamais esperaram.",
+      "popularity": 28.3136,
+      "poster_path": "/4QpHPh42Kc7wOV6cow8rkHlaPW0.jpg",
+      "release_date": "2023-08-10",
+      "softcore": false,
+      "video": false,
+      "vote_average": 7.929,
+      "vote_count": 1648
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/gQsjbxdjJUam7buy4U2TpVTiGSO.jpg",
+      "genre_ids": [
+        35
+      ],
+      "id": 1288059,
+      "title": "I Want Your Sex",
+      "original_language": "en",
+      "original_title": "I Want Your Sex",
+      "overview": "Elliot, um jovem novato, consegue um emprego para a renomada artista, ícone e provocadora Erika Tracy. Suas fantasias se tornam realidade quando Erika o convoca para se tornar sua musa sexual. No entanto, Elliot logo se vê fora de seu alcance quando a artista o leva em uma jornada mais profunda do que ele jamais havia imaginado, em um mundo de sexo, obsessão, poder, traição e assassinato.",
+      "popularity": 26.3967,
+      "poster_path": "/jeBeg5Xvt0fAfTrE1KNgaEdgJWD.jpg",
+      "release_date": "2026-10-22",
+      "softcore": false,
+      "video": false,
+      "vote_average": 6.028,
+      "vote_count": 106
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/v2LilmCylr3bL9TCZSj6syjowZh.jpg",
+      "genre_ids": [
+        35,
+        18
+      ],
+      "id": 937278,
+      "title": "O Pior Vizinho do Mundo",
+      "original_language": "en",
+      "original_title": "A Man Called Otto",
+      "overview": "A história de Otto Anderson, um viúvo mal-humorado que está muito preso aos seus hábitos. Quando uma jovem família animada se muda ao lado, ele conhece sua igual em Marisol, esperta e grávida, o que leva a uma amizade improvável que vai deixar o mundo de Otto de cabeça para baixo.",
+      "popularity": 23.4846,
+      "poster_path": "/hjOJGaLQe2aC3GCwJCedGvjEgvu.jpg",
+      "release_date": "2023-01-16",
+      "softcore": false,
+      "video": false,
+      "vote_average": 7.747,
+      "vote_count": 3818
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/vM6UBr6rNZkU5pihzMZfcHAbWsf.jpg",
+      "genre_ids": [
+        10749,
+        18,
+        35
+      ],
+      "id": 1287141,
+      "title": "Pillion",
+      "original_language": "en",
+      "original_title": "Pillion",
+      "overview": "Colin, um homem tímido, conhece Ray, um confiante líder de gangue de motoqueiros, que o inicia em um relacionamento submisso, desafiando a existência mundana de Colin e estimulando o crescimento pessoal por meio de sua dinâmica.",
+      "popularity": 20.9643,
+      "poster_path": "/w5Ws1UCeTw1ywrvOG7ucu81mM6f.jpg",
+      "release_date": "2026-07-10",
+      "softcore": false,
+      "video": false,
+      "vote_average": 6.49,
+      "vote_count": 348
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/2q3B90h2hZ6xJTvna9CIFDNaIr4.jpg",
+      "genre_ids": [
+        16,
+        35
+      ],
+      "id": 9473,
+      "title": "South Park: Maior, Melhor e Sem Cortes",
+      "original_language": "en",
+      "original_title": "South Park: Bigger, Longer & Uncut",
+      "overview": "Fama, autoridade, música, militarismo, raça, sexo e religião, esses são alguns dos ingredientes usados pelos criadores de South Park, nesse longa metragem que mergulha os Estados Unidos numa guerra com o Canadá. Tudo começa quando um grupo de estudantes de South Park, conseguem assistir um filme canadense proibido para menores. Os pais das crianças ficam chocados com o efeito que o filme causa na mente de seus inocentes filhos e exigem que uma pequena cidade serrana, no Colorado, os ouça. Talvez você possa se ofender, ou quem sabe esse filme possa fazer você rir mais do que qualquer outra comédia recente.",
+      "popularity": 17.5819,
+      "poster_path": "/wjKlDkmMHWTYbE3bYMZQznomSii.jpg",
+      "release_date": "2000-08-28",
+      "softcore": false,
+      "video": false,
+      "vote_average": 7.292,
+      "vote_count": 3062
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/hsb8nNBt3emvWqBs7Xv5IKlz6Im.jpg",
+      "genre_ids": [
+        12,
+        16,
+        35,
+        14
+      ],
+      "id": 223702,
+      "title": "Festa da Salsicha",
+      "original_language": "en",
+      "original_title": "Sausage Party",
+      "overview": "Dentro de um supermercado, os alimentos sonham em serem escolhidos pelas pessoas e se mudarem para as casas dos compradores. Mas eles nem suspeitam que serão cortados, ralados, cozidos e devorados! Quando uma salsicha descobre a terrível verdade, ela reúne outros alimentos com a tarefa de voltarem ao mercado e avisarem todos os colegas do risco que correm.",
+      "popularity": 16.2277,
+      "poster_path": "/3dIspFMRTWAr30KnKIS219bRqsw.jpg",
+      "release_date": "2016-10-06",
+      "softcore": false,
+      "video": false,
+      "vote_average": 5.748,
+      "vote_count": 7887
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/1nL5TJrldKI4rIj16tZTdqpdYL3.jpg",
+      "genre_ids": [
+        35
+      ],
+      "id": 9472,
+      "title": "Com a Bola Toda",
+      "original_language": "en",
+      "original_title": "DodgeBall: A True Underdog Story",
+      "overview": "A academia Average Joe e seu dono, Peter La Fleur, estão ambos sem sorte. Uma sofisticada academia concorrente, a Globo-Gym, gerenciada pelo viciado em saúde, White Goodman, está prestes a levar a Average Joe à falência, a menos que Peter consiga levantar cinquenta mil dólares para pagar a sua hipoteca. Para salvar a academia, Peter, um grupo de membros e funcionários da Average Joe entram em um concurso de queimada, que oferece um grande prêmio em dinheiro.",
+      "popularity": 15.9645,
+      "poster_path": "/x5dkT5LwiBXJ100xV2nbjLRBWvp.jpg",
+      "release_date": "2004-10-22",
+      "softcore": false,
+      "video": false,
+      "vote_average": 6.368,
+      "vote_count": 3992
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/wfdHCilp8cNPK7tK4jLgdUT7703.jpg",
+      "genre_ids": [
+        35
+      ],
+      "id": 1022690,
+      "title": "Ricky Stanicky",
+      "original_language": "en",
+      "original_title": "Ricky Stanicky",
+      "overview": "Três amigos de infância pregam uma peça que dá errado e inventam o imaginário Ricky Stanicky para não serem pegos! Vinte anos depois, eles ainda usam o inexistente Ricky como um álibi para seus comportamentos imaturos. Quando as famílias desconfiam e pedem para conhecer o famoso senhor Stanicky, o trio culpado decide contratar um ator decadente que imita celebridades para dar vida ao personagem.",
+      "popularity": 15.9541,
+      "poster_path": "/8Y7jmf24lH9Ha1iMtqvVq5SzgXt.jpg",
+      "release_date": "2024-03-07",
+      "softcore": false,
+      "video": false,
+      "vote_average": 6.521,
+      "vote_count": 862
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/thFSP3fBwqBYUZUyIAmaHuwNkvB.jpg",
+      "genre_ids": [
+        35,
+        80
+      ],
+      "id": 957304,
+      "title": "Garotas em Fuga",
+      "original_language": "en",
+      "original_title": "Drive-Away Dolls",
+      "overview": "Jamie, um espírito livre desinibido lamentando mais um término com uma namorada, e sua amiga recatada Marian precisam desesperadamente se soltar. Em busca de um novo começo, os dois embarcam em uma viagem improvisada para Tallahassee, mas as coisas rapidamente dão errado quando eles se cruzam com um grupo de criminosos ineptos ao longo do caminho.",
+      "popularity": 15.6132,
+      "poster_path": "/kWJXbCDnbZ3dptB1jibZBraqmRL.jpg",
+      "release_date": "2024-02-23",
+      "softcore": false,
+      "video": false,
+      "vote_average": 5.483,
+      "vote_count": 631
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/hgESQ2sK21j22Yode4w99jfwj44.jpg",
+      "genre_ids": [
+        35,
+        18
+      ],
+      "id": 491418,
+      "title": "De Repente uma Família",
+      "original_language": "en",
+      "original_title": "Instant Family",
+      "overview": "O jovem casal Pete e Ellie decide adotar uma criança, e busca uma feira destinada a proporcionar encontros entre adultos e jovens sem lar. O casal se apaixona pela pré-adolescente Lizzie, uma garota de temperamento forte, e decide adotá-la. Mas Lizzie tem dois irmãos menores, que se mudam com ela. Logo, Pete e Ellie se veem com três crianças barulhentas e indisciplinadas, que mudam as suas vidas por completo.",
+      "popularity": 15.3197,
+      "poster_path": "/89uyFdvre8F51FfEk4GYv5iW8AL.jpg",
+      "release_date": "2018-11-29",
+      "softcore": false,
+      "video": false,
+      "vote_average": 7.488,
+      "vote_count": 3328
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/cjhq1eBLXgKq1xHDFeUnYzu61H6.jpg",
+      "genre_ids": [
+        35,
+        80,
+        53
+      ],
+      "id": 1149504,
+      "title": "Honey, Não!",
+      "original_language": "en",
+      "original_title": "Honey Don't!",
+      "overview": "Honey O'Donahue, uma detetive particular de cidade pequena, investiga uma série de mortes ligadas a uma igreja misteriosa e envoltas por sedução e mentiras.",
+      "popularity": 14.8362,
+      "poster_path": "/fZcmQ7tbjsshE4e9rcOKx10ukKM.jpg",
+      "release_date": "2025-11-06",
+      "softcore": false,
+      "video": false,
+      "vote_average": 5.544,
+      "vote_count": 499
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/3mpgltEMgPf8zFtPnAWdDVN8ZT1.jpg",
+      "genre_ids": [
+        35,
+        18
+      ],
+      "id": 1056360,
+      "title": "Ficção Americana",
+      "original_language": "en",
+      "original_title": "American Fiction",
+      "overview": "A carreira do escritor Thelonious \"Monk\" Ellison estagnou porque seu trabalho não é \"negro o suficiente\". Sendo assim, Monk publica um livro satírico usando um pseudônimo, com o objetivo de expor as hipocrisias do mundo editorial. O grande sucesso do livro o obriga a permanecer por mais tempo sob sua nova identidade, o que o faz questionar sua visão do mundo.",
+      "popularity": 14.4076,
+      "poster_path": "/bndwT7YCJv9nEHGSXuzvx9PJ013.jpg",
+      "release_date": "2023-11-10",
+      "softcore": false,
+      "video": false,
+      "vote_average": 7.239,
+      "vote_count": 1464
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/bAtFhmRHp0f6aHqj1UGTZoPcmQo.jpg",
+      "genre_ids": [
+        18,
+        35,
+        53
+      ],
+      "id": 930564,
+      "title": "Saltburn",
+      "original_language": "en",
+      "original_title": "Saltburn",
+      "overview": "Uma história perversa sobre privilégio e desejo. Lutando para encontrar seu lugar na Faculdade de Oxford, o aluno Oliver Quick é atraído para o mundo do encantador e aristocrata Felix Catton, que o convida para Saltburn, a enorme mansão de sua família excêntrica, para passar um verão inesquecível.",
+      "popularity": 13.6919,
+      "poster_path": "/zGTfMwG112BC66mpaveVxoWPOaB.jpg",
+      "release_date": "2023-12-22",
+      "softcore": false,
+      "video": false,
+      "vote_average": 6.9,
+      "vote_count": 3170
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/AfXoko90cVuDz1KuVamkSMRKBWy.jpg",
+      "genre_ids": [
+        35,
+        18
+      ],
+      "id": 1125073,
+      "title": "Entre os Templos",
+      "original_language": "en",
+      "original_title": "Between the Temples",
+      "overview": "Um cantor em crise de fé vê seu mundo virar de cabeça para baixo quando sua professora de música da escola primária entra novamente em sua vida como sua nova aluna adulta de Bat Mitzvah.",
+      "popularity": 12.928,
+      "poster_path": "/sw5mxSLV8gNeHsc6G52YPSGZm1j.jpg",
+      "release_date": "2024-08-22",
+      "softcore": false,
+      "video": false,
+      "vote_average": 5.6,
+      "vote_count": 58
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/1yhQqbi1rZg9EJiOI22i8Xg7vW.jpg",
+      "genre_ids": [
+        35
+      ],
+      "id": 814776,
+      "title": "Clube da Luta para Meninas",
+      "original_language": "en",
+      "original_title": "Bottoms",
+      "overview": "Duas alunas não populares do último ano do ensino médio criam um clube da luta para tentar impressionar e conquistar líderes de torcida. E o plano bizarro delas funciona! Mas será que elas vão se meter em encrenca?",
+      "popularity": 12.7446,
+      "poster_path": "/1quLTLv1f7Qpt3gJVyXfEU4oTEU.jpg",
+      "release_date": "2023-11-21",
+      "softcore": false,
+      "video": false,
+      "vote_average": 6.755,
+      "vote_count": 942
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/n36zycrAqHn2uzx65IeAdnsZcMj.jpg",
+      "genre_ids": [
+        35,
+        18
+      ],
+      "id": 1159206,
+      "title": "Pai Mãe Irmã Irmão",
+      "original_language": "en",
+      "original_title": "Father Mother Sister Brother",
+      "overview": "Três capítulos situados em cidades diferentes: Nordeste dos Estados Unidos (pai), Dublin, Irlanda (mãe) e Paris, França (irmã e irmão). As histórias tratam das relações entre filhos adultos, entre seus pais um tanto distantes e entre eles próprios.",
+      "popularity": 12.4571,
+      "poster_path": "/eBP2PYBngd4boEoWvMHD1XRPPma.jpg",
+      "release_date": "2026-04-09",
+      "softcore": false,
+      "video": false,
+      "vote_average": 6.382,
+      "vote_count": 353
+    }
+  ],
+  "total_pages": 14,
+  "total_results": 265
+}
