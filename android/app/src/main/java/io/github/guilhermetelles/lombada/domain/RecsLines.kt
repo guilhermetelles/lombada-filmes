@@ -154,7 +154,7 @@ object RecsLines {
      * @param year Ano.
      * @param runtime Duração em minutos.
      * @param genres Gêneros.
-     * @return Por exemplo "1986 · 137 min · Ação, Terror".
+     * @return A linha, como "1986 · 137 min · Ação, Terror".
      */
     fun meta(year: Int?, runtime: Int?, genres: List<String>): String = listOfNotNull(
         year?.toString(),
