@@ -7,11 +7,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -34,6 +31,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -60,6 +59,9 @@ private val TIER_COLORS =
 
 /** Tinta escura sobre as cores das faixas. */
 private val TIER_INK = Color(0xFF1B1B1F)
+
+/** Largura da faixa colorida com a letra. */
+private val LABEL_WIDTH = 56.dp
 
 /**
  * Modo "Tiers" da aba Lista: o mesmo ranking em faixas S, A, B, C e F pela posição, com os cortes
@@ -140,23 +142,24 @@ private fun PresetChips(selected: String, onSelect: (String) -> Unit) {
 private fun TierRow(band: TierBand<Entry>, onOpenEntry: (Entry) -> Unit) {
     val empty = band.items.isEmpty()
     val range = if (empty) "—" else "#${band.from}–${band.to}"
+    val tierColor = TIER_COLORS.getValue(band.id)
+    // A faixa colorida da letra é desenhada no fundo da linha: com IntrinsicSize.Min o FlowRow mede a
+    // altura como se coubesse uma capa por linha, e cada faixa ficava com um vão enorme.
     Row(
         modifier =
             Modifier
                 .fillMaxWidth()
-                .height(IntrinsicSize.Min)
                 .heightIn(min = 92.dp)
                 .clip(RoundedCornerShape(10.dp))
                 .background(LombadaColors.Shelf)
+                .drawBehind { drawRect(tierColor, size = Size(LABEL_WIDTH.toPx(), size.height)) }
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(2.dp),
             modifier =
                 Modifier
-                    .width(56.dp)
-                    .fillMaxHeight()
-                    .background(TIER_COLORS.getValue(band.id))
+                    .width(LABEL_WIDTH)
                     .padding(horizontal = 2.dp, vertical = 14.dp)
                     .clearAndSetSemantics {
                         contentDescription =

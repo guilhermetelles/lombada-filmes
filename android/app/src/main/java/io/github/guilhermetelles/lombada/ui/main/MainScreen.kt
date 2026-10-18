@@ -19,8 +19,6 @@ import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.Quiz
-import androidx.compose.material3.Badge
-import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -112,11 +110,6 @@ fun MainScreen(list: MovieList, uid: String, onSwitchList: () -> Unit, onSignOut
     val destination = current?.destination
     val currentTab = destination?.let { dest -> TABS.firstOrNull { dest.hasRoute(it.routeClass) } }
     val showTabs = destination == null || currentTab != null
-    val queueFlow =
-        remember(list.id) { container.queue.observe(list.id).map { items -> items.map { it.tmdbId } }.catch {} }
-    val queueIds by queueFlow.collectAsStateWithLifecycle(initialValue = emptyList())
-    // A fila esconde os filmes que já estão na lista.
-    val queueCount = queueIds.count { it !in state.entryByTmdbId }
     val members = remember(list) { list.memberUids.mapNotNull { list.memberProfiles[it] } }
     val unseenFlow = remember(list.id, uid) { unseenFeedCount(container, list.id, uid) }
     val unseenCount by unseenFlow.collectAsStateWithLifecycle(initialValue = 0L)
@@ -217,7 +210,6 @@ fun MainScreen(list: MovieList, uid: String, onSwitchList: () -> Unit, onSignOut
         if (showTabs) {
             Tabs(
                 current = currentTab ?: TABS.first(),
-                queueCount = queueCount,
                 onSelect = { tab -> if (tab != currentTab) navController.navigateTo(tab.route) }
             )
         }
@@ -362,8 +354,6 @@ private fun AnimatedContentTransitionScope<NavBackStackEntry>.sharedAxisOut(forw
     } +
         fadeOut(tween(TRANSITION_MS / 2, easing = LombadaMotion.Easing))
 
-private fun countLabel(count: Int): String = if (count == 1) "1 filme" else "$count filmes"
-
 /**
  * Uma aba da navigation bar.
  *
@@ -402,15 +392,13 @@ private fun NavHostController.navigateTo(route: Any) {
 }
 
 /**
- * Navigation bar com as cinco abas: indicador tonal e ícone amarelo na aba ativa; "Quero ver" com
- * a quantidade de filmes na fila.
+ * Navigation bar com as cinco abas: indicador tonal e ícone amarelo na aba ativa.
  *
  * @param current Aba ativa.
- * @param queueCount Filmes na fila que ainda não estão na lista; 0 esconde o contador.
  * @param onSelect Escolhe a aba.
  */
 @Composable
-private fun Tabs(current: Tab, queueCount: Int, onSelect: (Tab) -> Unit) {
+private fun Tabs(current: Tab, onSelect: (Tab) -> Unit) {
     val colors =
         NavigationBarItemDefaults.colors(
             selectedIconColor = LombadaColors.Sticker,
@@ -421,21 +409,10 @@ private fun Tabs(current: Tab, queueCount: Int, onSelect: (Tab) -> Unit) {
         )
     NavigationBar(containerColor = LombadaColors.Shelf) {
         TABS.forEach { tab ->
-            val badge = if (tab.route == QueueRoute) queueCount else 0
             NavigationBarItem(
                 selected = tab == current,
                 onClick = { onSelect(tab) },
-                icon = {
-                    BadgedBox(
-                        badge = {
-                            if (badge > 0) {
-                                Badge(containerColor = LombadaColors.Sticker, contentColor = LombadaColors.StickerInk) {
-                                    Text(badge.toString())
-                                }
-                            }
-                        }
-                    ) { Icon(tab.icon, contentDescription = if (badge > 0) countLabel(badge) else null) }
-                },
+                icon = { Icon(tab.icon, contentDescription = null) },
                 label = { Text(tab.label, maxLines = 1) },
                 colors = colors
             )
