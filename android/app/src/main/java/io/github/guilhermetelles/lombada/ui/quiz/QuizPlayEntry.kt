@@ -76,11 +76,18 @@ fun QuizPlayEntry(context: ScreenContext, route: QuizPlayRoute) {
             quiz == null ->
                 if (state.isToday) {
                     EmptyState(
-                        if (QuizRules.beforeRelease()) "A pergunta de hoje sai às 5h30" else "A pergunta de hoje ainda não chegou",
+                        if (QuizRules.beforeRelease()) {
+                            "A pergunta de hoje sai às 5h30"
+                        } else {
+                            "A pergunta de hoje ainda não chegou"
+                        },
                         "Toda manhã, às 5h30 de Brasília, chega uma pergunta nova sobre os filmes da lista."
                     )
                 } else {
-                    EmptyState("Não há pergunta neste dia", "Só ficam guardadas as perguntas dos dias em que a rotina rodou.")
+                    EmptyState(
+                        "Não há pergunta neste dia",
+                        "Só ficam guardadas as perguntas dos dias em que a rotina rodou."
+                    )
                 }
 
             else -> QuizBody(state, quiz, list, context.uid, viewModel::answer) { context.navigate(QuizRoute) }
@@ -116,7 +123,7 @@ private fun QuizBody(
                 val look =
                     when {
                         mine == null -> OptionLook.Idle
-                        option.id == mine.optionId && (mine.correct || option.id == state.rightOptionId) -> OptionLook.MineRight
+                        option.id == mine.optionId && mine.correct -> OptionLook.MineRight
                         option.id == mine.optionId -> OptionLook.MineWrong
                         option.id == state.rightOptionId -> OptionLook.Right
                         else -> OptionLook.Idle
@@ -132,7 +139,12 @@ private fun QuizBody(
             }
         }
         state.error?.let {
-            Text(it, style = MaterialTheme.typography.bodyMedium, color = LombadaColors.Error, modifier = Modifier.padding(top = 10.dp))
+            Text(
+                it,
+                style = MaterialTheme.typography.bodyMedium,
+                color = LombadaColors.Error,
+                modifier = Modifier.padding(top = 10.dp)
+            )
         }
         when {
             mine != null -> ResultBlock(state, list, uid)
@@ -167,7 +179,12 @@ private fun QuizMediaBlock(quiz: QuizDoc, revealed: Boolean, modifier: Modifier 
         media.synopsis != null -> QuoteBlock(media.synopsis, modifier)
 
         // Diretor, ano, Bechdel: a capa ajuda a lembrar do filme.
-        poster != null -> MovieCover(title = "", posterPath = poster, seed = poster.hashCode(), modifier = modifier.width(120.dp))
+        poster != null -> MovieCover(
+            title = "",
+            posterPath = poster,
+            seed = poster.hashCode(),
+            modifier = modifier.width(120.dp)
+        )
     }
 }
 
@@ -196,7 +213,11 @@ private fun ResultBlock(state: QuizPlayState, list: MovieList, uid: String) {
         }
         when {
             state.explanation != null ->
-                Text(state.explanation, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(top = 8.dp))
+                Text(
+                    state.explanation,
+                    style = MaterialTheme.typography.bodyLarge,
+                    modifier = Modifier.padding(top = 8.dp)
+                )
 
             state.rightOptionId == null ->
                 Text(
@@ -220,7 +241,11 @@ private fun OthersBlock(state: QuizPlayState, list: MovieList, uid: String) {
         others.forEach { other ->
             val profile = memberProfile(list, other)
             val answer = state.others.firstOrNull { it.uid == other }
-            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.semantics(mergeDescendants = true) {}) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.semantics(mergeDescendants = true) {
+                }
+            ) {
                 MemberAvatar(profile.name, profile.photoUrl, 28.dp)
                 if (answer == null) {
                     Text(

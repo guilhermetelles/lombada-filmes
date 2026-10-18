@@ -192,12 +192,24 @@ private fun FeedRow(item: FeedItem, list: MovieList, unread: Boolean, time: Stri
                     Modifier
                         .size(40.dp)
                         .background(LombadaColors.Tonal, CircleShape)
-            ) { Icon(iconFor(item), contentDescription = null, tint = LombadaColors.Sticker, modifier = Modifier.size(22.dp)) }
+            ) {
+                Icon(
+                    iconFor(item),
+                    contentDescription = null,
+                    tint = LombadaColors.Sticker,
+                    modifier = Modifier.size(22.dp)
+                )
+            }
         }
         Column(modifier = Modifier.weight(1f).padding(start = 12.dp)) {
             Text(item.title, style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold))
             item.body?.takeIf { it.isNotBlank() }?.let {
-                Text(it, style = MaterialTheme.typography.bodyMedium, color = LombadaColors.Paper2, modifier = Modifier.padding(top = 2.dp))
+                Text(
+                    it,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = LombadaColors.Paper2,
+                    modifier = Modifier.padding(top = 2.dp)
+                )
             }
             item.quote?.takeIf { it.isNotBlank() }?.let {
                 // Comentário da dupla, verbatim.
@@ -212,20 +224,33 @@ private fun FeedRow(item: FeedItem, list: MovieList, unread: Boolean, time: Stri
             }
         }
         if (time.isNotEmpty()) {
-            Text(time, style = MaterialTheme.typography.labelSmall, color = LombadaColors.Paper3, modifier = Modifier.padding(start = 8.dp))
+            Text(
+                time,
+                style = MaterialTheme.typography.labelSmall,
+                color = LombadaColors.Paper3,
+                modifier = Modifier.padding(start = 8.dp)
+            )
         }
     }
 }
 
 private fun iconFor(item: FeedItem): ImageVector = when (item.type) {
     "quiz.winner" -> Icons.Filled.EmojiEvents
+
     "queue.added" -> Icons.Filled.Bookmark
+
     "daily.retro" -> Icons.Filled.BarChart
+
     "daily.duel" -> Icons.Filled.SwapVert
+
     "daily.milestone" -> Icons.Filled.EmojiEvents
+
     "daily.release", "daily.releaseAnniversary" -> Icons.Filled.Movie
+
     "daily.streaming" -> Icons.Filled.Tv
+
     "daily.birthday" -> Icons.Filled.Cake
+
     else ->
         when (item.kind) {
             "lista" -> Icons.AutoMirrored.Filled.List

@@ -80,7 +80,10 @@ fun NotifySettingsEntry(context: ScreenContext) {
 
             state.failed ->
                 Column {
-                    EmptyState("Não deu para carregar", "As preferências ficam na sua conta, no servidor. Confira a internet.")
+                    EmptyState(
+                        "Não deu para carregar",
+                        "As preferências ficam na sua conta, no servidor. Confira a internet."
+                    )
                     LombadaButton(
                         "Tentar de novo",
                         onClick = viewModel::load,
@@ -128,14 +131,22 @@ private fun PermissionCard(permission: NotificationPermissionState) {
             )
             Column(modifier = Modifier.padding(start = 12.dp)) {
                 Text(
-                    if (permission.granted) "Notificações permitidas neste celular" else "Notificações desligadas neste celular",
+                    if (permission.granted) {
+                        "Notificações permitidas neste celular"
+                    } else {
+                        "Notificações desligadas neste celular"
+                    },
                     style = MaterialTheme.typography.titleMedium
                 )
                 Text(
                     when {
                         permission.granted -> "Os avisos escolhidos abaixo aparecem aqui."
-                        permission.canAsk -> "Para os avisos aparecerem, o Android precisa da sua permissão. O app só pede aqui."
-                        else -> "O Android não mostra mais o pedido. Ligue as notificações do Lombada nas configurações do sistema."
+
+                        permission.canAsk ->
+                            "Para os avisos aparecerem, o Android precisa da sua permissão. O app só pede aqui."
+
+                        else ->
+                            "O Android não mostra mais o pedido: ligue as notificações nas configurações."
                     },
                     style = MaterialTheme.typography.bodyMedium,
                     color = LombadaColors.Paper2,
@@ -191,7 +202,13 @@ private fun PrefsSections(prefs: NotifyPrefs, otherName: String, onChange: ((Not
 }
 
 @Composable
-private fun SwitchRow(label: String, detail: String?, checked: Boolean, enabled: Boolean = true, onChange: (Boolean) -> Unit) {
+private fun SwitchRow(
+    label: String,
+    detail: String?,
+    checked: Boolean,
+    enabled: Boolean = true,
+    onChange: (Boolean) -> Unit
+) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier =

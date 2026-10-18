@@ -81,7 +81,10 @@ fun QuizEntry(context: ScreenContext) {
                 modifier = Modifier.padding(top = 8.dp)
             )
         }
-        SectionCard(title = "Últimas perguntas", subtitle = "A resposta de cada dia aparece depois que você responde.") {
+        SectionCard(
+            title = "Últimas perguntas",
+            subtitle = "A resposta de cada dia aparece depois que você responde."
+        ) {
             if (state.history.isEmpty()) {
                 Text(
                     "As perguntas dos dias anteriores aparecem aqui, com o resultado de quem respondeu.",
@@ -90,7 +93,11 @@ fun QuizEntry(context: ScreenContext) {
                 )
             }
             state.history.forEachIndexed { index, item ->
-                if (index > 0) HorizontalDivider(color = LombadaColors.Rule, modifier = Modifier.padding(vertical = 4.dp))
+                if (index >
+                    0
+                ) {
+                    HorizontalDivider(color = LombadaColors.Rule, modifier = Modifier.padding(vertical = 4.dp))
+                }
                 HistoryRow(item, list, context.uid) { context.navigate(QuizPlayRoute(day = item.quiz.day)) }
             }
         }
@@ -131,7 +138,9 @@ private fun TodaySection(state: QuizTabState, list: MovieList, uid: String, onPl
             LombadaButton("Responder", onClick = onPlay, modifier = Modifier.fillMaxWidth().padding(top = 14.dp))
             if (others.isNotEmpty()) {
                 Text(
-                    "O resultado de ${others.joinToString(" e ") { memberName(list, it) }} aparece depois que você responder.",
+                    "O resultado de ${others.joinToString(" e ") {
+                        memberName(list, it)
+                    }} aparece depois que você responder.",
                     style = MaterialTheme.typography.bodySmall,
                     color = LombadaColors.Paper3,
                     modifier = Modifier.padding(top = 8.dp)

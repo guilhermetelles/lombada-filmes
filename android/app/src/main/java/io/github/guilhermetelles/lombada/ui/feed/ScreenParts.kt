@@ -121,15 +121,15 @@ fun ScreenTopBar(title: String, onBack: (() -> Unit)?, actions: @Composable RowS
  * Seção em `--shelf` com raio 16, como as dos relatórios.
  *
  * @param title Título; null sem título.
- * @param subtitle Linha explicativa embaixo do título.
  * @param modifier Modificador do Compose.
+ * @param subtitle Linha explicativa embaixo do título.
  * @param content Conteúdo.
  */
 @Composable
 fun SectionCard(
     title: String?,
-    subtitle: String? = null,
     modifier: Modifier = Modifier,
+    subtitle: String? = null,
     content: @Composable ColumnScope.() -> Unit
 ) {
     Column(
@@ -219,7 +219,12 @@ fun MemberAvatar(name: String, photoUrl: String?, size: Dp = 32.dp) {
             color = LombadaColors.Paper2
         )
         if (photoUrl != null) {
-            AsyncImage(photoUrl, contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.size(size))
+            AsyncImage(
+                photoUrl,
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.size(size)
+            )
         }
     }
 }

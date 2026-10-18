@@ -31,8 +31,9 @@ class QuizResultCache(context: Context) {
      * @param day Dia `AAAA-MM-DD`.
      * @return O resultado, ou null se a resposta não foi dada neste aparelho.
      */
-    fun read(listId: String, day: String): QuizResult? =
-        prefs.getString(key(listId, day), null)?.let { runCatching { json.decodeFromString<QuizResult>(it) }.getOrNull() }
+    fun read(listId: String, day: String): QuizResult? = prefs.getString(key(listId, day), null)?.let {
+        runCatching { json.decodeFromString<QuizResult>(it) }.getOrNull()
+    }
 
     /**
      * Guarda o resultado de uma resposta.

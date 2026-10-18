@@ -100,7 +100,10 @@ fun ListInfoEntry(context: ScreenContext) {
                 list.memberUids.forEach { uid -> MemberRow(list, uid, isMe = uid == context.uid) }
             }
         }
-        SectionCard(title = "Placar do quiz", subtitle = "Quem fizer mais pontos no mês vence. Empate, os dois vencem.") {
+        SectionCard(
+            title = "Placar do quiz",
+            subtitle = "Quem fizer mais pontos no mês vence. Empate, os dois vencem."
+        ) {
             if (scores == null) {
                 LoadingBlock()
             } else {
@@ -126,7 +129,10 @@ fun ListInfoEntry(context: ScreenContext) {
                     }
             }
         }
-        SectionCard(title = "Convidar", subtitle = "Mande o código para quem vai entrar na lista. Vale por 7 dias, para quantas pessoas entrarem.") {
+        SectionCard(
+            title = "Convidar",
+            subtitle = "Mande o código para quem vai entrar na lista. Vale por 7 dias, para quantas pessoas entrarem."
+        ) {
             val shown = invite.invite
             if (shown == null) {
                 LombadaButton(
@@ -140,12 +146,18 @@ fun ListInfoEntry(context: ScreenContext) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
                         formatted,
-                        style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.ExtraBold, letterSpacing = 3.sp),
+                        style = MaterialTheme.typography.headlineMedium.copy(
+                            fontWeight = FontWeight.ExtraBold,
+                            letterSpacing = 3.sp
+                        ),
                         color = LombadaColors.Sticker,
                         modifier =
                             Modifier
                                 .weight(1f)
-                                .clearAndSetSemantics { contentDescription = "Código ${formatted.toList().joinToString(" ")}" }
+                                .clearAndSetSemantics {
+                                    contentDescription =
+                                        "Código ${formatted.toList().joinToString(" ")}"
+                                }
                     )
                     LombadaButton(
                         "Copiar",
@@ -227,13 +239,22 @@ private fun RecordsTable(records: List<MemberRecord>, list: MovieList) {
                     Modifier.clearAndSetSemantics {
                         contentDescription =
                             "$name: ${pointsLabel(record.monthPoints)} no mês, " +
-                            "${Formatting.count(record.monthsWon, "mês vencido", "meses vencidos")}, ${pointsLabel(record.total)} no total"
+                            "${Formatting.count(
+                                record.monthsWon,
+                                "mês vencido",
+                                "meses vencidos"
+                            )}, ${pointsLabel(record.total)} no total"
                     }
             ) {
                 val profile = memberProfile(list, record.uid)
                 Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
                     MemberAvatar(profile.name, profile.photoUrl, 24.dp)
-                    Text(name, style = MaterialTheme.typography.bodyMedium, maxLines = 1, modifier = Modifier.padding(start = 8.dp))
+                    Text(
+                        name,
+                        style = MaterialTheme.typography.bodyMedium,
+                        maxLines = 1,
+                        modifier = Modifier.padding(start = 8.dp)
+                    )
                 }
                 listOf(record.monthPoints, record.monthsWon, record.total).forEach { NumberCell(it) }
             }
@@ -272,12 +293,20 @@ private fun MonthRow(summary: MonthSummary, list: MovieList) {
                 modifier = Modifier.weight(1f)
             )
             when {
-                summary.current -> Text("em andamento", style = MaterialTheme.typography.bodySmall, color = LombadaColors.Paper3)
+                summary.current -> Text(
+                    "em andamento",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = LombadaColors.Paper3
+                )
 
                 summary.winnerUids.isEmpty() ->
                     Text("sem vencedor ainda", style = MaterialTheme.typography.bodySmall, color = LombadaColors.Paper3)
 
-                summary.winnerUids.size > 1 -> Text("empate", style = MaterialTheme.typography.bodyMedium, color = LombadaColors.Sticker)
+                summary.winnerUids.size > 1 -> Text(
+                    "empate",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = LombadaColors.Sticker
+                )
 
                 else -> {
                     val winner = memberProfile(list, summary.winnerUids.first())

@@ -87,7 +87,8 @@ class QuizPlayViewModel(
         ) { quiz, answers, localResult, sending ->
             val mine = answers.mine ?: localResult?.mine
             // Os outros pelo Firestore; os que o backend devolveu e ainda não chegaram completam.
-            val others = answers.others + localResult?.others.orEmpty().filter { o -> answers.others.none { it.uid == o.uid } }
+            val others =
+                answers.others + localResult?.others.orEmpty().filter { o -> answers.others.none { it.uid == o.uid } }
             val result = localResult?.result ?: cache.read(listId, day)
             QuizPlayState(
                 loading = false,

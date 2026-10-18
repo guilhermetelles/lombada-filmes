@@ -33,7 +33,9 @@ class DuelPairTest {
     @Test
     fun `sem par com menos de dois filmes`() {
         assertNull(DuelPair.ofDay(ranking(1), LocalDate.of(2026, 10, 18)))
-        assertEquals("e0" to "e1", DuelPair.ofDay(ranking(2), LocalDate.of(2026, 10, 18))?.let { it.first.id to it.second.id })
+        val pair = DuelPair.ofDay(ranking(2), LocalDate.of(2026, 10, 18))
+        assertEquals("e0", pair?.first?.id)
+        assertEquals("e1", pair?.second?.id)
     }
 
     @Test

@@ -21,7 +21,11 @@ import kotlinx.coroutines.launch
  * @property failed Se a leitura falhou; a tela oferece tentar de novo.
  * @property sendingTest Se a notificação de teste está indo.
  */
-data class NotifyPrefsState(val prefs: NotifyPrefs? = null, val failed: Boolean = false, val sendingTest: Boolean = false)
+data class NotifyPrefsState(
+    val prefs: NotifyPrefs? = null,
+    val failed: Boolean = false,
+    val sendingTest: Boolean = false
+)
 
 // Junta toques seguidos num pedido só.
 private const val SAVE_DELAY_MS = 600L
@@ -102,7 +106,13 @@ class NotifyPrefsViewModel(private val container: AppContainer) : ViewModel() {
                         else -> "Notificação enviada para $sent aparelhos."
                     }
                 } catch (error: BackendException) {
-                    if (error.code == BackendErrorCode.NETWORK) "Sem conexão com o servidor." else "Não deu para enviar o teste."
+                    if (error.code ==
+                        BackendErrorCode.NETWORK
+                    ) {
+                        "Sem conexão com o servidor."
+                    } else {
+                        "Não deu para enviar o teste."
+                    }
                 }
             _state.update { it.copy(sendingTest = false) }
             message(text)
