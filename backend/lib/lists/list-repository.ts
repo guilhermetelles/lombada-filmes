@@ -1,16 +1,18 @@
-import type {
-  CollectionReference,
-  DocumentReference,
-  Firestore,
-  FirestoreDataConverter,
-  Query,
+import {
+  type CollectionReference,
+  type DocumentReference,
+  FieldPath,
+  type Firestore,
+  type FirestoreDataConverter,
+  type Query,
 } from 'firebase-admin/firestore';
+import { withoutUndefined } from '../firestore/without-undefined.js';
 import { InviteSchema, ListSchema } from '../schemas/list.js';
 import type { Invite, List } from '../types/list.js';
 
-/** Valida ao ler; ao gravar, tira o `source` ausente (o Firestore recusa campos undefined). */
+/** Valida ao ler; ao gravar, tira `source` e `memberProfiles` ausentes (o Firestore recusa undefined). */
 const listConverter: FirestoreDataConverter<List> = {
-  toFirestore: ({ source, ...list }) => (source ? { ...list, source } : list),
+  toFirestore: (list) => withoutUndefined(list),
   fromFirestore: (snapshot) => ListSchema.parse(snapshot.data()),
 };
 
@@ -29,6 +31,50 @@ const inviteConverter: FirestoreDataConverter<Invite> = {
  */
 export function listDocument(db: Firestore, listId: string): DocumentReference<List> {
   return db.collection('lists').doc(listId).withConverter(listConverter);
+}
+
+/**
+ * Coleção lists/, com validação na leitura (para o script de migração percorrer todas as listas).
+ *
+ * @param db - Firestore.
+ * @returns A coleção tipada.
+ */
+export function listsCollection(db: Firestore): CollectionReference<List> {
+  return db.collection('lists').withConverter(listConverter);
+}
+
+/**
+ * Consulta as listas de que a pessoa é integrante.
+ *
+ * @param db - Firestore.
+ * @param uid - Integrante.
+ * @returns A consulta tipada.
+ */
+export function listsOfMember(db: Firestore, uid: string): Query<List> {
+  return listsCollection(db).where('memberUids', 'array-contains', uid);
+}
+
+/**
+ * Caminho do perfil de um membro dentro do documento da lista (memberProfiles.{uid}), para
+ * gravar ou apagar só essa chave com update().
+ *
+ * @param uid - Membro.
+ * @returns O caminho do campo.
+ */
+export function memberProfileField(uid: string): FieldPath {
+  return new FieldPath('memberProfiles', uid);
+}
+
+/**
+ * Consulta as entradas da lista que usam um filme (no máximo uma, na prática).
+ *
+ * @param db - Firestore.
+ * @param listId - Lista.
+ * @param tmdbId - Id do filme no TMDb.
+ * @returns A consulta, sem conversor (só para saber se existe).
+ */
+export function entriesOfMovie(db: Firestore, listId: string, tmdbId: number): Query {
+  return db.collection('lists').doc(listId).collection('entries').where('tmdbId', '==', tmdbId);
 }
 
 /**

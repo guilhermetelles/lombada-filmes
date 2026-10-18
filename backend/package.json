@@ -10,6 +10,7 @@
     "test": "npx -y firebase-tools@15.32.1 emulators:exec --config ../firebase/firebase.json --only auth,firestore --project demo-lombada \"node --import tsx --test --test-concurrency=1 'test/**/*.test.ts'\"",
     "check:firestore": "node --import tsx scripts/check-firestore.ts",
     "record:fixtures": "node --import tsx scripts/record-fixtures.ts",
+    "migrate:member-profiles": "node --import tsx scripts/migrate-member-profiles.ts",
     "lint": "biome check",
     "format": "biome check --write",
     "login-page": "python3 -m http.server 5173 --bind 127.0.0.1 --directory scripts/google-login",
