@@ -32,7 +32,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import io.github.guilhermetelles.lombada.data.model.MovieList
 import io.github.guilhermetelles.lombada.data.model.QuizDoc
 import io.github.guilhermetelles.lombada.domain.BrazilDay
-import io.github.guilhermetelles.lombada.domain.Formatting
+import io.github.guilhermetelles.lombada.domain.QuizEvent
 import io.github.guilhermetelles.lombada.domain.QuizRules
 import io.github.guilhermetelles.lombada.ui.appContainer
 import io.github.guilhermetelles.lombada.ui.components.LombadaButton
@@ -47,10 +47,9 @@ import io.github.guilhermetelles.lombada.ui.main.QuizPlayRoute
 import io.github.guilhermetelles.lombada.ui.main.QuizRoute
 import io.github.guilhermetelles.lombada.ui.main.ScreenContext
 import io.github.guilhermetelles.lombada.ui.theme.LombadaColors
-import java.time.LocalDate
 
 /**
- * Pergunta do quiz de um dia. Ponto de entrada do pacote, registrado no `MainScreen`.
+ * Pergunta do quiz de um dia ou do evento de início. Ponto de entrada do pacote, registrado no `MainScreen`.
  *
  * @param context Lista, pessoa logada e navegação.
  * @param route Argumentos da rota.
@@ -66,7 +65,12 @@ fun QuizPlayEntry(context: ScreenContext, route: QuizPlayRoute) {
             QuizPlayViewModel(container, QuizResultCache(appContext), list.id, context.uid, day)
         }
     val state by viewModel.state.collectAsStateWithLifecycle()
-    val title = if (state.isToday) "Pergunta de hoje" else "Quiz de ${Formatting.fullDate(LocalDate.parse(day))}"
+    val title =
+        when {
+            state.isEvent -> state.eventIndex?.let { "Pergunta $it de ${QuizEvent.SIZE}" } ?: QuizEvent.TITLE
+            state.isToday -> "Pergunta de hoje"
+            else -> dayLabel(day)?.let { "Quiz de $it" } ?: "Quiz"
+        }
 
     ScreenColumn(title = title, onBack = context.back) {
         val quiz = state.quiz
@@ -74,7 +78,12 @@ fun QuizPlayEntry(context: ScreenContext, route: QuizPlayRoute) {
             state.loading -> LoadingBlock()
 
             quiz == null ->
-                if (state.isToday) {
+                if (state.isEvent) {
+                    EmptyState(
+                        "Esta pergunta não está disponível",
+                        "As perguntas do evento de início aparecem na aba Quiz quando ficam prontas."
+                    )
+                } else if (state.isToday) {
                     EmptyState(
                         if (QuizRules.beforeRelease()) {
                             "A pergunta de hoje sai às 5h30"
@@ -90,7 +99,21 @@ fun QuizPlayEntry(context: ScreenContext, route: QuizPlayRoute) {
                     )
                 }
 
-            else -> QuizBody(state, quiz, list, context.uid, viewModel::answer) { context.navigate(QuizRoute) }
+            else ->
+                QuizBody(
+                    state,
+                    quiz,
+                    list,
+                    context.uid,
+                    onAnswer = viewModel::answer,
+                    onOpenQuiz = { context.navigate(QuizRoute) },
+                    onNextEvent = { next ->
+                        // Troca esta tela pela próxima: voltar leva à aba Quiz, não à pergunta anterior.
+                        context.back()
+                        context.navigate(QuizPlayRoute(day = next))
+                    },
+                    onDoneEvent = context.back
+                )
         }
     }
 }
@@ -102,12 +125,18 @@ private fun QuizBody(
     list: MovieList,
     uid: String,
     onAnswer: (String) -> Unit,
-    onOpenQuiz: () -> Unit
+    onOpenQuiz: () -> Unit,
+    onNextEvent: (String) -> Unit,
+    onDoneEvent: () -> Unit
 ) {
     val mine = state.mine
     Column(modifier = Modifier.padding(horizontal = 20.dp)) {
         Text(
-            QuizRules.typeTitle(quiz.type),
+            if (state.isEvent) {
+                "${QuizEvent.TITLE} · ${QuizRules.typeTitle(quiz.type)}"
+            } else {
+                QuizRules.typeTitle(quiz.type)
+            },
             style = MaterialTheme.typography.labelLarge,
             color = LombadaColors.Sticker,
             modifier = Modifier.padding(top = 4.dp)
@@ -147,9 +176,12 @@ private fun QuizBody(
             )
         }
         when {
-            mine != null -> ResultBlock(state, list, uid)
+            mine != null -> {
+                ResultBlock(state, list, uid)
+                if (state.isEvent) EventNextBlock(state.nextEventId, onNextEvent, onDoneEvent)
+            }
 
-            state.dayClosed || !state.isToday ->
+            state.dayClosed || !state.open ->
                 ClosedBlock(onOpenQuiz)
         }
     }
@@ -249,7 +281,7 @@ private fun OthersBlock(state: QuizPlayState, list: MovieList, uid: String) {
                 MemberAvatar(profile.name, profile.photoUrl, 28.dp)
                 if (answer == null) {
                     Text(
-                        if (state.isToday) {
+                        if (state.open) {
                             "${profile.name} ainda não respondeu. O resultado aparece aqui quando responder."
                         } else {
                             "${profile.name} não respondeu."
@@ -288,6 +320,30 @@ private fun ClosedBlock(onOpenQuiz: () -> Unit) {
         LombadaButton(
             "Ver a pergunta de hoje",
             onClick = onOpenQuiz,
+            style = LombadaButtonStyle.Tonal,
+            modifier = Modifier.fillMaxWidth().padding(top = 12.dp)
+        )
+    }
+}
+
+@Composable
+private fun EventNextBlock(nextId: String?, onNext: (String) -> Unit, onDone: () -> Unit) {
+    if (nextId != null) {
+        LombadaButton(
+            "Próxima pergunta",
+            onClick = { onNext(nextId) },
+            modifier = Modifier.fillMaxWidth().padding(top = 20.dp)
+        )
+    } else {
+        Text(
+            "Você respondeu todas as perguntas do evento.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = LombadaColors.Paper2,
+            modifier = Modifier.padding(top = 20.dp)
+        )
+        LombadaButton(
+            "Ver o placar",
+            onClick = onDone,
             style = LombadaButtonStyle.Tonal,
             modifier = Modifier.fillMaxWidth().padding(top = 12.dp)
         )

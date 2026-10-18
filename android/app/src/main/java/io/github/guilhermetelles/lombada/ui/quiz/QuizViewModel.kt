@@ -6,6 +6,7 @@ import io.github.guilhermetelles.lombada.AppContainer
 import io.github.guilhermetelles.lombada.data.model.QuizDoc
 import io.github.guilhermetelles.lombada.data.model.Scores
 import io.github.guilhermetelles.lombada.domain.BrazilDay
+import io.github.guilhermetelles.lombada.domain.QuizEvent
 import io.github.guilhermetelles.lombada.domain.QuizRules
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
@@ -48,7 +49,8 @@ data class QuizHistoryItem(val quiz: QuizDoc, val answers: DayAnswers, val right
  * @property today Pergunta de hoje, ou null antes da rotina.
  * @property todayAnswers Respostas de hoje.
  * @property scores Placar do mês, ou null antes da primeira resposta.
- * @property history Perguntas dos dias anteriores, da mais nova para a mais antiga.
+ * @property history Perguntas dos dias anteriores, da mais nova para a mais antiga (sem as do evento).
+ * @property event Perguntas do evento de início e as próprias respostas.
  */
 data class QuizTabState(
     val loading: Boolean = true,
@@ -56,7 +58,8 @@ data class QuizTabState(
     val today: QuizDoc? = null,
     val todayAnswers: DayAnswers = DayAnswers.NONE,
     val scores: Scores? = null,
-    val history: List<QuizHistoryItem> = emptyList()
+    val history: List<QuizHistoryItem> = emptyList(),
+    val event: QuizEventState = QuizEventState()
 )
 
 private const val HISTORY_SIZE = 7L
@@ -65,7 +68,7 @@ private const val CLOCK_TICK_MS = 30_000L
 private fun currentClock() = QuizClock(BrazilDay.todayId(), BrazilDay.monthId(), QuizRules.beforeRelease())
 
 /**
- * Aba Quiz: a pergunta de hoje, o placar do mês e o histórico, em tempo real. Vira o dia sozinha.
+ * Aba Quiz: o evento de início, a pergunta de hoje, o placar do mês e o histórico, em tempo real. Vira o dia sozinha.
  *
  * @param container Dependências do app.
  * @param cache Resultados guardados das respostas dadas neste aparelho.
@@ -95,15 +98,20 @@ class QuizViewModel(
                     container.quiz.observeQuiz(listId, now.day).catch { emit(null) },
                     observeDayAnswers(container.quiz, listId, now.day, uid),
                     container.scores.observe(listId, now.month).onStart { emit(null) }.catch { emit(null) },
-                    history(now.day)
-                ) { today, answers, scores, history ->
-                    QuizTabState(false, now, today, answers, scores, history)
+                    history(now.day),
+                    observeQuizEvent(container.quiz, listId, uid)
+                ) { today, answers, scores, history, event ->
+                    QuizTabState(false, now, today, answers, scores, history, event)
                 }
             }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), QuizTabState())
 
     private fun history(today: String): Flow<List<QuizHistoryItem>> = container.quiz
-        .observeRecent(listId, HISTORY_SIZE + 1)
-        .map { quizzes -> quizzes.filter { it.day < today }.take(HISTORY_SIZE.toInt()) }
+        // As do evento também têm `day`: busca a mais para sobrar o bastante depois de tirá-las.
+        .observeRecent(listId, HISTORY_SIZE + 1 + QuizEvent.SIZE)
+        .map { quizzes ->
+            quizzes.filter { it.event == null && !QuizEvent.isEventId(it.id) && it.day < today }
+                .take(HISTORY_SIZE.toInt())
+        }
         .distinctUntilChanged()
         .flatMapLatest { quizzes ->
             if (quizzes.isEmpty()) {
@@ -111,8 +119,8 @@ class QuizViewModel(
             } else {
                 combine(
                     quizzes.map { quiz ->
-                        observeDayAnswers(container.quiz, listId, quiz.day, uid).map { answers ->
-                            val remembered = cache.read(listId, quiz.day)?.rightOptionId
+                        observeDayAnswers(container.quiz, listId, quiz.id, uid).map { answers ->
+                            val remembered = cache.read(listId, quiz.id)?.rightOptionId
                             QuizHistoryItem(quiz, answers, QuizRules.rightOption(remembered, answers.all))
                         }
                     }

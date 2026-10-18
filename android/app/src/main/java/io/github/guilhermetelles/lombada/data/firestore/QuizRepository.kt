@@ -13,7 +13,8 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
 /**
- * Quiz diário em `lists/{listId}/quizzes/{dia}` e as respostas em `answers/{uid}`. Só o backend
+ * Quiz diário em `lists/{listId}/quizzes/{dia}`, as perguntas do evento de início em
+ * `quizzes/inicio-NN` e as respostas em `answers/{uid}`. Só o backend
  * escreve; responder passa por `BackendClient.answerQuiz`.
  *
  * @param db Instância do Firestore.
@@ -25,7 +26,8 @@ class QuizRepository(private val db: FirebaseFirestore) {
      * Acompanha a pergunta de um dia.
      *
      * @param listId Lista.
-     * @param day Dia `AAAA-MM-DD` em Brasília (`BrazilDay.todayId()` para hoje).
+     * @param day Id do documento: o dia `AAAA-MM-DD` em Brasília (`BrazilDay.todayId()` para hoje) ou
+     *   `inicio-NN` no evento.
      * @return Fluxo com a pergunta, ou null enquanto a rotina não gerou.
      */
     fun observeQuiz(listId: String, day: String): Flow<QuizDoc?> =
@@ -33,6 +35,8 @@ class QuizRepository(private val db: FirebaseFirestore) {
 
     /**
      * Acompanha as perguntas mais recentes, para o histórico.
+     *
+     * As do evento também têm `day` e entram na contagem; quem mostra o histórico as tira.
      *
      * @param listId Lista.
      * @param limit Quantas, no máximo.
@@ -46,10 +50,24 @@ class QuizRepository(private val db: FirebaseFirestore) {
         .endOnPermissionDenied()
 
     /**
+     * Acompanha as perguntas de um evento (como as 10 do início de uso do app).
+     *
+     * @param listId Lista.
+     * @param event Valor do campo `event`, como `inicio`.
+     * @return Fluxo com as perguntas, na ordem do evento; vazio enquanto o backend não gravou.
+     */
+    fun observeEvent(listId: String, event: String): Flow<List<QuizDoc>> = quizzes(listId)
+        .whereEqualTo("event", event)
+        .snapshots()
+        .map { snapshot ->
+            snapshot.documents.mapNotNull { it.toQuiz() }.sortedBy { it.eventIndex ?: Int.MAX_VALUE }
+        }.endOnPermissionDenied()
+
+    /**
      * Acompanha a própria resposta do dia. As regras sempre deixam ler a própria.
      *
      * @param listId Lista.
-     * @param day Dia.
+     * @param day Id do documento: o dia ou `inicio-NN`.
      * @param uid Pessoa logada.
      * @return Fluxo com a resposta, ou null antes de responder.
      */
@@ -66,7 +84,7 @@ class QuizRepository(private val db: FirebaseFirestore) {
      * as regras negam e o fluxo termina vazio.
      *
      * @param listId Lista.
-     * @param day Dia.
+     * @param day Id do documento: o dia ou `inicio-NN`.
      * @return Fluxo com as respostas.
      */
     fun observeAnswers(listId: String, day: String): Flow<List<QuizAnswer>> = quizzes(listId)
@@ -80,6 +98,7 @@ class QuizRepository(private val db: FirebaseFirestore) {
         if (!exists()) return null
         val media = get("media") as? Map<*, *>
         return QuizDoc(
+            id = id,
             day = getString("day") ?: id,
             type = getString("type") ?: return null,
             prompt = getString("prompt") ?: return null,
@@ -108,7 +127,9 @@ class QuizRepository(private val db: FirebaseFirestore) {
                         synopsis = raw.string("synopsis")
                     )
                 },
-            createdAt = getTimestamp("createdAt")?.toDate()?.toInstant()
+            createdAt = getTimestamp("createdAt")?.toDate()?.toInstant(),
+            event = getString("event"),
+            eventIndex = getLong("eventIndex")?.toInt()
         )
     }
 
