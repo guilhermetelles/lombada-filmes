@@ -1,0 +1,37 @@
+{
+  "status": "completed",
+  "usage": {
+    "total_tokens": 938,
+    "total_input_tokens": 857,
+    "input_tokens_by_modality": [
+      {
+        "modality": "text",
+        "tokens": 857
+      }
+    ],
+    "total_cached_tokens": 0,
+    "total_output_tokens": 81,
+    "total_tool_use_tokens": 0,
+    "total_thought_tokens": 0
+  },
+  "created": "2026-10-18T18:16:21Z",
+  "updated": "2026-10-18T18:16:21Z",
+  "service_tier": "standard",
+  "steps": [
+    {
+      "signature": "EmkKZwFpFH0T329zR20tV5M2n5h9fjlV06R1Sc4JrD4JHlr2JVdfW13ZRA0JV5EvBOcRS/6Tfa2WDdzIYpVqOyqogbPmu6xtntMYgZkWPP1kkk4loEBpH8sq3zDwHqrMw/mU/Vf84h7A/fc=",
+      "type": "thought"
+    },
+    {
+      "content": [
+        {
+          "text": "{\n  \"filters\": {\n    \"dec\": [\"1990\"],\n    \"dur\": [\"ate90\"],\n    \"genre\": [\"Comédia\"],\n    \"mood\": [\"leve\"],\n    \"svc\": [\"Netflix\"]\n  },\n  \"explanation\": \"Comédias leves e curtas dos anos 1990 na Netflix.\"\n}",
+          "type": "text"
+        }
+      ],
+      "type": "model_output"
+    }
+  ],
+  "object": "interaction",
+  "model": "gemini-3.8-flash"
+}
