@@ -270,6 +270,8 @@ class ListViewModel(
             } else {
                 // O id continua escondido: o Firestore some com a entrada logo em seguida.
                 container.entries.remove(listId, entry.id)
+                events.forget(listId, entry.id)
+                events.record(listId, ListEventType.Removed, entry.id, entry.tmdbId)
             }
         }
     }

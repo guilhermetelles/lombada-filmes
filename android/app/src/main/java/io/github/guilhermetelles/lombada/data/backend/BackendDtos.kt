@@ -127,11 +127,12 @@ data class QueueAddResponse(val tmdbId: Int)
 /**
  * Um evento da lista para `POST /api/lists/{id}/events`.
  *
- * @property type `added`, `moved` ou `commented`.
+ * @property type `added`, `moved`, `commented` ou `removed`.
  * @property entryId Entrada.
+ * @property tmdbId Filme, só em `removed`.
  */
 @Serializable
-data class ListEventDto(val type: String, val entryId: String)
+data class ListEventDto(val type: String, val entryId: String, val tmdbId: Int? = null)
 
 /** Corpo de `POST /api/lists/{id}/events`, com até 50 eventos. */
 @Serializable

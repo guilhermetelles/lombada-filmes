@@ -15,7 +15,10 @@ enum class ListEventType(val wire: String) {
     Moved("moved"),
 
     /** Comentário novo ou editado. */
-    Commented("commented")
+    Commented("commented"),
+
+    /** Entrada retirada da lista. */
+    Removed("removed")
 }
 
 /**
@@ -23,9 +26,10 @@ enum class ListEventType(val wire: String) {
  *
  * @property type Valor de [ListEventType.wire].
  * @property entryId Entrada.
+ * @property tmdbId Filme, só em [ListEventType.Removed] (a entrada já não existe para o backend ler).
  */
 @Serializable
-data class PendingEvent(val type: String, val entryId: String)
+data class PendingEvent(val type: String, val entryId: String, val tmdbId: Int? = null)
 
 /** Regras da fila local de eventos de uma lista, sem Android. */
 object PendingEvents {

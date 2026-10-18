@@ -11,9 +11,8 @@ import androidx.work.workDataOf
 import java.util.concurrent.TimeUnit
 
 /**
- * Eventos da lista (adicionar, mover, comentar) para a Atividade e o push do outro membro: guarda
- * na fila local e agenda um envio único por lista, que junta tudo o que acontecer nos próximos
- * minutos num pedido só a `POST /api/lists/{id}/events`.
+ * Eventos da lista (adicionar, mover, comentar, retirar) para a Atividade e o push do outro membro:
+ * guarda na fila local e agenda o envio a `POST /api/lists/{id}/events` assim que houver rede.
  *
  * @param context Contexto do app.
  */
@@ -22,14 +21,15 @@ class ListEvents(context: Context) {
     private val store = PendingEventStore(appContext)
 
     /**
-     * Registra um evento e agenda o envio (`activity-flush-{listId}`, KEEP: o agendado não muda).
+     * Registra um evento e agenda o envio (`activity-flush-{listId}`).
      *
      * @param listId Lista.
      * @param type Tipo.
      * @param entryId Entrada.
+     * @param tmdbId Filme; obrigatório em [ListEventType.Removed].
      */
-    fun record(listId: String, type: ListEventType, entryId: String) {
-        store.update(listId) { PendingEvents.add(it, PendingEvent(type.wire, entryId)) }
+    fun record(listId: String, type: ListEventType, entryId: String, tmdbId: Int? = null) {
+        store.update(listId) { PendingEvents.add(it, PendingEvent(type.wire, entryId, tmdbId)) }
         schedule(appContext, listId)
     }
 
@@ -45,12 +45,6 @@ class ListEvents(context: Context) {
 
     companion object {
         /**
-         * Espera antes de enviar, para juntar os eventos próximos num lote. Curta para o aviso chegar
-         * logo; o backend já agrupa os avisos (1 a cada 15 minutos, com a mesma tag).
-         */
-        const val FLUSH_DELAY_MINUTES = 1L
-
-        /**
          * Nome do envio único de uma lista.
          *
          * @param listId Lista.
@@ -59,7 +53,8 @@ class ListEvents(context: Context) {
         fun workName(listId: String): String = "activity-flush-$listId"
 
         /**
-         * Agenda o envio da fila de uma lista, se ainda não houver um agendado.
+         * Agenda o envio da fila de uma lista, sem espera. APPEND_OR_REPLACE encadeia um envio novo
+         * depois do que estiver rodando, para nada que chegue no fim de um envio ficar parado.
          *
          * @param context Contexto.
          * @param listId Lista.
@@ -67,14 +62,13 @@ class ListEvents(context: Context) {
         fun schedule(context: Context, listId: String) {
             val request =
                 OneTimeWorkRequestBuilder<ActivityFlushWorker>()
-                    .setInitialDelay(FLUSH_DELAY_MINUTES, TimeUnit.MINUTES)
                     .setConstraints(Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build())
                     .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 1, TimeUnit.MINUTES)
                     .setInputData(workDataOf(ActivityFlushWorker.KEY_LIST_ID to listId))
                     .build()
             WorkManager
                 .getInstance(context)
-                .enqueueUniqueWork(workName(listId), ExistingWorkPolicy.KEEP, request)
+                .enqueueUniqueWork(workName(listId), ExistingWorkPolicy.APPEND_OR_REPLACE, request)
         }
     }
 }

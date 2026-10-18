@@ -25,7 +25,7 @@ class ActivityFlushWorker(context: Context, params: WorkerParameters) : Coroutin
             val batch = PendingEvents.nextBatch(store.read(listId))
             if (batch.isEmpty()) return Result.success()
             try {
-                backend.sendEvents(listId, batch.map { ListEventDto(it.type, it.entryId) })
+                backend.sendEvents(listId, batch.map { ListEventDto(it.type, it.entryId, it.tmdbId) })
             } catch (error: BackendException) {
                 if (!isRejected(error)) return Result.retry()
             }
