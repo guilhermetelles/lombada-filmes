@@ -16,6 +16,7 @@ import kotlinx.serialization.Serializable
  * @property reason Frase curta com o motivo.
  * @property trending Se está em alta.
  * @property inListEntryId Entrada da lista com este filme, quando já foi visto.
+ * @property matchedKeywords Ids das palavras-chave pedidas (`kw`) que o filme tem; vazio quando não se sabe.
  */
 @Serializable
 data class DiscoverItem(
@@ -29,5 +30,6 @@ data class DiscoverItem(
     val score: Double = 0.0,
     val reason: String = "",
     val trending: Boolean = false,
-    val inListEntryId: String? = null
+    val inListEntryId: String? = null,
+    val matchedKeywords: List<Int> = emptyList()
 )

@@ -112,9 +112,28 @@ data class DiscoverResponse(val results: List<DiscoverItem>, val page: Int = 1, 
 @Serializable
 data class InterpretRequest(val text: String)
 
-/** Resposta de `POST /api/search/interpret`: os filtros e uma frase explicando. */
+/**
+ * Palavra-chave do TMDb devolvida pelo `interpret`.
+ *
+ * @property id Id da palavra-chave no TMDb.
+ * @property label Rótulo em português, para mostrar.
+ */
 @Serializable
-data class InterpretResponse(val filters: Filters, val explanation: String = "")
+data class InterpretKeyword(val id: Int, val label: String = "")
+
+/**
+ * Resposta de `POST /api/search/interpret`.
+ *
+ * @property filters Filtros entendidos.
+ * @property explanation Frase explicando o que foi entendido.
+ * @property keywords De 0 a 5 palavras-chave do TMDb; ausente vira lista vazia.
+ */
+@Serializable
+data class InterpretResponse(
+    val filters: Filters,
+    val explanation: String = "",
+    val keywords: List<InterpretKeyword> = emptyList()
+)
 
 /** Corpo de `POST /api/lists/{id}/queue`. */
 @Serializable
