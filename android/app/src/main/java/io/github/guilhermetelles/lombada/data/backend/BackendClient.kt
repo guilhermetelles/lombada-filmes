@@ -1,5 +1,7 @@
 package io.github.guilhermetelles.lombada.data.backend
 
+import io.github.guilhermetelles.lombada.data.model.Filters
+import io.github.guilhermetelles.lombada.data.model.NotifyPrefs
 import java.io.IOException
 import java.util.concurrent.TimeUnit
 import kotlinx.serialization.json.Json
@@ -37,10 +39,12 @@ class BackendClient(private val api: BackendApi) {
      * Garante o filme no banco com os dados em dia.
      *
      * @param tmdbId Id do filme no TMDb.
-     * @return Os campos da cópia resumida.
+     * @param listId Lista para calcular a compatibilidade ([MovieResponse.compat]); null para não calcular.
+     * @return Os campos da cópia resumida e, com [listId], a compatibilidade.
      * @throws BackendException Em qualquer falha.
      */
-    suspend fun refreshMovie(tmdbId: Int): MovieResponse = call { api.refreshMovie(tmdbId) }
+    suspend fun refreshMovie(tmdbId: Int, listId: String? = null): MovieResponse =
+        call { api.refreshMovie(tmdbId, listId) }
 
     /**
      * Garante a ficha da pessoa no banco, em dia.
@@ -100,6 +104,138 @@ class BackendClient(private val api: BackendApi) {
         call { api.deleteList(listId).orThrow() }
     }
 
+    /**
+     * Sincroniza nome e foto da conta Google em `memberProfiles` das listas. Chamar ao abrir o app.
+     *
+     * @return O uid e quantas listas foram atualizadas.
+     * @throws BackendException Em qualquer falha.
+     */
+    suspend fun me(): MeResponse = call { api.me() }
+
+    /**
+     * Registra o token do FCM deste aparelho.
+     *
+     * @param token Token do FCM.
+     * @throws BackendException Em qualquer falha.
+     */
+    suspend fun registerDevice(token: String) {
+        call { api.registerDevice(RegisterDeviceRequest(token)).orThrow() }
+    }
+
+    /**
+     * Remove o token do FCM deste aparelho, como ao sair da conta.
+     *
+     * @param token Token do FCM.
+     * @throws BackendException Em qualquer falha.
+     */
+    suspend fun unregisterDevice(token: String) {
+        call { api.unregisterDevice(UnregisterDeviceRequest(token)).orThrow() }
+    }
+
+    /**
+     * Lê as preferências de notificação.
+     *
+     * @return As preferências; o backend devolve as padrão para quem nunca gravou.
+     * @throws BackendException Em qualquer falha.
+     */
+    suspend fun getNotifyPrefs(): NotifyPrefs = call { api.getNotifyPrefs() }
+
+    /**
+     * Grava as preferências de notificação.
+     *
+     * @param prefs Preferências completas.
+     * @return As preferências gravadas.
+     * @throws BackendException `INVALID_INPUT` para valor fora do contrato, entre outras.
+     */
+    suspend fun putNotifyPrefs(prefs: NotifyPrefs): NotifyPrefs = call { api.putNotifyPrefs(prefs) }
+
+    /**
+     * Manda uma notificação de teste aos aparelhos da pessoa.
+     *
+     * @return Quantos aparelhos receberam.
+     * @throws BackendException Em qualquer falha.
+     */
+    suspend fun notifyTest(): Int = call { api.notifyTest().sent }
+
+    /**
+     * Busca avançada no TMDb, ordenada pela compatibilidade com a lista.
+     *
+     * @param listId Lista.
+     * @param filters Filtros; listas vazias não vão no pedido.
+     * @param page Página, a partir de 1.
+     * @return Os filmes e a paginação.
+     * @throws BackendException Em qualquer falha.
+     */
+    suspend fun discover(listId: String, filters: Filters, page: Int = 1): DiscoverResponse = call {
+        api.discover(
+            listId = listId,
+            mood = filters.mood.joinedOrNull(),
+            dur = filters.dur.joinedOrNull(),
+            dec = filters.dec.joinedOrNull(),
+            genre = filters.genre.joinedOrNull(),
+            theme = filters.theme.joinedOrNull(),
+            svc = filters.svc.joinedOrNull(),
+            fit = filters.fit.takeIf { it },
+            page = page
+        )
+    }
+
+    /**
+     * Interpreta um texto livre como filtros da busca avançada.
+     *
+     * @param text De 2 a 200 caracteres.
+     * @return Os filtros e uma frase explicando.
+     * @throws BackendException `RATE_LIMITED` (429) acima de 30 por pessoa por dia, entre outras.
+     */
+    suspend fun interpret(text: String): InterpretResponse = call { api.interpret(InterpretRequest(text)) }
+
+    /**
+     * Põe um filme na fila "Quero ver".
+     *
+     * @param listId Lista.
+     * @param tmdbId Filme.
+     * @throws BackendException Em qualquer falha.
+     */
+    suspend fun addToQueue(listId: String, tmdbId: Int) {
+        call { api.addToQueue(listId, QueueAddRequest(tmdbId)) }
+    }
+
+    /**
+     * Tira um filme da fila.
+     *
+     * @param listId Lista.
+     * @param tmdbId Filme.
+     * @throws BackendException Em qualquer falha.
+     */
+    suspend fun removeFromQueue(listId: String, tmdbId: Int) {
+        call { api.removeFromQueue(listId, tmdbId).orThrow() }
+    }
+
+    /**
+     * Manda um lote de eventos da lista, para a Atividade e o push do outro membro.
+     *
+     * @param listId Lista.
+     * @param items Até 50 eventos.
+     * @return Se algum push saiu.
+     * @throws BackendException Em qualquer falha.
+     */
+    suspend fun sendEvents(listId: String, items: List<ListEventDto>): Boolean =
+        call { api.sendEvents(listId, ListEventsRequest(items)).pushed }
+
+    /**
+     * Responde ao quiz do dia.
+     *
+     * @param listId Lista.
+     * @param day Dia `AAAA-MM-DD` em Brasília; precisa ser hoje.
+     * @param optionId Alternativa escolhida.
+     * @return Se acertou, a certa, a explicação e as respostas de quem já respondeu.
+     * @throws BackendException Com `status` 409 se já respondeu e `INVALID_INPUT` se o dia não é hoje.
+     */
+    suspend fun answerQuiz(listId: String, day: String, optionId: String): QuizAnswerResponse =
+        call { api.answerQuiz(listId, day, QuizAnswerRequest(optionId)) }
+
+    private fun List<String>.joinedOrNull(): String? = takeIf { it.isNotEmpty() }?.joinToString(",")
+
     private fun retrofit2.Response<Unit>.orThrow() {
         if (!isSuccessful) throw HttpException(this)
     }
@@ -126,7 +262,12 @@ class BackendClient(private val api: BackendApi) {
     }
 
     companion object {
-        private val json = Json { ignoreUnknownKeys = true }
+        private val json =
+            Json {
+                ignoreUnknownKeys = true
+                // As preferências vão inteiras no PUT, mesmo os campos iguais ao padrão.
+                encodeDefaults = true
+            }
 
         /**
          * Monta o cliente com o interceptor do token.
