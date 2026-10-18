@@ -1,5 +1,5 @@
 import type * as z from 'zod';
-import { TmdbMovieExtrasResponse, TmdbMoviePage } from '../schemas/sources/tmdb-discover.js';
+import { TmdbKeywordSearchResponse, TmdbMovieExtrasResponse, TmdbMoviePage } from '../schemas/sources/tmdb-discover.js';
 import { fetchJson } from '../sources/shared/fetch-json.js';
 import type { Fetch } from '../types/sources.js';
 import { STREAMING_SERVICES } from './discover-vocabulary.js';
@@ -27,13 +27,18 @@ export type CandidateExtras = {
   runtime: number | null;
   providers: string[]; // serviços conhecidos (STREAMING_SERVICES), com o nome do TMDb, como "Netflix"
   keywords: string[]; // nomes em inglês, como no TMDb
+  keywordIds?: number[] | undefined; // ids das mesmas palavras-chave, quando lidos do TMDb
 };
+
+/** Uma palavra-chave do TMDb. */
+export type TmdbKeyword = { id: number; name: string };
 
 /** Cliente do TMDb para a busca avançada: /discover, filmes em alta e os detalhes de um filme. */
 export type TmdbDiscoverClient = {
   discover(params: URLSearchParams): Promise<CandidatePage>;
   trendingWeek(): Promise<DiscoverCandidate[]>;
   movieExtras(tmdbId: number): Promise<CandidateExtras>;
+  searchKeyword(query: string): Promise<TmdbKeyword[]>;
 };
 
 /**
@@ -88,7 +93,16 @@ function createTmdbDiscoverClient({ token, fetch }: { token: string; fetch: Fetc
         runtime: movie.runtime || null,
         providers: knownServices(movie['watch/providers']?.results.BR?.flatrate ?? []),
         keywords: (movie.keywords?.keywords ?? []).map((keyword) => keyword.name),
+        keywordIds: (movie.keywords?.keywords ?? []).map((keyword) => keyword.id),
       };
+    },
+
+    async searchKeyword(query) {
+      const found = await getFromTmdb(
+        `/search/keyword?${new URLSearchParams({ query, page: '1' })}`,
+        TmdbKeywordSearchResponse,
+      );
+      return found.results.map(({ id, name }) => ({ id, name }));
     },
   };
 }

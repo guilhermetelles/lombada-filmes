@@ -18,6 +18,7 @@ describe('interpretText', () => {
     assert.deepEqual(await interpretText(gemini, 'comédia curta dos anos 90 na Netflix'), {
       filters: { mood: ['leve'], dur: ['ate90'], dec: ['1990'], genre: ['Comédia'], svc: ['Netflix'] },
       explanation: 'Comédias leves e curtas dos anos 1990 na Netflix.',
+      keywords: [],
     });
   });
 
@@ -52,6 +53,7 @@ describe('interpretText', () => {
     assert.deepEqual(await interpretText(gemini.client, 'suspense de serial killer no prime'), {
       filters: { mood: ['tenso'], genre: ['Thriller'], theme: ['serial-killer'], svc: ['Amazon Prime Video'] },
       explanation: 'Suspense com serial killer no Prime Video.',
+      keywords: [],
     });
   });
 

@@ -20,6 +20,9 @@ import type { CandidateExtras, DiscoverCandidate, TmdbDiscoverClient } from './t
 /** Quantos dos primeiros resultados ganham detalhes (duração, streaming e palavras-chave). */
 export const DETAILED_RESULTS = 10;
 
+/** Com palavras-chave do texto, mais resultados ganham detalhes, para a ordem por palavras valer. */
+export const DETAILED_RESULTS_WITH_KEYWORDS = 20;
+
 /** Compatibilidade mínima para "Só o que combina com vocês". */
 export const FIT_MIN_SCORE = 60;
 
@@ -68,10 +71,12 @@ async function discoverMovies(
     : new Map<number, string>();
 
   let scored = sortByScore(candidates.map((candidate) => ({ candidate, compat: scorer(candidate) })));
+  const keywordIds = filters.kw ?? [];
+  const detailed = keywordIds.length > 0 ? DETAILED_RESULTS_WITH_KEYWORDS : DETAILED_RESULTS;
   const extras = await readExtras(
     tmdb,
     usage,
-    scored.slice(0, DETAILED_RESULTS).map(({ candidate }) => candidate.tmdbId),
+    scored.slice(0, detailed).map(({ candidate }) => candidate.tmdbId),
   );
   scored = sortByScore(
     scored.map(({ candidate, compat }) => {
@@ -87,6 +92,18 @@ async function discoverMovies(
   });
   if (filters.fit && listId) scored = scored.filter(({ compat }) => compat.score >= FIT_MIN_SCORE);
 
+  // Palavras do texto: quem tem mais delas vem antes; no empate, a compatibilidade decide.
+  const matchesOf = (tmdbId: number) => {
+    const ids = extras.get(tmdbId)?.keywordIds ?? [];
+    return keywordIds.filter((id) => ids.includes(id));
+  };
+  if (keywordIds.length > 0) {
+    scored = [...scored].sort(
+      (a, b) =>
+        matchesOf(b.candidate.tmdbId).length - matchesOf(a.candidate.tmdbId).length || b.compat.score - a.compat.score,
+    );
+  }
+
   const results = scored.map(({ candidate, compat }): DiscoverItem => {
     const detail = extras.get(candidate.tmdbId);
     return {
@@ -101,6 +118,7 @@ async function discoverMovies(
       reason: compat.reason,
       trending: trendingIds.has(candidate.tmdbId),
       inListEntryId: entryIds.get(candidate.tmdbId) ?? null,
+      matchedKeywords: matchesOf(candidate.tmdbId),
     };
   });
   return { results, page: found.page, totalPages: found.totalPages };

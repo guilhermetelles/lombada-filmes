@@ -38,3 +38,8 @@ export const TmdbMovieExtrasResponse = z.object({
     })
     .optional(),
 });
+
+/** Resposta de /search/keyword (só o que a busca usa). */
+export const TmdbKeywordSearchResponse = z.object({
+  results: z.array(z.object({ id: z.number().int(), name: z.string() })).default([]),
+});

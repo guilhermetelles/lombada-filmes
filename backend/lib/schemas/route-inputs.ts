@@ -116,6 +116,10 @@ export const DiscoverQuery = z.object({
   genre: commaList(z.string().max(40, 'genre pode ter até 40 caracteres')),
   theme: commaList(ThemeSchema),
   svc: commaList(z.string().max(60, 'svc pode ter até 60 caracteres')),
+  kw: commaList(z.coerce.number().int().positive('kw deve ter ids de palavras-chave')).refine(
+    (ids) => (ids?.length ?? 0) <= 5,
+    'kw pode ter até 5 palavras-chave',
+  ),
   fit: z
     .enum(['true', 'false'], "fit deve ser 'true' ou 'false'")
     .optional()

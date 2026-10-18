@@ -84,6 +84,7 @@ describe('discoverMovies sem lista', () => {
       reason: 'Nota do TMDb',
       trending: false,
       inListEntryId: null,
+      matchedKeywords: [],
     });
     assert.equal(page.results.filter((item) => item.runtime !== null).length, DETAILED_RESULTS);
 
@@ -152,5 +153,52 @@ describe('discoverMovies sem lista', () => {
     );
     // Na página gravada, só Acampamento Miasma (Terror), Honey, Não! e Saltburn (Thriller) são tensos.
     assert.deepEqual(page.results.map((item) => item.tmdbId).sort(), [1149504, 1240889, 930564].sort());
+  });
+});
+
+describe('discoverMovies com palavras-chave do texto', () => {
+  test('pede as palavras com "ou" e põe primeiro quem tem mais delas; no empate, a nota', async () => {
+    const candidate = (tmdbId: number, vote: number) => ({
+      tmdbId,
+      title: `Filme ${tmdbId}`,
+      year: 2000,
+      posterPath: null,
+      genreIds: [35],
+      vote,
+      votes: 500,
+      popularity: 10,
+    });
+    const keywordsOf: Record<number, number[]> = { 1: [], 2: [15097], 3: [15097, 931] };
+    let params: URLSearchParams | undefined;
+    const tmdb: TmdbDiscoverClient = {
+      async discover(sent) {
+        params = sent;
+        return { page: 1, totalPages: 1, results: [candidate(1, 9), candidate(2, 6), candidate(3, 5)] };
+      },
+      async trendingWeek() {
+        return [];
+      },
+      async movieExtras(tmdbId) {
+        return { runtime: 100, providers: [], keywords: [], keywordIds: keywordsOf[tmdbId] ?? [] };
+      },
+      async searchKeyword() {
+        return [];
+      },
+    };
+
+    const page = await discoverMovies(
+      { db: noDatabase, tmdb, usage: new CountingUsage() },
+      { filters: { kw: [15097, 931] }, page: 1 },
+    );
+
+    assert.equal(params?.get('with_keywords'), '15097|931');
+    assert.deepEqual(
+      page.results.map((item) => [item.tmdbId, item.matchedKeywords]),
+      [
+        [3, [15097, 931]],
+        [2, [15097]],
+        [1, []],
+      ],
+    );
   });
 });

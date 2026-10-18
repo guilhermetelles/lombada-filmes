@@ -1,6 +1,6 @@
-import { InterpretResultSchema } from '../schemas/discover.js';
+import { InterpretReplySchema } from '../schemas/discover.js';
 import { GEMINI_MODELS } from '../sources/gemini/gemini-models.js';
-import type { Filters, InterpretResult } from '../types/discover.js';
+import type { Filters, InterpretReply } from '../types/discover.js';
 import type { GeminiClient } from '../types/sources.js';
 import { genreIdByName, STREAMING_SERVICES, streamingServiceByName, TMDB_GENRES } from './discover-vocabulary.js';
 
@@ -29,7 +29,12 @@ Regras:
 - svc (streaming no Brasil, nomes exatos): ${STREAMING_SERVICES.map((service) => `"${service.name}"`).join(', ')}.
 - fit: true só quando o pedido diz que o filme tem que combinar com o gosto do casal ("a nossa cara", "combina com a gente").
 
-explanation: uma frase curta em português, dirigida a quem pediu, dizendo o que você entendeu em termos dos filtros
+keywords: até 5 termos que o pedido traz e os filtros acima não cobrem (assunto, lugar, criatura, situação, tipo de
+personagem), cada um como a palavra-chave em inglês que o TMDb usaria ("shark", "time loop", "heist", "small town",
+"road trip", "boxing") e o rótulo curto em português para mostrar ("tubarão", "loop temporal"). Não repita como termo
+o que já entrou em genre, theme ou mood, nem palavras genéricas ("movie", "film", "good", "funny").
+
+explanation: uma frase curta em português, dirigida a quem pediu, dizendo o que você entendeu em termos dos filtros e dos termos
 (ex. de forma: "Comédias de até 90 minutos dos anos 1990."). Se nada do pedido couber nos filtros, devolva filters vazio
 e diga isso na explanation.`;
 
@@ -39,17 +44,21 @@ e diga isso na explanation.`;
  *
  * @param gemini - Cliente do Gemini.
  * @param text - Frase digitada (2 a 200 caracteres, já validada).
- * @returns Filtros e a explicação curta.
+ * @returns Filtros, a explicação curta e os termos para palavras-chave (ainda sem id).
  * @throws {SourceUnavailableError} Se o Gemini falhar, não tiver chave ou responder fora do formato.
  */
-async function interpretText(gemini: GeminiClient, text: string): Promise<InterpretResult> {
+async function interpretText(gemini: GeminiClient, text: string): Promise<InterpretReply> {
   const reply = await gemini.generateJson({
     model: GEMINI_MODELS.interpret,
     system: SYSTEM_INSTRUCTION,
     prompt: text,
-    schema: InterpretResultSchema,
+    schema: InterpretReplySchema,
   });
-  return { filters: cleanFilters(reply.filters), explanation: reply.explanation.trim() };
+  return {
+    filters: cleanFilters(reply.filters),
+    explanation: reply.explanation.trim(),
+    keywords: reply.keywords.filter((keyword) => keyword.term.trim() !== ''),
+  };
 }
 
 /**

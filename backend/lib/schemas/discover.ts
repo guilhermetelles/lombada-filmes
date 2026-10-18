@@ -5,6 +5,7 @@ import type {
   DiscoverPage,
   Dur,
   Filters,
+  InterpretReply,
   InterpretResult,
   Mood,
   MovieCompat,
@@ -55,6 +56,7 @@ export const FiltersSchema: z.ZodType<Filters> = z.object({
   theme: z.array(ThemeSchema).optional(),
   svc: z.array(z.string()).optional(),
   fit: z.boolean().optional(),
+  kw: z.array(z.number().int().positive()).max(5).optional(),
 });
 
 /** Um resultado da busca avançada. */
@@ -70,6 +72,7 @@ export const DiscoverItemSchema: z.ZodType<DiscoverItem> = z.object({
   reason: z.string(),
   trending: z.boolean(),
   inListEntryId: z.string().nullable(),
+  matchedKeywords: z.array(z.number().int()),
 });
 
 /** Saída de GET /api/discover. */
@@ -83,6 +86,17 @@ export const DiscoverPageSchema: z.ZodType<DiscoverPage> = z.object({
 export const InterpretResultSchema: z.ZodType<InterpretResult> = z.object({
   filters: FiltersSchema,
   explanation: z.string(),
+  keywords: z.array(z.object({ id: z.number().int().positive(), label: z.string() })),
+});
+
+/** Resposta do Gemini na interpretação do texto livre. */
+export const InterpretReplySchema: z.ZodType<InterpretReply> = z.object({
+  filters: FiltersSchema,
+  explanation: z.string(),
+  keywords: z
+    .array(z.object({ term: z.string(), label: z.string() }))
+    .max(5)
+    .default([]),
 });
 
 /** Compatibilidade de um filme com a lista. */

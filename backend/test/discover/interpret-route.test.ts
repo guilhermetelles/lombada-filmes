@@ -53,7 +53,7 @@ describe('POST /api/search/interpret', () => {
     const { response, dependencies } = await interpret({ text: '  terror curto  ' });
 
     assert.equal(response.status, 200);
-    assert.deepEqual(await response.json(), reply);
+    assert.deepEqual(await response.json(), { ...reply, keywords: [] });
     assert.equal(gemini.requests[0]?.prompt, 'terror curto');
     const counter = await dependencies.db.doc(`rateLimits/${uid}_2026-10-17`).get();
     assert.equal(brazilDay(clock), '2026-10-17');
@@ -73,6 +73,7 @@ describe('POST /api/search/interpret', () => {
     assert.deepEqual(await response.json(), {
       filters: { mood: ['leve'], dur: ['ate90'], dec: ['1990'], genre: ['Comédia'], svc: ['Netflix'] },
       explanation: 'Comédias leves e curtas dos anos 1990 na Netflix.',
+      keywords: [],
     });
   });
 

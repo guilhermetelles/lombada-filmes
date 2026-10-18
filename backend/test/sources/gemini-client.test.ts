@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import { describe, test } from 'node:test';
 import * as z from 'zod';
 import { SourceUnavailableError } from '../../lib/errors/app-errors.js';
-import { InterpretResultSchema } from '../../lib/schemas/discover.js';
+import { InterpretReplySchema } from '../../lib/schemas/discover.js';
 import { createGeminiClient } from '../../lib/sources/gemini/gemini-client.js';
 import { GEMINI_MODELS } from '../../lib/sources/gemini/gemini-models.js';
 import type { Fetch } from '../../lib/types/sources.js';
@@ -35,7 +35,7 @@ const interpretRequest = {
   model: GEMINI_MODELS.interpret,
   system: 'instrução de teste',
   prompt: 'comédia curta dos anos 90 na Netflix',
-  schema: InterpretResultSchema,
+  schema: InterpretReplySchema,
 };
 
 describe('createGeminiClient', () => {
@@ -46,6 +46,7 @@ describe('createGeminiClient', () => {
     assert.deepEqual(result, {
       filters: { mood: ['leve'], dur: ['ate90'], dec: ['1990'], genre: ['Comédia'], svc: ['Netflix'] },
       explanation: 'Comédias leves e curtas dos anos 1990 na Netflix.',
+      keywords: [],
     });
     assert.equal(seen.length, 1);
     const [request] = seen;
@@ -58,7 +59,7 @@ describe('createGeminiClient', () => {
     const format = request?.body.response_format as { mime_type: string; schema: Record<string, unknown> };
     assert.equal(format.mime_type, 'application/json');
     assert.equal(format.schema.$schema, undefined);
-    assert.deepEqual(format.schema.required, ['filters', 'explanation']);
+    assert.deepEqual(format.schema.required, ['filters', 'explanation', 'keywords']);
   });
 
   test('sem chave: SourceUnavailableError sem fazer pedido', async () => {

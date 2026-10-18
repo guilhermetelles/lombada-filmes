@@ -66,7 +66,10 @@ export function buildDiscoverParams(filters: Filters, page: number): DiscoverPla
   if (withoutGenres.length > 0) params.set('without_genres', withoutGenres.join(','));
 
   const themeKeywords = unique((filters.theme ?? []).flatMap((theme) => THEME_KEYWORDS[theme]));
-  const keywords = themeKeywords.length > 0 ? themeKeywords : moodKeywords;
+  const filterKeywords = themeKeywords.length > 0 ? themeKeywords : moodKeywords;
+  // As palavras do texto livre entram com "ou" junto das do tema ou humor: o TMDb não mistura "e"
+  // e "ou" no mesmo parâmetro. Quem tem mais palavras do texto sobe na ordem (discoverMovies).
+  const keywords = unique([...(filters.kw ?? []), ...filterKeywords]);
   if (keywords.length > 0) params.set('with_keywords', keywords.join('|'));
 
   const durs = (filters.dur ?? []).map((dur) => DUR_RANGES[dur]);

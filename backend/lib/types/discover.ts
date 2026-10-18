@@ -31,6 +31,7 @@ export type Filters = {
   theme?: Theme[] | undefined;
   svc?: string[] | undefined; // serviços de streaming
   fit?: boolean | undefined; // só o que combina com a lista
+  kw?: number[] | undefined; // palavras-chave do TMDb tiradas do texto livre (ids, até 5)
 };
 
 /** Um resultado da busca avançada. */
@@ -46,6 +47,7 @@ export type DiscoverItem = {
   reason: string;
   trending: boolean;
   inListEntryId: string | null; // entrada da lista, quando o filme já está nela
+  matchedKeywords: number[]; // ids de `kw` que o filme tem (só nos resultados detalhados)
 };
 
 /** Saída de GET /api/discover. */
@@ -55,10 +57,30 @@ export type DiscoverPage = {
   totalPages: number;
 };
 
+/** Palavra-chave do TMDb tirada do texto livre, com o rótulo em português. */
+export type InterpretKeyword = {
+  id: number;
+  label: string;
+};
+
 /** Saída de POST /api/search/interpret. */
 export type InterpretResult = {
   filters: Filters;
   explanation: string;
+  keywords: InterpretKeyword[];
+};
+
+/** Termo que o Gemini tira do texto: em inglês, como as palavras-chave do TMDb, e o rótulo em português. */
+export type InterpretTerm = {
+  term: string;
+  label: string;
+};
+
+/** Resposta pedida ao Gemini na interpretação: filtros, explicação e termos para palavras-chave. */
+export type InterpretReply = {
+  filters: Filters;
+  explanation: string;
+  keywords: InterpretTerm[];
 };
 
 /** Compatibilidade de um filme com a lista, em GET /api/movies/{tmdbId}?listId=. */
