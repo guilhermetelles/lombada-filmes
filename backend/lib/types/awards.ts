@@ -12,6 +12,7 @@ export type AwardItem = {
   cat: string | null;
   kind: AwardKind;
   year: number | null;
+  for?: string | null | undefined; // por qual filme (prêmios de pessoas, qualificador P1686); ausente quando a fonte não diz
 };
 
 /** Campo awards de movies/{tmdbId} e people/{id}. */

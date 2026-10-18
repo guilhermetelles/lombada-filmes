@@ -114,4 +114,11 @@ describe('Wikidata: personAwardsByTmdbIds', () => {
       stewart.some((item) => item.org === 'Framboesa de Ouro' && item.cat === 'pior atriz' && item.kind === 'win'),
     );
   });
+
+  test('prêmio de pessoa leva o filme do qualificador P1686 em for', async () => {
+    const awards = await client(fakeWikimedia().fetch).personAwardsByTmdbIds([37917]);
+
+    const oscar = (awards.get(37917) ?? []).find((item) => item.org === 'Oscar');
+    assert.deepEqual(oscar, { org: 'Oscar', cat: 'melhor atriz', kind: 'nom', year: 2022, for: 'Spencer' });
+  });
 });

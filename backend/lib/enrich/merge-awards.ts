@@ -26,7 +26,8 @@ function awardKey(cat: string | null): string {
 /**
  * Junta os prêmios de várias fontes (Wikidata nos dois sentidos e Wikipedia) sem repetir: a mesma
  * premiação e categoria no mesmo ano (ou com o ano faltando de um lado) viram um item só, e vitória
- * vale mais que indicação. Item sem categoria só fica quando a premiação não tem um item mais
+ * vale mais que indicação. O filme do prêmio (`for`, prêmios de pessoas) passa adiante: dois itens
+ * com filmes diferentes continuam separados, e o que não diz o filme ganha o do outro. Item sem categoria só fica quando a premiação não tem um item mais
  * específico pelo menos tão forte (uma vitória genérica fica ao lado de indicações específicas).
  * A saída vem por premiação (Oscar primeiro, Framboesa por último), com as vitórias antes das
  * indicações e, dentro delas, por ano.
@@ -45,7 +46,8 @@ function mergeAwards(...lists: AwardItem[][]): AwardItem[] {
       (other) =>
         other.org === item.org &&
         other.key === item.key &&
-        (other.year === null || item.year === null || other.year === item.year),
+        (other.year === null || item.year === null || other.year === item.year) &&
+        (!other.for || !item.for || other.for === item.for),
     );
     if (!same) {
       merged.push({ ...item });
@@ -54,6 +56,7 @@ function mergeAwards(...lists: AwardItem[][]): AwardItem[] {
     if (item.kind === 'win') same.kind = 'win';
     same.year = same.year ?? item.year;
     same.cat = same.cat ?? item.cat;
+    if (!same.for && item.for) same.for = item.for;
   }
 
   return merged
@@ -70,7 +73,7 @@ function mergeAwards(...lists: AwardItem[][]): AwardItem[] {
         (a.year ?? 9999) - (b.year ?? 9999) ||
         (a.cat ?? '').localeCompare(b.cat ?? ''),
     )
-    .map(({ org, cat, kind, year }) => ({ org, cat, kind, year }));
+    .map(({ org, cat, kind, year, for: work }) => ({ org, cat, kind, year, ...(work && { for: work }) }));
 }
 
 export { mergeAwards };

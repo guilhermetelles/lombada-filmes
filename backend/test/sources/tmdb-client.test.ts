@@ -66,6 +66,41 @@ describe('TMDb: getMovie', () => {
     assert.equal(extras?.certBR, '14');
     assert.deepEqual(extras?.providersBR, []);
     assert.deepEqual(extras?.recs, []);
+    assert.deepEqual(extras?.recsInfo, []);
+    assert.equal(extras?.release, null);
+  });
+
+  test('data de estreia e resumo das recomendações, com os mesmos ids de recs', async () => {
+    const extras = (await tmdbClient().getMovie(2756)).extras;
+
+    assert.equal(extras?.release, '1989-08-09');
+    assert.deepEqual(
+      extras?.recsInfo.map((info) => info.tmdbId),
+      extras?.recs,
+    );
+    assert.equal(extras?.recsInfo[0]?.title, 'Leviathan');
+  });
+
+  test('resumo das recomendações: título, ano e pôster; data fora do formato vira null', async () => {
+    const response = {
+      id: 1,
+      title: 'Filme',
+      release_date: '1989-13-40',
+      recommendations: {
+        results: [
+          { id: 2, title: 'Parecido', release_date: '1990-03-02', poster_path: '/p.jpg' },
+          { id: 3, original_title: 'Original', release_date: '', poster_path: null },
+        ],
+      },
+    };
+    const movie = await tmdbClient(respondWith(response)).getMovie(1);
+
+    assert.equal(movie.year, 1989);
+    assert.equal(movie.extras?.release, null);
+    assert.deepEqual(movie.extras?.recsInfo, [
+      { tmdbId: 2, title: 'Parecido', year: 1990, posterPath: '/p.jpg' },
+      { tmdbId: 3, title: 'Original', year: null, posterPath: null },
+    ]);
   });
 
   test('pede os campos extras na mesma chamada', async () => {
@@ -106,6 +141,42 @@ describe('TMDb: getMovie', () => {
       throw new TypeError('fetch failed');
     };
     await assert.rejects(tmdbClient(offline).getMovie(2756), SourceUnavailableError);
+  });
+});
+
+describe('TMDb: getCollection', () => {
+  test('pede /collection/{id} em pt-BR e devolve os filmes com a data de estreia', async () => {
+    const urls: string[] = [];
+    const response = {
+      id: 50,
+      name: 'Saga',
+      parts: [
+        { id: 2, title: 'Segundo', release_date: '1981-05-01' },
+        { id: 3, original_title: 'Terceiro', release_date: '' },
+      ],
+    };
+    const recording: Fetch = async (input, init) => {
+      urls.push(String(input));
+      return respondWith(response)(input, init);
+    };
+    const collection = await tmdbClient(recording).getCollection(50);
+
+    const url = new URL(urls[0] ?? '');
+    assert.equal(url.pathname, '/3/collection/50');
+    assert.equal(url.searchParams.get('language'), 'pt-BR');
+    assert.deepEqual(collection, {
+      id: 50,
+      name: 'Saga',
+      parts: [
+        { tmdbId: 2, title: 'Segundo', release: '1981-05-01' },
+        { tmdbId: 3, title: 'Terceiro', release: null },
+      ],
+    });
+  });
+
+  test('coleção inexistente: NotFoundError; fora do formato: SourceUnavailableError', async () => {
+    await assert.rejects(tmdbClient(respondWith('{}', { status: 404 })).getCollection(1), NotFoundError);
+    await assert.rejects(tmdbClient(respondWith({ id: 1 })).getCollection(1), SourceUnavailableError);
   });
 });
 

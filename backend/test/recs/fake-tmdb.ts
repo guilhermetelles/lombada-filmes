@@ -13,11 +13,16 @@ export type FakeMovie = {
   vote?: number;
 };
 
+/** Uma saga falsa: os filmes dela, com a data de estreia. */
+export type FakeCollection = { parts: { id: number; title: string; release_date: string }[] };
+
 /** O fetch falso do TMDb e o que ele registra. */
 export type FakeTmdb = {
   fetch: Fetch;
   /** Ids pedidos em /movie/{id}, na ordem. */
   movieCalls: number[];
+  /** Ids pedidos em /collection/{id}, na ordem. */
+  collectionCalls: number[];
   /** Pedidos a /trending e a /discover. */
   listCalls: string[];
   /** Pedidos a hosts que não são do TMDb (devem ficar vazios: nada de OMDb nem Letterboxd). */
@@ -35,13 +40,19 @@ const fixtures = {
  * Cria um fetch falso do TMDb para o motor de sugestões: /movie/{id} responde a gravação de The
  * Abyss com id, título, gêneros, palavras-chave, recomendações, saga, diretores e nota trocados
  * pelo que o teste passar (qualquer outro id recebe a gravação só com o id trocado); /trending e
- * /discover respondem as gravações da busca avançada.
+ * /discover respondem as gravações da busca avançada; /collection/{id} responde a saga passada
+ * (404 para as outras).
  *
  * @param movies - Filmes falsos, por id.
+ * @param collections - Sagas falsas, por id.
  * @returns O fetch e os registros.
  */
-export function fakeTmdb(movies: Record<number, FakeMovie> = {}): FakeTmdb {
+export function fakeTmdb(
+  movies: Record<number, FakeMovie> = {},
+  collections: Record<number, FakeCollection> = {},
+): FakeTmdb {
   const movieCalls: number[] = [];
+  const collectionCalls: number[] = [];
   const listCalls: string[] = [];
   const otherHosts: string[] = [];
 
@@ -57,6 +68,12 @@ export function fakeTmdb(movies: Record<number, FakeMovie> = {}): FakeTmdb {
       movieCalls.push(tmdbId);
       return json(buildMovie(tmdbId, movies[tmdbId] ?? {}));
     }
+    const collectionMatch = /^\/3\/collection\/(\d+)$/.exec(url.pathname);
+    const collection = collectionMatch ? collections[Number(collectionMatch[1])] : undefined;
+    if (collectionMatch) {
+      collectionCalls.push(Number(collectionMatch[1]));
+      if (collection) return json({ id: Number(collectionMatch[1]), name: 'Saga de Teste', ...collection });
+    }
     if (url.pathname.startsWith('/3/trending/')) {
       listCalls.push('trending');
       return json(fixtures.trending);
@@ -68,7 +85,7 @@ export function fakeTmdb(movies: Record<number, FakeMovie> = {}): FakeTmdb {
     return new Response('{"status_message":"not found"}', { status: 404 });
   };
 
-  return { fetch, movieCalls, listCalls, otherHosts };
+  return { fetch, movieCalls, collectionCalls, listCalls, otherHosts };
 }
 
 /**

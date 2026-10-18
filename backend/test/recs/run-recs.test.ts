@@ -110,6 +110,33 @@ describe('runRecs', () => {
     assert.equal(docs.size, 1);
   });
 
+  test('próximo filme ainda não visto da saga começada pela lista, por data de estreia, já lançado', async () => {
+    // 101 (na lista) é de 1978; 212 vem antes de 201 pela data; 213 ainda não estreou.
+    tmdb = fakeTmdb(
+      {
+        212: { title: 'Entre os Dois', genres: ['Terror'], collection: { id: 50, name: 'Saga de Teste' }, year: 1980 },
+      },
+      {
+        50: {
+          parts: [
+            { id: 201, title: 'Continuação da Saga', release_date: '1981-05-01' },
+            { id: 213, title: 'Ainda Não Estreou', release_date: '2027-05-01' },
+            { id: 101, title: 'Topo da Saga', release_date: '1978-05-01' },
+            { id: 212, title: 'Entre os Dois', release_date: '1980-05-01' },
+          ],
+        },
+      },
+    );
+    dependencies = createTestDependencies(tmdb.fetch, () => clock, { gemini: gemini.client });
+    await runRecs(dependencies, new UsageMeter());
+
+    assert.deepEqual(tmdb.collectionCalls, [50]);
+    const saga = (await readRecsDoc()).items.find((item) => item.tmdbId === 212);
+    assert.equal(saga?.kind, 'saga');
+    assert.equal(saga?.reasonFrom[0], 'e101');
+    assert.ok(!tmdb.movieCalls.includes(213));
+  });
+
   test('respeita o limite de pedidos ao TMDb da execução', async () => {
     await runRecs(dependencies, new UsageMeter(), { ...DEFAULT_RECS_LIMITS, tmdbCalls: 3, batchSize: 1 });
     assert.ok(tmdb.movieCalls.length <= 3, `pedidos: ${tmdb.movieCalls.length}`);

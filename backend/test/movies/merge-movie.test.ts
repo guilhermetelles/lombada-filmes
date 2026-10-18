@@ -64,6 +64,8 @@ describe('mergeMovie: campos extras', () => {
     collection: null,
     keywords: ['submarine'],
     recs: [14372],
+    recsInfo: [{ tmdbId: 14372, title: 'Leviathan', year: 1989, posterPath: null }],
+    release: '1989-08-09',
     providersBR: ['Disney Plus'],
     popularity: 16.2,
     vote: 7.4,
@@ -83,6 +85,8 @@ describe('mergeMovie: campos extras', () => {
     assert.equal(movie.titlePt, 'O Segredo do Abismo');
     assert.deepEqual(movie.keywords, ['submarine']);
     assert.deepEqual(movie.recs, [14372]);
+    assert.deepEqual(movie.recsInfo, [{ tmdbId: 14372, title: 'Leviathan', year: 1989, posterPath: null }]);
+    assert.equal(movie.release, '1989-08-09');
     assert.equal(movie.collection, null);
     assert.deepEqual(movie.providersBR, { flatrate: ['Disney Plus'], previous: ['Disney Plus'], fetchedAt: firstDay });
     assert.equal('extraFetchedAt' in movie, false);
@@ -96,6 +100,8 @@ describe('mergeMovie: campos extras', () => {
       'titlePt',
       'keywords',
       'recs',
+      'recsInfo',
+      'release',
       'providersBR',
       'awards',
       'extraFetchedAt',
@@ -140,6 +146,8 @@ describe('mergeMovie: campos extras', () => {
     const before = enriched();
     const movie = mergeMovie(before, { tmdb: tmdbAbyss }, nextDay);
     assert.deepEqual(movie.keywords, before.keywords);
+    assert.deepEqual(movie.recsInfo, before.recsInfo);
+    assert.equal(movie.release, '1989-08-09');
     assert.deepEqual(movie.providersBR, before.providersBR);
   });
 

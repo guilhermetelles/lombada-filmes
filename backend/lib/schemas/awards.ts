@@ -8,6 +8,7 @@ export const AwardItemSchema: z.ZodType<AwardItem> = z.object({
   cat: z.string().nullable(),
   kind: z.enum(['win', 'nom']),
   year: z.number().int().nullable(),
+  for: z.string().nullable().optional(),
 });
 
 /** Campo awards de movies/{tmdbId} e people/{id}. */

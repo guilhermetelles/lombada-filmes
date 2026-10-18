@@ -9,6 +9,7 @@ import { brazilDay } from '../time/brazil-day.js';
 import { DAY_MS } from '../time/durations.js';
 import type { Movie } from '../types/movie.js';
 import type { RecSource } from '../types/recs.js';
+import type { TmdbCollectionPart } from '../types/sources.js';
 import type { RecsRun } from './recs-run.js';
 import type { ListFilm } from './score-recs.js';
 
@@ -20,6 +21,9 @@ const RECURRING_DIRECTOR_FILMS = 2;
 
 /** Peso de um filme da filmografia de um diretor recorrente, perto do de uma recomendação do topo. */
 const DIRECTOR_WEIGHT = 0.8;
+
+/** De quantas sagas começadas pela lista buscar o próximo filme (as dos filmes mais altos primeiro). */
+const MAX_SAGAS = 10;
 
 /** Quantos dias para trás contam como "em cartaz". */
 const NOW_PLAYING_DAYS = 40;
@@ -49,10 +53,11 @@ export async function completeSeedMovies(
 }
 
 /**
- * Escolhe os candidatos da lista: as recomendações do TMDb dos 25 primeiros (pesando mais as do
- * topo e as primeiras de cada filme) e a filmografia dos diretores que aparecem em 2 ou mais
- * filmes da lista (das fichas já guardadas em people/). Tira os excluídos (lista, fila e "Não
- * quero") e fica com os de maior peso.
+ * Escolhe os candidatos da lista: o próximo filme de cada saga começada pela lista (na frente dos
+ * outros), as recomendações do TMDb dos 25 primeiros (pesando mais as do topo e as primeiras de
+ * cada filme) e a filmografia dos diretores que aparecem em 2 ou mais filmes da lista (das fichas
+ * já guardadas em people/). Tira os excluídos (lista, fila e "Não quero") e fica com os de maior
+ * peso, até o limite de candidatos da execução.
  *
  * @param run - Execução (banco e limites).
  * @param films - Filmes da lista, do topo para baixo.
@@ -89,10 +94,70 @@ export async function chooseCandidateIds(
     for (const { tmdbId } of directed) add(tmdbId, DIRECTOR_WEIGHT * quality(bestPosition));
   }
 
-  return [...weights]
+  const sagaIds = await nextInSagas(run, films, movies, excluded);
+  const weighted = [...weights]
     .sort((a, b) => b[1] - a[1] || a[0] - b[0])
-    .slice(0, run.limits.maxCandidates)
-    .map(([tmdbId]) => tmdbId);
+    .map(([tmdbId]) => tmdbId)
+    .filter((tmdbId) => !sagaIds.includes(tmdbId));
+  return [...sagaIds, ...weighted].slice(0, run.limits.maxCandidates);
+}
+
+/**
+ * Busca no TMDb (/collection/{id}) as sagas começadas pela lista, das dos filmes mais altos para
+ * as dos mais baixos (até 10), e fica com o próximo filme de cada uma, enquanto houver tempo e
+ * pedidos na execução. Saga que o TMDb não devolve fica de fora (registrado no log).
+ *
+ * @param run - Execução.
+ * @param films - Filmes da lista, do topo para baixo.
+ * @param movies - Documentos dos filmes da lista, por id.
+ * @param excluded - Ids que não podem ser sugeridos (lista, fila e "Não quero").
+ * @returns Um id por saga, na ordem das sagas.
+ */
+async function nextInSagas(
+  run: RecsRun,
+  films: readonly ListFilm[],
+  movies: ReadonlyMap<number, Movie>,
+  excluded: ReadonlySet<number>,
+): Promise<number[]> {
+  const collectionIds = [...new Set(films.flatMap((film) => movies.get(film.tmdbId)?.collection?.id ?? []))].slice(
+    0,
+    MAX_SAGAS,
+  );
+  const watched = new Set(films.map((film) => film.tmdbId));
+  const today = brazilDay(run.startedAt);
+  const picks: number[] = [];
+
+  for (const collectionId of collectionIds) {
+    if (!run.canFetch()) break;
+    try {
+      const { tmdb } = run.dependencies.sources;
+      const collection = await run.usage.track('tmdb', () => tmdb.getCollection(collectionId));
+      const next = nextUnwatchedPart(collection.parts, watched, today);
+      if (next !== null && !excluded.has(next) && !picks.includes(next)) picks.push(next);
+    } catch (error) {
+      logger.warn('saga indisponível no TMDb, fora das sugestões', { collectionId, error });
+    }
+  }
+  return picks;
+}
+
+/**
+ * Próximo filme de uma saga: o primeiro, por data de estreia, que já estreou e não está na lista.
+ *
+ * @param parts - Filmes da saga.
+ * @param watched - Ids dos filmes da lista.
+ * @param today - Hoje, AAAA-MM-DD (Brasília).
+ * @returns O id do filme, ou null se a lista já tem todos os lançados.
+ */
+export function nextUnwatchedPart(
+  parts: readonly TmdbCollectionPart[],
+  watched: ReadonlySet<number>,
+  today: string,
+): number | null {
+  const released = parts
+    .flatMap((part) => (part.release !== null && part.release <= today ? [{ ...part, release: part.release }] : []))
+    .sort((a, b) => a.release.localeCompare(b.release) || a.tmdbId - b.tmdbId);
+  return released.find((part) => !watched.has(part.tmdbId))?.tmdbId ?? null;
 }
 
 /**

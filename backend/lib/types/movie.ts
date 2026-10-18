@@ -37,6 +37,14 @@ export type MovieCollection = {
   name: string;
 };
 
+/** Resumo de um filme recomendado pelo TMDb, para a fileira de parecidos abrir sem ler cada filme. */
+export type MovieRecInfo = {
+  tmdbId: number;
+  title: string;
+  year: number | null;
+  posterPath: string | null;
+};
+
 /** Onde assistir no Brasil por assinatura, com os serviços da busca anterior para notar o que chegou. */
 export type ProvidersBR = {
   flatrate: string[];
@@ -68,6 +76,8 @@ export type Movie = {
   collection?: MovieCollection | null | undefined;
   keywords?: string[] | undefined; // até 25, em inglês (nomes do TMDb)
   recs?: number[] | undefined; // até 10 ids do TMDb (recomendações do TMDb)
+  recsInfo?: MovieRecInfo[] | undefined; // os mesmos ids de recs, com título, ano e pôster
+  release?: string | null | undefined; // AAAA-MM-DD, release_date do TMDb (aniversário de estreia)
   providersBR?: ProvidersBR | undefined;
   awards?: Awards | undefined;
   popularity?: number | undefined;
