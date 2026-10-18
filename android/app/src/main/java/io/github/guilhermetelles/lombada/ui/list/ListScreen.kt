@@ -75,6 +75,7 @@ private const val LIST_HEADER_ITEMS = 5
  * @param onOpenPerson Abre a tela de uma pessoa achada na busca.
  * @param onAbout Abre "Sobre".
  * @param onSignOut Sair da conta.
+ * @param topBarActions Ações da barra do app antes do menu ⋮: o sino da Atividade e os membros.
  */
 @Composable
 fun ListScreen(
@@ -85,7 +86,8 @@ fun ListScreen(
     onOpenMovie: (MovieRoute) -> Unit,
     onOpenPerson: (PersonRoute) -> Unit,
     onAbout: () -> Unit,
-    onSignOut: () -> Unit
+    onSignOut: () -> Unit,
+    topBarActions: @Composable () -> Unit = {}
 ) {
     val onOpenEntry: (Entry) -> Unit = { entry ->
         onOpenMovie(MovieRoute(entry.tmdbId, entry.movie.title, entry.movie.year, entry.movie.posterPath))
@@ -119,7 +121,12 @@ fun ListScreen(
             contentPadding = WindowInsets.navigationBars.asPaddingValues(),
             modifier = Modifier.fillMaxSize()
         ) {
-            item(key = "topbar") { LombadaTopBar { AccountMenu(onAbout, onSignOut) } }
+            item(key = "topbar") {
+                LombadaTopBar {
+                    topBarActions()
+                    AccountMenu(onAbout, onSignOut)
+                }
+            }
             item(key = "title") { ListTitle(list.name, list.description, onSwitchList) }
             stickyHeader(key = "search") {
                 SearchBar(search.query, searchViewModel::onQueryChange, searchViewModel::clear)

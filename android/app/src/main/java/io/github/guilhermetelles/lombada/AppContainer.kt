@@ -10,10 +10,17 @@ import com.google.firebase.firestore.persistentCacheSettings
 import io.github.guilhermetelles.lombada.data.auth.AuthRepository
 import io.github.guilhermetelles.lombada.data.backend.BackendClient
 import io.github.guilhermetelles.lombada.data.backend.IdTokenInterceptor
+import io.github.guilhermetelles.lombada.data.firestore.DismissedRepository
 import io.github.guilhermetelles.lombada.data.firestore.EntryRepository
+import io.github.guilhermetelles.lombada.data.firestore.FeedRepository
 import io.github.guilhermetelles.lombada.data.firestore.ListRepository
 import io.github.guilhermetelles.lombada.data.firestore.MovieRepository
 import io.github.guilhermetelles.lombada.data.firestore.PersonRepository
+import io.github.guilhermetelles.lombada.data.firestore.QueueRepository
+import io.github.guilhermetelles.lombada.data.firestore.QuizRepository
+import io.github.guilhermetelles.lombada.data.firestore.RecsRepository
+import io.github.guilhermetelles.lombada.data.firestore.RetroRepository
+import io.github.guilhermetelles.lombada.data.firestore.ScoresRepository
 import io.github.guilhermetelles.lombada.data.firestore.UsageRepository
 import io.github.guilhermetelles.lombada.data.firestore.UserRepository
 import kotlinx.coroutines.CoroutineScope
@@ -62,11 +69,34 @@ class AppContainer(context: Context) {
     /** Snackbar comum a todas as telas. */
     val snackbar = SnackbarHostState()
 
+    // Gravações recusadas pelas regras viram aviso no snackbar.
+    private val onWriteError: (Exception) -> Unit = { error ->
+        appScope.launch { snackbar.showSnackbar(writeFailureMessage(error)) }
+    }
+
     /** Entradas das listas. */
-    val entries =
-        EntryRepository(db) { error ->
-            appScope.launch { snackbar.showSnackbar(writeFailureMessage(error)) }
-        }
+    val entries = EntryRepository(db, onWriteError)
+
+    /** Fila "Quero ver" (só leitura; gravar passa pelo backend). */
+    val queue = QueueRepository(db)
+
+    /** Sugestões calculadas pela rotina `recs`. */
+    val recs = RecsRepository(db)
+
+    /** Sugestões recusadas ("Não quero"). */
+    val dismissed = DismissedRepository(db, onWriteError)
+
+    /** Atividade da lista. */
+    val feed = FeedRepository(db)
+
+    /** Quiz diário e respostas. */
+    val quiz = QuizRepository(db)
+
+    /** Placar mensal do quiz. */
+    val scores = ScoresRepository(db)
+
+    /** Retrospectivas mensais. */
+    val retros = RetroRepository(db)
 
     private fun writeFailureMessage(error: Exception): String =
         if (error is FirebaseFirestoreException && error.code == FirebaseFirestoreException.Code.PERMISSION_DENIED) {
