@@ -46,7 +46,7 @@ import io.github.guilhermetelles.lombada.ui.theme.LombadaColors
 import java.time.LocalDate
 
 /**
- * Aba Quiz: a pergunta de hoje, o placar do mês e o histórico. Ponto de entrada do pacote, registrado no `MainScreen`.
+ * Aba Quiz: o evento de início (quando há), a pergunta de hoje, o placar do mês e o histórico. Ponto de entrada do pacote, registrado no `MainScreen`.
  *
  * @param context Lista, pessoa logada e navegação.
  */
@@ -68,6 +68,10 @@ fun QuizEntry(context: ScreenContext) {
             color = LombadaColors.Paper2,
             modifier = Modifier.padding(horizontal = 20.dp)
         )
+        EventSection(state.event) { id ->
+            val type = state.event.items.firstOrNull { it.quiz.id == id }?.quiz?.type
+            context.navigate(QuizPlayRoute(day = id, type = type))
+        }
         TodaySection(state, list, context.uid) { context.navigate(QuizPlayRoute(day = state.clock.day)) }
         SectionCard(
             title = "Placar de ${QuizScoreboard.monthName(state.clock.month)}",
@@ -98,7 +102,7 @@ fun QuizEntry(context: ScreenContext) {
                 ) {
                     HorizontalDivider(color = LombadaColors.Rule, modifier = Modifier.padding(vertical = 4.dp))
                 }
-                HistoryRow(item, list, context.uid) { context.navigate(QuizPlayRoute(day = item.quiz.day)) }
+                HistoryRow(item, list, context.uid) { context.navigate(QuizPlayRoute(day = item.quiz.id)) }
             }
         }
     }
@@ -130,7 +134,7 @@ private fun TodaySection(state: QuizTabState, list: MovieList, uid: String, onPl
     val others = list.memberUids.filter { it != uid }
     SectionCard(
         title = "Pergunta de hoje",
-        subtitle = "${QuizRules.typeTitle(quiz.type)} · ${Formatting.fullDate(LocalDate.parse(quiz.day))}"
+        subtitle = listOfNotNull(QuizRules.typeTitle(quiz.type), dayLabel(quiz.day)).joinToString(" · ")
     ) {
         Text(quiz.prompt, style = MaterialTheme.typography.titleLarge.copy(fontSize = 20.sp, lineHeight = 26.sp))
         val mine = state.todayAnswers.mine
@@ -212,7 +216,7 @@ private fun HistoryRow(item: QuizHistoryItem, list: MovieList, uid: String, onOp
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
-                "${Formatting.fullDate(LocalDate.parse(quiz.day))} · ${QuizRules.typeTitle(quiz.type)}",
+                listOfNotNull(dayLabel(quiz.day), QuizRules.typeTitle(quiz.type)).joinToString(" · "),
                 style = MaterialTheme.typography.labelMedium,
                 color = LombadaColors.Paper3,
                 modifier = Modifier.weight(1f)
@@ -248,3 +252,11 @@ private fun HistoryRow(item: QuizHistoryItem, list: MovieList, uid: String, onOp
 
 private fun rightLabel(quiz: QuizDoc, rightOptionId: String?): String? =
     quiz.options.firstOrNull { it.id == rightOptionId }?.label
+
+/**
+ * Data por extenso de um dia `AAAA-MM-DD`, sem quebrar com um valor que não é data.
+ *
+ * @param day Dia.
+ * @return A data por extenso, ou null se não der para ler.
+ */
+internal fun dayLabel(day: String): String? = runCatching { Formatting.fullDate(LocalDate.parse(day)) }.getOrNull()
