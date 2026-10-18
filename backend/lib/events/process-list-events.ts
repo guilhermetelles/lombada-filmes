@@ -6,8 +6,7 @@ import { requireMember } from '../lists/list-access.js';
 import { listDocument } from '../lists/list-repository.js';
 import { readMemberProfile } from '../lists/member-profiles.js';
 import { logger } from '../logging/logger.js';
-import { claimActivityPush } from '../notify/activity-push-quota.js';
-import { sendFcm } from '../notify/send-fcm.js';
+import { pushActivity } from '../notify/push-activity.js';
 import { queueDocument } from '../queue/queue-repository.js';
 import { onListChanged } from '../recs/on-list-changed.js';
 import type { Dependencies } from '../types/dependencies.js';
@@ -15,7 +14,7 @@ import type { List } from '../types/list.js';
 import { consumeEventsQuota } from './events-rate-limit.js';
 import { readRankedEntries } from './list-entries.js';
 import { type RequestedEvent, selectValidEvents, type ValidEvent } from './select-valid-events.js';
-import { type EventsSummary, summarizeEvents } from './summarize-events.js';
+import { summarizeEvents } from './summarize-events.js';
 
 /** Um lote vindo do app: quem manda, a lista e os eventos. */
 type EventsRequest = { uid: string; listId: string; items: readonly RequestedEvent[] };
@@ -64,7 +63,9 @@ async function processListEvents(dependencies: Dependencies, { uid, listId, item
 
   let pushed = false;
   for (const recipient of list.memberUids.filter((member) => member !== uid)) {
-    if (await pushActivity(dependencies, { recipient, listId, feedId, summary, now })) pushed = true;
+    const body = summary.quote ? `“${summary.quote}”` : (summary.body ?? FALLBACK_PUSH_BODY);
+    const push = { recipient, listId, feedId, title: summary.title, body, route: summary.route, now };
+    if (await pushActivity(dependencies, push)) pushed = true;
   }
   return pushed;
 }
@@ -111,40 +112,6 @@ async function actorName(list: List, auth: Pick<Auth, 'getUser'>, uid: string): 
   } catch (error) {
     logger.warn('nome do integrante não lido', { uid, error });
     return '';
-  }
-}
-
-/** O que o aviso de um lote leva a um destinatário. */
-type ActivityPush = { recipient: string; listId: string; feedId: string; summary: EventsSummary; now: Date };
-
-/**
- * Manda o aviso do lote a um integrante, se notifyState liberar. Agrupado, vai com a tag
- * `activity-{listId}`, que substitui o aviso anterior no aparelho. Uma falha só vai para o log.
- *
- * @param dependencies - Banco e FCM.
- * @param push - Destinatário, lista, item da Atividade, resumo e momento.
- * @returns true se o FCM aceitou o aviso em algum aparelho.
- */
-async function pushActivity(
-  dependencies: Dependencies,
-  { recipient, listId, feedId, summary, now }: ActivityPush,
-): Promise<boolean> {
-  try {
-    const claim = await claimActivityPush(dependencies.db, recipient, now);
-    if (!claim) return false;
-    const { sent } = await sendFcm(dependencies, recipient, {
-      title: summary.title,
-      body: summary.quote ? `“${summary.quote}”` : (summary.body ?? FALLBACK_PUSH_BODY),
-      listId,
-      feedId,
-      route: summary.route,
-      channelId: 'lista',
-      tag: claim.grouped ? `activity-${listId}` : undefined,
-    });
-    return sent > 0;
-  } catch (error) {
-    logger.warn('aviso de atividade não enviado', { recipient, listId, error });
-    return false;
   }
 }
 

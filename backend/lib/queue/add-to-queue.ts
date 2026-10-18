@@ -5,6 +5,7 @@ import { requireMember } from '../lists/list-access.js';
 import { entriesOfMovie, listDocument } from '../lists/list-repository.js';
 import { readMemberProfile } from '../lists/member-profiles.js';
 import { getFreshMovie } from '../movies/get-fresh-movie.js';
+import { pushActivity } from '../notify/push-activity.js';
 import type { Dependencies } from '../types/dependencies.js';
 import type { UsageRecorder } from '../types/usage.js';
 import { queueDocument } from './queue-repository.js';
@@ -15,8 +16,8 @@ type QueueRequest = { uid: string; listId: string; tmdbId: number };
 /**
  * Põe um filme na fila "Quero ver" da lista. Garante o filme completo em movies/{tmdbId} (a página
  * do filme lê de lá), cria lists/{listId}/queue/{tmdbId} e, só quando o filme entra agora, grava um
- * item `queue.added` na Atividade com o nome de quem pediu e o título do filme. Pedir de novo um
- * filme que já está na fila não muda nada.
+ * item `queue.added` na Atividade com o nome de quem pediu e o título do filme, com aviso aos outros
+ * integrantes pela cota de atividade. Pedir de novo um filme que já está na fila não muda nada.
  *
  * @param dependencies - Banco, Auth, clientes das fontes e relógio.
  * @param usage - Medidor de consumo do pedido.
@@ -33,7 +34,7 @@ async function addToQueue(
   { uid, listId, tmdbId }: QueueRequest,
 ): Promise<boolean> {
   const { db, auth, now } = dependencies;
-  requireMember((await listDocument(db, listId).get()).data(), uid);
+  const list = requireMember((await listDocument(db, listId).get()).data(), uid);
 
   const inList = await entriesOfMovie(db, listId, tmdbId).limit(1).get();
   if (!inList.empty) throw new ConflictError('o filme já está na lista');
@@ -44,14 +45,22 @@ async function addToQueue(
   if (!added) return false;
 
   const { name } = await readMemberProfile(auth, uid);
-  await writeFeedItem(db, listId, {
+  const title = name ? `${name} quer ver ${movie.title}` : `${movie.title} entrou na fila`;
+  const route = { name: 'movie', args: { tmdbId } } as const;
+  const { feedId } = await writeFeedItem(db, listId, {
     type: 'queue.added',
     kind: 'lista',
     createdAt,
     actorUid: uid,
-    title: name ? `${name} quer ver ${movie.title}` : `${movie.title} entrou na fila`,
-    route: { name: 'movie', args: { tmdbId } },
+    title,
+    route,
   });
+
+  // O aviso usa a mesma cota dos lotes de eventos: 1 a cada 15 minutos e no máximo 6 por dia.
+  const body = 'Entrou na fila Quero ver de vocês.';
+  for (const recipient of list.memberUids.filter((member) => member !== uid)) {
+    await pushActivity(dependencies, { recipient, listId, feedId, title, body, route, now: createdAt });
+  }
   return true;
 }
 

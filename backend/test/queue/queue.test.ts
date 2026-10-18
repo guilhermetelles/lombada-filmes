@@ -4,8 +4,10 @@ import { addToQueueRoute } from '../../api/lists/[listId]/queue/_add.js';
 import { removeFromQueueRoute } from '../../api/lists/[listId]/queue/_remove.js';
 import { createListRoute } from '../../api/lists/index.js';
 import { joinListRoute } from '../../api/lists/join.js';
+import { deviceTokenDocument } from '../../lib/notify/notify-repository.js';
 import { createTestDependencies } from '../support/dependencies.js';
 import { resetEmulators, signUp } from '../support/emulators.js';
+import { createFakeMessaging, type FakeMessaging } from '../support/fake-messaging.js';
 import { type FakeSources, fakeSources } from '../support/fake-sources.js';
 import { jsonRequest, readErrorCode } from '../support/requests.js';
 
@@ -16,6 +18,7 @@ type CreatedList = { listId: string; inviteCode: string };
 const ABYSS = 2756;
 
 let sources: FakeSources;
+let fcm: FakeMessaging;
 let clock: Date;
 let dependencies: ReturnType<typeof createTestDependencies>;
 let ana: Person;
@@ -27,7 +30,8 @@ beforeEach(async () => {
   await resetEmulators();
   sources = fakeSources();
   clock = new Date('2026-10-16T15:00:00Z');
-  dependencies = createTestDependencies(sources.fetch, () => clock);
+  fcm = createFakeMessaging();
+  dependencies = createTestDependencies(sources.fetch, () => clock, { messaging: fcm.messaging });
   [ana, bia, outsider] = await Promise.all([
     signUp('ana@exemplo.com'),
     signUp('bia@exemplo.com'),
@@ -133,6 +137,27 @@ describe('POST /api/lists/{listId}/queue', () => {
     assert.equal(response.status, 404);
     assert.equal(await queueItem(99999999), undefined);
     assert.equal((await feedItems()).length, 0);
+  });
+
+  test('avisa o outro integrante pela cota de atividade, e só uma vez em 15 minutos', async () => {
+    await deviceTokenDocument(dependencies.db, ana.uid, 'token-ana').set({
+      token: 'token-ana',
+      platform: 'android',
+      updatedAt: clock,
+    });
+
+    await add(bia, { tmdbId: ABYSS });
+    assert.equal(fcm.sent.length, 1);
+    assert.deepEqual(fcm.sent[0]?.tokens, ['token-ana']);
+    assert.equal(fcm.sent[0]?.notification?.title, 'Bia quer ver The Abyss');
+    assert.equal(fcm.sent[0]?.android?.notification?.tag, `activity-${listId}`);
+
+    // Tirar e pôr de novo 5 minutos depois entra na Atividade, mas não gera outro aviso.
+    clock = new Date(clock.getTime() + 5 * 60 * 1000);
+    await remove(bia, ABYSS);
+    await add(bia, { tmdbId: ABYSS });
+    assert.equal(fcm.sent.length, 1);
+    assert.equal((await feedItems()).filter((item) => item.type === 'queue.added').length, 2);
   });
 
   test('tmdbId inválido: 400', async () => {
