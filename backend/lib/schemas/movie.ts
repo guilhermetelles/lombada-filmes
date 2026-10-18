@@ -1,5 +1,6 @@
 import * as z from 'zod';
-import type { Bechdel, Movie, MovieSnapshot } from '../types/movie.js';
+import type { Bechdel, Movie, MovieCollection, MovieSnapshot, ProvidersBR } from '../types/movie.js';
+import { AwardsSchema } from './awards.js';
 import { firestoreDate } from './firestore.js';
 import { CastMemberSchema, DirectorSchema, PersonRefSchema } from './person.js';
 
@@ -13,6 +14,16 @@ export const BechdelSchema: z.ZodType<Bechdel> = z.object({
   rating: z.number().int().min(0).max(3).nullable(),
   dubious: z.boolean(),
   disputes: z.number().int().nonnegative(),
+  fetchedAt: firestoreDate,
+});
+
+/** movies/{tmdbId}.collection: saga do TMDb. */
+export const MovieCollectionSchema: z.ZodType<MovieCollection> = z.object({ id: z.number().int(), name: z.string() });
+
+/** movies/{tmdbId}.providersBR: streaming por assinatura no Brasil. */
+export const ProvidersBRSchema: z.ZodType<ProvidersBR> = z.object({
+  flatrate: z.array(z.string()),
+  previous: z.array(z.string()),
   fetchedAt: firestoreDate,
 });
 
@@ -36,6 +47,21 @@ export const MovieSchema: z.ZodType<Movie> = z.object({
   }),
   tmdbFetchedAt: firestoreDate,
   bechdel: BechdelSchema.optional(),
+  titlePt: z.string().nullable().optional(),
+  tagline: z.string().nullable().optional(),
+  budget: z.number().nullable().optional(),
+  revenue: z.number().nullable().optional(),
+  boxOfficeUS: z.number().nullable().optional(),
+  certBR: z.string().nullable().optional(),
+  collection: MovieCollectionSchema.nullable().optional(),
+  keywords: z.array(z.string()).max(25).optional(),
+  recs: z.array(z.number().int()).max(10).optional(),
+  providersBR: ProvidersBRSchema.optional(),
+  awards: AwardsSchema.optional(),
+  popularity: z.number().optional(),
+  vote: z.number().nullable().optional(),
+  votes: z.number().int().optional(),
+  extraFetchedAt: firestoreDate.optional(),
 });
 
 /** Cópia resumida como está gravada em lists/{listId}/entries/{entryId}.movie. */
