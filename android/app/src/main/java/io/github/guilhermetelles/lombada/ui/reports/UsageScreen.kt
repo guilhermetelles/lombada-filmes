@@ -64,8 +64,29 @@ private val SOURCES =
             "Letterboxd",
             "Nota e página de cada filme, pelas páginas públicas. Sem cota documentada."
         ),
-        Triple("omdb", "OMDb", "Notas do IMDb, Rotten Tomatoes e Metacritic. Cota diária do plano gratuito."),
-        Triple("bechdel", "Bechdel Test", "Teste de Bechdel: índice e páginas do site. Sem cota documentada.")
+        Triple(
+            "omdb",
+            "OMDb",
+            "Notas do IMDb, Rotten Tomatoes e Metacritic, prêmios e bilheteria nos EUA. Cota diária do plano gratuito."
+        ),
+        Triple("bechdel", "Bechdel Test", "Teste de Bechdel: índice e páginas do site. Sem cota documentada."),
+        Triple(
+            "wikidata",
+            "Wikidata",
+            "Prêmios e indicações de filmes e pessoas, numa consulta por lote na rotina diária. " +
+                "Sem cota documentada."
+        ),
+        Triple(
+            "wikipedia",
+            "Wikipedia",
+            "Indicações e vitórias na Framboesa de Ouro, pelas categorias da Wikipedia. Sem cota documentada."
+        ),
+        Triple(
+            "gemini",
+            "Gemini",
+            "Motivos das sugestões, textos do quiz, retrospectiva do mês e busca em texto livre. " +
+                "Plano gratuito, com limite diário: aqui aparece só o uso."
+        )
     )
 
 /**

@@ -138,9 +138,39 @@ data class BechdelReport(
     val dubious: Int
 )
 
+/**
+ * Um filme numa lista do card "Oscar contra Framboesa".
+ *
+ * @property entry Entrada.
+ * @property position Posição no ranking, a partir de 1.
+ * @property detail Linha embaixo do título ("3 vitórias · 1 Oscar", "levou a Framboesa").
+ */
+data class AwardsRow(val entry: Entry, val position: Int, val detail: String)
+
+/**
+ * Card "Oscar contra Framboesa".
+ *
+ * @property headline Frase de abertura com as contagens.
+ * @property mostAwarded Até 5 filmes com mais vitórias fora a Framboesa.
+ * @property razzies Filmes que concorreram à Framboesa, quem levou mais primeiro.
+ * @property both Filmes que concorreram ao Oscar e à Framboesa.
+ * @property oscarAverageRank Posição média de quem ganhou Oscar; null sem os dois grupos.
+ * @property razzieAverageRank Posição média de quem concorreu à Framboesa; null sem os dois grupos.
+ */
+data class AwardsReport(
+    val headline: String,
+    val mostAwarded: List<AwardsRow>,
+    val razzies: List<AwardsRow>,
+    val both: List<AwardsRow>,
+    val oscarAverageRank: Int?,
+    val razzieAverageRank: Int?
+)
+
 /** Cálculos dos relatórios, a partir da lista em memória, como no mock. */
 object Reports {
     private const val TOP = 10
+    private const val MOST_AWARDED = 5
+    private const val OSCAR = "Oscar"
 
     // Desempate pelo nome como o localeCompare do mock: "Ação" antes de "Animação".
     private val collator = Collator.getInstance(Locale.forLanguageTag("pt-BR"))
@@ -371,6 +401,90 @@ object Reports {
     }
 
     /**
+     * Card "Oscar contra Framboesa": os mais premiados, os que concorreram à Framboesa, os que
+     * tiveram os dois e a posição média de cada grupo, como no mock. Filmes sem `awards` contam
+     * como sem prêmios; categoria e ano não entram na conta.
+     *
+     * @param ranking Entradas na ordem do ranking.
+     * @param movies Filmes, com os prêmios.
+     * @return O card, ou null quando nenhum filme tem vitória nem concorreu à Framboesa.
+     */
+    fun awards(ranking: List<Entry>, movies: Map<Int, Movie>): AwardsReport? {
+        val rows =
+            ranking.mapIndexed { index, entry ->
+                AwardTally(entry, index + 1, AwardGroups.of(movies[entry.tmdbId]?.awards?.items.orEmpty()))
+            }
+        val top =
+            rows
+                .filter { it.wins > 0 }
+                .sortedWith(
+                    compareByDescending<AwardTally> { it.wins }
+                        .thenByDescending { it.oscarWins }
+                        .thenBy { it.position }
+                ).take(MOST_AWARDED)
+        val razzies =
+            rows
+                .filter { it.razzie != null }
+                .sortedWith(
+                    compareByDescending<AwardTally> { it.razzie?.wins ?: 0 }
+                        .thenByDescending { it.razzie?.nominations ?: 0 }
+                        .thenBy { it.position }
+                )
+        if (top.isEmpty() && razzies.isEmpty()) return null
+        val both = rows.filter { it.razzie != null && (it.oscarWins > 0 || it.oscarNominations > 0) }
+        val oscarRows = rows.filter { it.oscarWins > 0 }
+        val oscarFilms = oscarRows.size
+        val razzieWon = razzies.count { (it.razzie?.wins ?: 0) > 0 }
+        val oscarWinners =
+            when (oscarFilms) {
+                0 -> "nenhum ganhou Oscar"
+                1 -> "1 filme ganhou pelo menos um Oscar"
+                else -> "$oscarFilms filmes ganharam pelo menos um Oscar"
+            }
+        val headline =
+            if (razzies.isNotEmpty()) {
+                val competed = if (razzies.size == 1) "concorreu" else "concorreram"
+                val won =
+                    when (razzieWon) {
+                        0 -> "nenhum levou"
+                        1 -> "1 levou"
+                        else -> "$razzieWon levaram"
+                    }
+                "${Formatting.count(razzies.size, "filme", "filmes")} da lista $competed à Framboesa de Ouro; " +
+                    "$won. Do outro lado, $oscarWinners."
+            } else {
+                val winners = if (oscarFilms == 1) "1 filme da lista ganhou" else "$oscarFilms filmes da lista ganharam"
+                "$winners pelo menos um Oscar, e nenhum concorreu à Framboesa de Ouro."
+            }
+        val bothGroups = oscarRows.isNotEmpty() && razzies.isNotEmpty()
+        return AwardsReport(
+            headline = headline,
+            mostAwarded =
+                top.map { row ->
+                    val oscars = row.oscarWins.takeIf { it > 0 }?.let { oscarCount(it) }
+                    AwardsRow(
+                        row.entry,
+                        row.position,
+                        listOfNotNull(Formatting.count(row.wins, "vitória", "vitórias"), oscars).joinToString(" · ")
+                    )
+                },
+            razzies = razzies.map { AwardsRow(it.entry, it.position, razzieDetail(it)) },
+            both =
+                both.map { row ->
+                    val oscar =
+                        if (row.oscarWins > 0) {
+                            "ganhou ${oscarCount(row.oscarWins)}"
+                        } else {
+                            "${Formatting.count(row.oscarNominations, "indicação", "indicações")} ao Oscar"
+                        }
+                    AwardsRow(row.entry, row.position, "$oscar e ${razzieDetail(row)}")
+                },
+            oscarAverageRank = if (bothGroups) jsRound(oscarRows.map { it.position.toDouble() }.average()) else null,
+            razzieAverageRank = if (bothGroups) jsRound(razzies.map { it.position.toDouble() }.average()) else null
+        )
+    }
+
+    /**
      * Os 10 gêneros mais frequentes; um filme conta em todos os seus gêneros.
      *
      * @param ranking Entradas.
@@ -419,6 +533,26 @@ object Reports {
      * @return Texto.
      */
     fun monthLabel(month: YearMonth): String = "${MONTHS[month.monthValue - 1]}/${month.year.toString().takeLast(2)}"
+
+    // Prêmios de uma entrada, já agrupados por premiação.
+    private class AwardTally(val entry: Entry, val position: Int, groups: List<AwardGroup>) {
+        private val oscar = groups.firstOrNull { it.org == OSCAR }
+        val razzie = groups.firstOrNull { it.isRazzie }
+        val wins = groups.filterNot { it.isRazzie }.sumOf { it.wins }
+        val oscarWins = oscar?.wins ?: 0
+        val oscarNominations = oscar?.nominations ?: 0
+    }
+
+    private fun oscarCount(wins: Int): String = if (wins == 1) "1 Oscar" else "$wins Oscars"
+
+    private fun razzieDetail(row: AwardTally): String {
+        val razzie = row.razzie ?: return ""
+        return when (razzie.wins) {
+            0 -> "${Formatting.count(razzie.nominations, "indicação", "indicações")} à Framboesa"
+            1 -> "levou a Framboesa"
+            else -> "levou ${razzie.wins} Framboesas"
+        }
+    }
 
     private fun countBy(keys: List<String>): List<Bar> = keys
         .groupingBy { it }
