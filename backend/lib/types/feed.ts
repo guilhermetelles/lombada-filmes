@@ -4,6 +4,7 @@
 export type FeedType =
   | 'member.activity'
   | 'queue.added'
+  | 'queue.removed'
   | 'quiz.result'
   | 'quiz.winner'
   | 'daily.quiz'

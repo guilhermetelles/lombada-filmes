@@ -7,6 +7,7 @@ import { firestoreDate } from './firestore.js';
 export const FeedTypeSchema: z.ZodType<FeedType> = z.enum([
   'member.activity',
   'queue.added',
+  'queue.removed',
   'quiz.result',
   'quiz.winner',
   'daily.quiz',

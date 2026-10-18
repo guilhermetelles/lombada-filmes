@@ -139,7 +139,7 @@ describe('POST /api/lists/{listId}/queue', () => {
     assert.equal((await feedItems()).length, 0);
   });
 
-  test('avisa o outro integrante a cada filme que entra na fila', async () => {
+  test('avisa o outro integrante a cada filme que entra ou sai da fila', async () => {
     await deviceTokenDocument(dependencies.db, ana.uid, 'token-ana').set({
       token: 'token-ana',
       platform: 'android',
@@ -152,12 +152,19 @@ describe('POST /api/lists/{listId}/queue', () => {
     assert.equal(fcm.sent[0]?.notification?.title, 'Bia quer ver The Abyss');
     assert.equal(fcm.sent[0]?.android?.notification?.tag, `activity-${listId}`);
 
-    // Tirar e pôr de novo um minuto depois avisa de novo: não há intervalo mínimo.
+    // Tirar avisa e vai para a Atividade; tirar de novo (já fora da fila) não avisa.
     clock = new Date(clock.getTime() + 60 * 1000);
     await remove(bia, ABYSS);
-    await add(bia, { tmdbId: ABYSS });
     assert.equal(fcm.sent.length, 2);
-    assert.equal((await feedItems()).filter((item) => item.type === 'queue.added').length, 2);
+    assert.equal(fcm.sent[1]?.notification?.title, 'Bia tirou The Abyss do Quero ver');
+    await remove(bia, ABYSS);
+    assert.equal(fcm.sent.length, 2);
+
+    // Pôr de novo um minuto depois avisa de novo: não há intervalo mínimo.
+    await add(bia, { tmdbId: ABYSS });
+    assert.equal(fcm.sent.length, 3);
+    const types = (await feedItems()).map((item) => item.type).sort();
+    assert.deepEqual(types, ['queue.added', 'queue.added', 'queue.removed']);
   });
 
   test('tmdbId inválido: 400', async () => {

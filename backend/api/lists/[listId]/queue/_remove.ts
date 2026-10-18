@@ -19,6 +19,6 @@ export const removeFromQueueRoute = authenticatedRoute(async ({ request, uid, de
     listId: readPathParam(url, 'listId'),
     tmdbId: readPathParam(url, 'tmdbId', TMDB_ID_POSITION),
   });
-  await removeFromQueue(dependencies.db, uid, listId, tmdbId);
+  await removeFromQueue(dependencies, { uid, listId, tmdbId });
   return new Response(null, { status: 204 });
 });

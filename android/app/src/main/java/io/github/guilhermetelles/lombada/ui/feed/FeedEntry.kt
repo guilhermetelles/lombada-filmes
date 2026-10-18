@@ -237,7 +237,7 @@ private fun FeedRow(item: FeedItem, list: MovieList, unread: Boolean, time: Stri
 private fun iconFor(item: FeedItem): ImageVector = when (item.type) {
     "quiz.winner" -> Icons.Filled.EmojiEvents
 
-    "queue.added" -> Icons.Filled.Bookmark
+    "queue.added", "queue.removed" -> Icons.Filled.Bookmark
 
     "daily.retro" -> Icons.Filled.BarChart
 
