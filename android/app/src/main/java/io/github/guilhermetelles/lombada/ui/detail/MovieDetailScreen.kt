@@ -23,13 +23,19 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.LinkAnnotation
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextLinkStyles
@@ -46,7 +52,10 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import io.github.guilhermetelles.lombada.data.model.Entry
 import io.github.guilhermetelles.lombada.data.model.Movie
 import io.github.guilhermetelles.lombada.data.model.PersonRef
+import io.github.guilhermetelles.lombada.domain.Curiosities
 import io.github.guilhermetelles.lombada.domain.Formatting
+import io.github.guilhermetelles.lombada.domain.MoviePage
+import io.github.guilhermetelles.lombada.domain.SimilarFilms
 import io.github.guilhermetelles.lombada.domain.Standing
 import io.github.guilhermetelles.lombada.ui.appContainer
 import io.github.guilhermetelles.lombada.ui.components.LombadaButton
@@ -54,43 +63,53 @@ import io.github.guilhermetelles.lombada.ui.components.LombadaButtonStyle
 import io.github.guilhermetelles.lombada.ui.components.MovieCover
 import io.github.guilhermetelles.lombada.ui.main.MovieRoute
 import io.github.guilhermetelles.lombada.ui.main.PersonRoute
+import io.github.guilhermetelles.lombada.ui.main.ScreenContext
 import io.github.guilhermetelles.lombada.ui.theme.LombadaColors
 import io.github.guilhermetelles.lombada.ui.theme.RankSticker
 import java.time.ZoneId
 
 /**
- * Detalhe do filme: capa, fatos, diretores, a nota de vocês, as quatro notas, sinopse, Teste de
- * Bechdel, elenco e o comentário, com "Editar registro" ou "Adicionar à lista" no rodapé.
+ * Página única de filme, da lista ou de fora: capa, fatos, diretores, a nota de vocês (ou a
+ * compatibilidade, fora da lista), as quatro notas, sinopse, Teste de Bechdel, curiosidades,
+ * prêmios, filmes parecidos, elenco e o comentário. No rodapé, "Editar registro" ou "Adicionar" e
+ * "Quero ver". Adicionar por aqui mantém a página aberta, que vira a de um filme da lista.
  *
  * @param route Filme aberto, com título, ano e capa para a tela abrir na hora.
- * @param ranking Entradas da lista ativa, na ordem do ranking.
- * @param preparingAdd Se o registro deste filme está sendo preparado.
- * @param onBack Volta.
- * @param onOpenPerson Abre a tela de um diretor ou ator.
- * @param onEdit Abre a folha de edição da entrada.
- * @param onAdd Prepara o registro do filme.
+ * @param context Lista, pessoa logada, estado da lista e navegação.
  */
 @Composable
-fun MovieDetailScreen(
-    route: MovieRoute,
-    ranking: List<Entry>,
-    preparingAdd: Boolean,
-    onBack: () -> Unit,
-    onOpenPerson: (PersonRoute) -> Unit,
-    onEdit: (Entry) -> Unit,
-    onAdd: (Int) -> Unit
-) {
+fun MovieDetailScreen(route: MovieRoute, context: ScreenContext) {
     val container = appContainer()
-    val viewModel = viewModel(key = "movie-${route.tmdbId}") { MovieDetailViewModel(container, route.tmdbId) }
+    val listId = context.list.id
+    val viewModel =
+        viewModel(key = "movie-$listId-${route.tmdbId}") { MovieDetailViewModel(container, route.tmdbId, listId) }
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val listState by context.listViewModel.state.collectAsStateWithLifecycle()
+    val ranking = listState.ranking
     val uri = LocalUriHandler.current
     val movie = state.movie
-    val entry = ranking.firstOrNull { it.tmdbId == route.tmdbId }
+    val page = MoviePage.of(route.tmdbId, ranking, listLoaded = !listState.loading)
+    val entry = (page as? MoviePage.InList)?.entry
     val standing = entry?.let { Standing.of(ranking, it.id) }
     val title = movie?.title ?: entry?.movie?.title ?: route.title
     val year = movie?.year ?: entry?.movie?.year ?: route.year
     val poster = movie?.posterPath ?: entry?.movie?.posterPath ?: route.posterPath
     val refreshing = state.refresh == RefreshStatus.Refreshing
+    val onOpenPerson: (PersonRoute) -> Unit = { context.navigate(it) }
+    val similar =
+        remember(movie?.recs, ranking, state.similarInfo) {
+            SimilarFilms.of(route.tmdbId, movie?.recs.orEmpty(), ranking, state.similarInfo)
+        }
+    val curiosities = remember(movie) { movie?.let(Curiosities::of) }
+    val scroll = rememberScrollState()
+    var wasOutside by remember { mutableStateOf(false) }
+    val inList = page is MoviePage.InList
+
+    // Adicionado por aqui: a página vira a de um filme da lista e volta ao topo, como no mock.
+    LaunchedEffect(inList, page == MoviePage.Outside) {
+        if (inList && wasOutside) scroll.animateScrollTo(0)
+        wasOutside = page == MoviePage.Outside
+    }
 
     Box(
         modifier =
@@ -103,7 +122,7 @@ fun MovieDetailScreen(
             modifier =
                 Modifier
                     .fillMaxSize()
-                    .verticalScroll(rememberScrollState())
+                    .verticalScroll(scroll)
                     .padding(bottom = 104.dp)
                     .navigationBarsPadding()
         ) {
@@ -111,16 +130,23 @@ fun MovieDetailScreen(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.height(56.dp).padding(horizontal = 4.dp)
             ) {
-                IconButton(onClick = onBack) {
+                IconButton(onClick = context.back) {
                     Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Voltar")
                 }
             }
             Hero(route.tmdbId, title, year, poster, movie, entry, standing?.position, onOpenPerson)
             RefreshNotice(state.refresh, movie, onRetry = viewModel::retry)
+            // Enquanto a lista não chega, ainda não se sabe se o filme é dela.
             standing?.let { StandingCard(it) }
+            if (page == MoviePage.Outside) CompatBlock(state.compat, refreshing)
             Scores(route.tmdbId, title, year, movie, entry, onOpen = uri::openUri)
             Synopsis(movie, loading = movie == null && refreshing)
             movie?.bechdel?.takeIf { it.isRated }?.let { BechdelSection(it, onOpen = uri::openUri) }
+            curiosities?.let { CuriositiesSection(it) }
+            movie?.awards?.let { MovieAwardsSection(it.items, it.summary) }
+            SimilarSection(similar) { film ->
+                context.navigate(MovieRoute(film.tmdbId, film.title, film.year, film.posterPath))
+            }
             if (movie == null || movie.cast.isNotEmpty() || refreshing) {
                 CastRow(
                     cast = movie?.cast.orEmpty(),
@@ -130,9 +156,18 @@ fun MovieDetailScreen(
             }
             if (entry != null) OurNote(entry)
         }
-        Footer(entry, preparingAdd, onEdit, onAdd = {
-            onAdd(route.tmdbId)
-        }, modifier = Modifier.align(Alignment.BottomCenter))
+        if (page != MoviePage.Unknown) {
+            Footer(
+                entry = entry,
+                preparingAdd = listState.preparingTmdbId == route.tmdbId,
+                queued = state.queued,
+                queueBusy = state.queueBusy,
+                onEdit = { context.listViewModel.openEditor(it.id) },
+                onAdd = { context.listViewModel.startAdd(route.tmdbId, stayOnPage = true) },
+                onToggleQueue = { viewModel.toggleQueue(title) },
+                modifier = Modifier.align(Alignment.BottomCenter)
+            )
+        }
     }
 }
 
@@ -349,8 +384,11 @@ private fun OurNote(entry: Entry) {
 private fun Footer(
     entry: Entry?,
     preparingAdd: Boolean,
+    queued: Boolean,
+    queueBusy: Boolean,
     onEdit: (Entry) -> Unit,
     onAdd: () -> Unit,
+    onToggleQueue: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Box(
@@ -372,7 +410,27 @@ private fun Footer(
                 onEdit(entry)
             }, style = LombadaButtonStyle.Tonal, modifier = Modifier.fillMaxWidth())
         } else {
-            LombadaButton("Adicionar à lista", onClick = onAdd, busy = preparingAdd, modifier = Modifier.fillMaxWidth())
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
+                LombadaButton(
+                    "Adicionar",
+                    onClick = onAdd,
+                    busy = preparingAdd,
+                    modifier =
+                        Modifier.weight(1f).semantics {
+                            contentDescription = "Adicionar à lista"
+                        }
+                )
+                LombadaButton(
+                    if (queued) "Na fila" else "Quero ver",
+                    onClick = onToggleQueue,
+                    style = LombadaButtonStyle.Tonal,
+                    busy = queueBusy,
+                    modifier =
+                        Modifier.weight(1f).semantics {
+                            stateDescription = if (queued) "Na fila do Quero ver; toque para tirar" else "Fora da fila"
+                        }
+                )
+            }
         }
     }
 }
