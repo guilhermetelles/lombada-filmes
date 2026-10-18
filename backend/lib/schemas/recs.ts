@@ -31,6 +31,7 @@ export const RecsModelSchema: z.ZodType<RecsModel> = z.object({
   weights: z
     .record(z.string(), z.number())
     .refine((weights) => Object.keys(weights).length <= 300, 'o modelo pode ter até 300 variáveis'),
+  labels: z.record(z.string(), z.string()).optional(),
 });
 
 /** lists/{listId}/recs/current, validado ao ler. */
@@ -45,4 +46,9 @@ export const RecsDocSchema: z.ZodType<RecsDoc> = z.object({
 /** Resposta pedida ao Gemini nos motivos das sugestões: um motivo por filme. */
 export const RecReasonsReplySchema = z.object({
   reasons: z.array(z.object({ tmdbId: z.number().int(), reason: z.string() })),
+});
+
+/** Resposta pedida ao Gemini na tradução das palavras-chave: um rótulo por nome em inglês. */
+export const KeywordLabelsReplySchema = z.object({
+  labels: z.array(z.object({ name: z.string(), label: z.string() })),
 });

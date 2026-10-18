@@ -118,7 +118,10 @@ describe('scoreMovie', () => {
       'model',
     );
     assert.equal(rec.kind, 'tema');
-    assert.equal(fallbackReason(rec, index, BASELINE), 'Parecido com Primeiro, #1 na lista de vocês (zombie, Terror)');
+    // Sem rótulo em português, a palavra-chave não aparece; com ele, aparece traduzida.
+    assert.equal(fallbackReason(rec, index, BASELINE), 'Parecido com Primeiro, #1 na lista de vocês (Terror)');
+    const labeled = { ...BASELINE, labels: { zombie: 'zumbis' } };
+    assert.equal(fallbackReason(rec, index, labeled), 'Parecido com Primeiro, #1 na lista de vocês (zumbis, Terror)');
   });
 
   test('em alta: kind emAlta e motivo com o prefixo da origem', () => {

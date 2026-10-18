@@ -56,6 +56,8 @@ const readRecsDoc = async (): Promise<RecsDoc> => {
 
 describe('runRecs', () => {
   test('grava recs/current com candidatos do TMDb, sem os da lista, da fila e de "Não quero"', async () => {
+    // Primeiro a tradução das palavras-chave do modelo, depois os motivos.
+    gemini.replies.push({ labels: [{ name: 'zombie', label: 'zumbis' }] });
     gemini.replies.push({ reasons: [{ tmdbId: 201, reason: 'Continua a saga que vocês puseram no topo da lista' }] });
     const report = await runRecs(dependencies, new UsageMeter());
 
@@ -67,6 +69,8 @@ describe('runRecs', () => {
     assert.ok(ids.includes(201) && ids.includes(211));
     assert.ok(recs.items.length <= 30 && recs.trending.length <= 15 && recs.trending.length > 0);
     assert.equal(recs.modelVersion, 'pairwise-logit-v1');
+    assert.equal(recs.model.labels?.zombie, 'zumbis');
+    assert.equal((await dependencies.db.doc('keywordLabels/zombie').get()).get('label'), 'zumbis');
     assert.ok(Object.keys(recs.model.weights).length <= 300);
 
     const saga = recs.items.find((item) => item.tmdbId === 201);
@@ -86,9 +90,10 @@ describe('runRecs', () => {
     for (const item of recs.trending) assert.equal(item.kind, 'emAlta');
 
     // Um pedido ao Gemini para a lista, com o comentário sem o nome do membro; nada de OMDb nem Letterboxd.
-    assert.equal(gemini.requests.length, 1);
-    assert.ok(!gemini.requests[0]?.prompt.includes('Joana'));
-    assert.ok(gemini.requests[0]?.prompt.includes('a [nome] adorou os zumbis no shopping'));
+    assert.equal(gemini.requests.length, 2);
+    assert.ok(gemini.requests[0]?.prompt.includes('"zombie"'));
+    assert.ok(!gemini.requests[1]?.prompt.includes('Joana'));
+    assert.ok(gemini.requests[1]?.prompt.includes('a [nome] adorou os zumbis no shopping'));
     assert.deepEqual(tmdb.otherHosts, []);
     // Os filmes da lista estavam frescos: nenhum pedido ao TMDb por eles.
     for (const listed of [101, 102, 103, 104, 105, 106]) assert.ok(!tmdb.movieCalls.includes(listed));

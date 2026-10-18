@@ -38,9 +38,10 @@ export type DiscoverPlan = {
  * @returns A consulta e os grupos de gêneros a conferir nos resultados.
  */
 export function buildDiscoverParams(filters: Filters, page: number): DiscoverPlan {
+  // Sem `region`: com ela o TMDb devolve a data de estreia no Brasil em release_date, e o ano do
+  // resultado sai errado (Moana, de 2016, vinha como 2017). Os filtros de data usam a data original.
   const params = new URLSearchParams({
     language: 'pt-BR',
-    region: 'BR',
     include_adult: 'false',
     include_video: 'false',
     sort_by: 'popularity.desc',

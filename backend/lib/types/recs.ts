@@ -27,6 +27,7 @@ export type RecItem = {
 export type RecsModel = {
   bias: number;
   weights: Record<string, number>; // até 300 variáveis
+  labels?: Record<string, string> | undefined; // rótulo em português de cada palavra-chave (nome em inglês)
 };
 
 /** Documento lists/{listId}/recs/current. */

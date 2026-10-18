@@ -177,7 +177,7 @@ export type WikipediaClient = {
 
 /** Pedido de texto estruturado ao Gemini. */
 export type GeminiRequest<T> = {
-  model: string; // uma das versões fixas de GEMINI_MODELS
+  model: string | readonly string[]; // versões fixas de GEMINI_MODELS, em ordem de preferência
   system?: string | undefined;
   prompt: string;
   schema: z.ZodType<T>; // formato da resposta; vira o JSON Schema pedido ao modelo e valida o que volta

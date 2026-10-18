@@ -39,7 +39,9 @@ async function onListChanged(db: Firestore, listId: string): Promise<void> {
       ]),
     ]);
     const index = buildListIndex(withMovies(films, movies), films.length);
-    const { model } = fitFromIndex(index);
+    // Os rótulos das palavras-chave vêm da rotina: o reajuste não chama o Gemini.
+    const labels = stored.recs.model.labels;
+    const model = { ...fitFromIndex(index).model, ...(labels ? { labels } : {}) };
     const inList = new Set(films.map((film) => film.tmdbId));
 
     const rescore = (item: RecItem) => rescoreItem(item, movies.get(item.tmdbId), model, index);

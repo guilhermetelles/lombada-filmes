@@ -16,7 +16,6 @@ function plan(filters: Parameters<typeof buildDiscoverParams>[0], page = 1) {
 
 const BASE = {
   language: 'pt-BR',
-  region: 'BR',
   include_adult: 'false',
   include_video: 'false',
   sort_by: 'popularity.desc',

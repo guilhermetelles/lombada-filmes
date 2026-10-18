@@ -6,6 +6,7 @@ import { diversify } from './diversify.js';
 import { fallbackReason } from './fallback-reason.js';
 import { chooseCandidateIds, completeSeedMovies, fetchMovies, gatherTrending } from './gather-candidates.js';
 import { writeGeminiReasons } from './gemini-reasons.js';
+import { keywordLabels } from './keyword-labels.js';
 import { movieFeatures } from './movie-features.js';
 import { readExcludedMovieIds, readListFilms, recsDocument } from './recs-repository.js';
 import type { RecsRun } from './recs-run.js';
@@ -76,6 +77,16 @@ async function computeListRecs(run: RecsRun, listId: string, list: List): Promis
   const excluded = new Set([...(await readExcludedMovieIds(db, listId)), ...films.map((film) => film.tmdbId)]);
   const index = buildListIndex(withMovies(films, listMovies), films.length);
   const fitted = fitFromIndex(index);
+  // Rótulos em português das palavras-chave do modelo, para os motivos nunca citarem o nome em inglês.
+  fitted.model = {
+    ...fitted.model,
+    labels: await keywordLabels(
+      { db, gemini: sources.gemini, usage: run.usage, now: run.dependencies.now },
+      Object.keys(fitted.model.weights).flatMap((feature) =>
+        feature.startsWith('keyword:') ? [feature.slice('keyword:'.length)] : [],
+      ),
+    ),
+  };
 
   const candidateIds = await chooseCandidateIds(run, films, listMovies, excluded);
   const candidateMovies = await fetchMovies(run, candidateIds);

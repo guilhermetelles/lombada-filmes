@@ -32,7 +32,7 @@ function fallbackReason(rec: ScoredRec, index: ListIndex, model: RecsModel): str
   const nearest = rec.neighbors[0];
   const film = nearest ? index.byEntryId.get(nearest.entryId) : undefined;
   if (film) {
-    const shared = sharedLabels(rec.tags, film.movie.genres, film.movie.keywords ?? []);
+    const shared = sharedLabels(rec.tags, film.movie.genres, film.movie.keywords ?? [], model.labels ?? {});
     const sentence = `parecido com ${film.movie.title}, #${film.position} na lista de vocês${shared ? ` (${shared})` : ''}`;
     return prefix ? `${prefix} e ${sentence}` : capitalize(sentence);
   }
@@ -47,15 +47,17 @@ function fallbackReason(rec: ScoredRec, index: ListIndex, model: RecsModel): str
  * @param tags - Marcas do candidato.
  * @param genres - Gêneros do filme da lista.
  * @param keywords - Palavras-chave do filme da lista.
+ * @param labels - Rótulos em português das palavras-chave; sem rótulo, a palavra não é citada.
  * @returns Até duas, separadas por vírgula, ou texto vazio.
  */
 function sharedLabels(
   tags: ReadonlyMap<string, number>,
   genres: readonly string[],
   keywords: readonly string[],
+  labels: Readonly<Record<string, string>>,
 ): string {
   const shared = [
-    ...keywords.filter((keyword) => tags.has(`keyword:${keyword}`)),
+    ...keywords.flatMap((keyword) => (tags.has(`keyword:${keyword}`) && labels[keyword] ? [labels[keyword]] : [])),
     ...genres.filter((genre) => tags.has(`genre:${genre}`)),
   ];
   return shared.slice(0, SHARED_LABELS).join(', ');

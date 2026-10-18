@@ -60,11 +60,12 @@ export function scoreWithModel(model: RecsModel, features: Record<string, number
   }
   const score = Math.round(100 / (1 + Math.exp(-logit)));
 
+  const labelOf = (feature: string) => featureLabel(feature, model.labels ?? {});
   const favoring = contributions
-    .filter(({ feature, value }) => value > 0 && featureLabel(feature) !== null)
+    .filter(({ feature, value }) => value > 0 && labelOf(feature) !== null)
     .sort((a, b) => b.value - a.value)
     .slice(0, 2)
-    .flatMap(({ feature }) => featureLabel(feature) ?? []);
+    .flatMap(({ feature }) => labelOf(feature) ?? []);
   const reason =
     favoring.length > 0
       ? `Pesa a favor no gosto de vocês: ${joinPortuguese(favoring)}`
@@ -123,17 +124,19 @@ export function scoreByTmdbVote(candidate: DiscoverCandidate, listIsEmpty: boole
 }
 
 /**
- * Texto de uma variável para o motivo, ou null quando ela não diz nada para quem lê (nota, votos).
+ * Texto de uma variável para o motivo, ou null quando ela não diz nada para quem lê (nota, votos) ou
+ * é uma palavra-chave sem rótulo em português (nunca aparece em inglês).
  *
  * @param feature - Nome da variável.
- * @returns O texto, como "Comédia", "anos 1990" ou "time travel".
+ * @param labels - Rótulos em português das palavras-chave, por nome em inglês (RecsModel.labels).
+ * @returns O texto, como "Comédia", "anos 1990" ou "viagem no tempo".
  */
-function featureLabel(feature: string): string | null {
+function featureLabel(feature: string, labels: Readonly<Record<string, string>>): string | null {
   const [kind, ...rest] = feature.split(':');
   const value = rest.join(':');
   if (kind === 'genre' && value) return value;
   if (kind === 'decade' && value) return `anos ${value}`;
-  if (kind === 'keyword' && value) return value;
+  if (kind === 'keyword' && value) return labels[value] ?? null;
   return null;
 }
 
