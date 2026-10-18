@@ -30,6 +30,23 @@ export type TmdbMovie = {
   synopsis: Synopsis;
   posterPath: string | null;
   imdbId: string | null;
+  extras?: TmdbMovieExtras | undefined; // campos da versão 0.3; ausente só em dados montados à mão
+};
+
+/** Campos extras do filme no TMDb (curiosidades, parecidos, onde assistir), no formato de movies/{tmdbId}. */
+export type TmdbMovieExtras = {
+  titlePt: string | null; // título no Brasil
+  tagline: string | null; // slogan em pt-BR
+  budget: number | null; // US$; null quando o TMDb não sabe (0)
+  revenue: number | null; // bilheteria mundial, US$; null quando o TMDb não sabe (0)
+  certBR: string | null; // classificação indicativa no Brasil
+  collection: { id: number; name: string } | null;
+  keywords: string[]; // até 25, em inglês
+  recs: number[]; // até 10 ids do TMDb
+  providersBR: string[]; // streaming por assinatura no Brasil (flatrate)
+  popularity: number;
+  vote: number | null; // média do TMDb; null sem votos
+  votes: number;
 };
 
 /** Um resultado da busca do TMDb, resumido para a lista de busca. */
@@ -59,6 +76,8 @@ export type OmdbRatings = {
   imdb: { value: number | null; votes: number | null };
   rottenTomatoes: { value: number | null; url: string | null };
   metacritic: { value: number | null };
+  awardsSummary?: string | null | undefined; // Awards da OMDb traduzido; null quando não há
+  boxOfficeUS?: number | null | undefined; // BoxOffice da OMDb, US$
 };
 
 /** Nota do Letterboxd e o endereço da página do filme. */
@@ -114,22 +133,27 @@ export type BechdelClient = {
 /** Prêmios por id do TMDb (filme ou pessoa); quem não tem prêmio fica fora do mapa. */
 export type AwardsById = Map<number, AwardItem[]>;
 
-/** Cliente do Wikidata: prêmios (P166) e indicações (P1411) por id do TMDb, em lote (SPARQL). */
+/** Prêmios de filmes no Wikidata e o título do artigo de cada filme na Wikipedia em inglês. */
+export type WikidataMovieAwards = {
+  awards: AwardsById;
+  enwikiTitles: Map<number, string>; // id do TMDb -> título do artigo (sitelink enwiki)
+};
+
+/** Cliente do Wikidata: prêmios (P166) e indicações (P1411) por id do TMDb, uma consulta SPARQL por lote. */
 export type WikidataClient = {
-  awardsByTmdbIds(tmdbIds: number[]): Promise<AwardsById>;
+  awardsByTmdbIds(tmdbIds: number[]): Promise<WikidataMovieAwards>;
   personAwardsByTmdbIds(personIds: number[]): Promise<AwardsById>;
 };
 
-/** Filme procurado nas páginas da Framboesa de Ouro da Wikipedia. */
-export type RazzieLookup = {
+/** Artigo de um filme na Wikipedia em inglês, com o título vindo do sitelink do Wikidata. */
+export type WikipediaArticle = {
   tmdbId: number;
-  title: string; // em inglês, como em movies/{tmdbId}.title
-  year: number | null;
+  title: string;
 };
 
-/** Cliente da Wikipedia: indicações e vitórias na Framboesa de Ouro, casadas por título e ano. */
+/** Cliente da Wikipedia: prêmios pelas categorias do artigo em inglês (Framboesa de Ouro e principais). */
 export type WikipediaClient = {
-  razzieByTitles(movies: RazzieLookup[]): Promise<AwardsById>;
+  awardsByArticles(articles: WikipediaArticle[]): Promise<AwardsById>;
 };
 
 /** Pedido de texto estruturado ao Gemini. */
