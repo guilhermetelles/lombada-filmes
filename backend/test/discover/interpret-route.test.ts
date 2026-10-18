@@ -36,9 +36,10 @@ beforeEach(async () => {
  * @param token - ID token (nenhum para testar 401).
  * @returns A resposta e as dependências usadas.
  */
-async function interpret(body: unknown, client: GeminiClient = gemini.client, token: string | undefined = idToken) {
+async function interpret(body: unknown, client: GeminiClient = gemini.client, token: string | null = idToken) {
   const dependencies = createTestDependencies(fakeSources().fetch, () => clock, { gemini: client });
-  const response = await interpretRoute(() => dependencies)(jsonRequest('/api/search/interpret', body, token));
+  // null = sem token (undefined acionaria o valor padrão do parâmetro).
+  const response = await interpretRoute(() => dependencies)(jsonRequest('/api/search/interpret', body, token ?? undefined));
   return { response, dependencies };
 }
 
@@ -111,7 +112,7 @@ describe('POST /api/search/interpret', () => {
   });
 
   test('sem token: 401', async () => {
-    const { response } = await interpret({ text: 'terror curto' }, gemini.client, undefined);
+    const { response } = await interpret({ text: 'terror curto' }, gemini.client, null);
     assert.equal(response.status, 401);
     assert.equal(gemini.requests.length, 0);
   });

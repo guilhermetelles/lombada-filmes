@@ -120,7 +120,7 @@ describe('GET /api/discover', () => {
     // Comédia 3/4, Drama 1/4, História 1/4: 1 − 0,25 × 0,75 × 0,75
     assert.equal(greenBook?.score, Math.round(100 * (1 - 0.25 * 0.75 * 0.75)));
     assert.equal(greenBook?.reason, 'Comédia e Drama: gêneros que vocês põem no topo');
-    assert.equal(page.results.filter((item) => item.inListEntryId !== null).length, 2); // 9472 e 1022690 também
+    assert.equal(page.results.filter((item) => item.inListEntryId !== null).length, 3); // Green Book, 9472 e 1022690
   });
 
   test('com modelo em recs/current: os pesos pontuam e o motivo cita o que pesou', async () => {
