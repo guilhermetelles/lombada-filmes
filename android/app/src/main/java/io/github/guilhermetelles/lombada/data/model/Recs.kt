@@ -15,6 +15,7 @@ import java.time.Instant
  * @property score Compatibilidade, de 0 a 100.
  * @property reason Frase curta com o motivo.
  * @property reasonFrom Ids das entradas ou filmes da lista que justificam.
+ * @property reasonBy Quem escreveu o motivo: `gemini` ou `rules`; null nos documentos antigos.
  * @property source `model`, `trending` ou `nowPlaying`.
  * @property kind `saga`, `diretor`, `tema` ou `emAlta`.
  */
@@ -30,7 +31,8 @@ data class RecItem(
     val reason: String,
     val reasonFrom: List<String>,
     val source: String,
-    val kind: String
+    val kind: String,
+    val reasonBy: String? = null
 )
 
 /**

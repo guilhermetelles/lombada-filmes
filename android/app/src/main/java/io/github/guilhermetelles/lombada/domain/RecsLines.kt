@@ -101,13 +101,15 @@ object RecsLines {
     }
 
     /**
-     * Se o motivo foi escrito pelo Gemini. O documento não marca a origem; as frases de reserva
-     * do backend começam sempre do mesmo jeito, e o resto é do Gemini.
+     * Se o motivo foi escrito pelo Gemini. Vale `reasonBy`; nos documentos antigos, sem ele, as
+     * frases de reserva do backend começam sempre do mesmo jeito, e o resto é do Gemini.
      *
      * @param reason Motivo da sugestão.
+     * @param reasonBy `gemini`, `rules` ou null quando o documento não diz.
      * @return true para o motivo gerado; false para a reserva ou motivo vazio.
      */
-    fun isGenerated(reason: String): Boolean {
+    fun isGenerated(reason: String, reasonBy: String? = null): Boolean {
+        if (reasonBy != null) return reasonBy == "gemini" && reason.isNotBlank()
         val text = reason.trim()
         return text.isNotEmpty() && fallbackStarts.none { text.startsWith(it, ignoreCase = true) }
     }

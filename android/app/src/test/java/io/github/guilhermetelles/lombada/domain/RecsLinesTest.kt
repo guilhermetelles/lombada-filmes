@@ -66,6 +66,13 @@ class RecsLinesTest {
     }
 
     @Test
+    fun `reasonBy decide quando o documento diz quem escreveu`() {
+        assertTrue(RecsLines.isGenerated("Mesmo diretor de Alien (Ridley Scott)", "gemini"))
+        assertFalse(RecsLines.isGenerated("Vocês chamaram Fargo de humor seco", "rules"))
+        assertFalse(RecsLines.isGenerated("  ", "gemini"))
+    }
+
+    @Test
     fun `por causa de, com a posição`() {
         val ranking = listOf(entry(10), entry(20), entry(30))
         val origins = RecsLines.origins(listOf("e30", "x", "e30", "10"), ranking)

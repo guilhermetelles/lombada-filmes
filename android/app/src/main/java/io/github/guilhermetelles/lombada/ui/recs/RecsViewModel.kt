@@ -170,7 +170,7 @@ class RecsViewModel(
             RecRow(
                 item = item,
                 label = RecsLines.kindLabel(item),
-                generated = RecsLines.isGenerated(item.reason),
+                generated = RecsLines.isGenerated(item.reason, item.reasonBy),
                 origins = RecsLines.origins(item.reasonFrom, list.ranking),
                 inQueue = item.tmdbId in queue || item.tmdbId in local.queuedHere,
                 busy = item.tmdbId in local.busy

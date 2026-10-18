@@ -163,6 +163,7 @@ fun MainScreen(list: MovieList, uid: String, onSwitchList: () -> Unit, onSignOut
                     onOpenPerson = { navController.navigate(it) },
                     onAbout = { navController.navigate(AboutRoute) },
                     onSignOut = signOut,
+                    onOpenAdvancedSearch = { navController.navigate(AdvancedSearchRoute) },
                     topBarActions = {
                         ListTopActions(
                             unseenCount = unseenCount.toInt(),

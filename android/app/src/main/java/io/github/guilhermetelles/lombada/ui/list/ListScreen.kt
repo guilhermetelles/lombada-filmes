@@ -78,6 +78,7 @@ private const val LIST_HEADER_ITEMS = 5
  * @param onOpenPerson Abre a tela de uma pessoa achada na busca.
  * @param onAbout Abre "Sobre".
  * @param onSignOut Sair da conta.
+ * @param onOpenAdvancedSearch Abre a busca avançada pelo atalho da busca.
  * @param topBarActions Ações da barra do app antes do menu ⋮: o sino da Atividade e os membros.
  */
 @Composable
@@ -90,6 +91,7 @@ fun ListScreen(
     onOpenPerson: (PersonRoute) -> Unit,
     onAbout: () -> Unit,
     onSignOut: () -> Unit,
+    onOpenAdvancedSearch: () -> Unit = {},
     topBarActions: @Composable () -> Unit = {}
 ) {
     val onOpenEntry: (Entry) -> Unit = { entry ->
@@ -134,7 +136,12 @@ fun ListScreen(
             }
             item(key = "title") { ListTitle(list.name, list.description, onSwitchList) }
             stickyHeader(key = "search") {
-                SearchBar(search.query, searchViewModel::onQueryChange, searchViewModel::clear)
+                SearchBar(
+                    search.query,
+                    searchViewModel::onQueryChange,
+                    searchViewModel::clear,
+                    onAdvanced = onOpenAdvancedSearch
+                )
             }
             if (search.active) {
                 searchResults(
