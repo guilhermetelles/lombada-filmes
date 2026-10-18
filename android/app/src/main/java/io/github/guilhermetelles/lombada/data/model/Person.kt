@@ -30,6 +30,7 @@ data class Credit(val tmdbId: Int, val title: String, val year: Int?, val charac
  * @property actedCount Filmes em que atuou, segundo o TMDb.
  * @property acted Os mais votados em que atuou, até 20.
  * @property fetchedAt Quando o backend buscou.
+ * @property awards Prêmios e indicações; null enquanto a rotina não buscou.
  */
 data class Person(
     val id: Int,
@@ -45,5 +46,6 @@ data class Person(
     val directed: List<Credit>,
     val actedCount: Int,
     val acted: List<Credit>,
-    val fetchedAt: Instant?
+    val fetchedAt: Instant?,
+    val awards: Awards? = null
 )

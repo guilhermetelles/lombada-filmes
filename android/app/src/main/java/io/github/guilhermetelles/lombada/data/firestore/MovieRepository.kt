@@ -9,6 +9,8 @@ import io.github.guilhermetelles.lombada.data.model.Bechdel
 import io.github.guilhermetelles.lombada.data.model.CastMember
 import io.github.guilhermetelles.lombada.data.model.Director
 import io.github.guilhermetelles.lombada.data.model.Movie
+import io.github.guilhermetelles.lombada.data.model.MovieCollection
+import io.github.guilhermetelles.lombada.data.model.ProvidersBR
 import io.github.guilhermetelles.lombada.data.model.Rating
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
@@ -92,11 +94,30 @@ class MovieRepository(private val db: FirebaseFirestore) {
             metacritic = ratings.rating("metacritic"),
             tmdbFetchedAt = getTimestamp("tmdbFetchedAt")?.toDate()?.toInstant(),
             missingDirectorPhotos = rawDirectors.any { !it.containsKey("profilePath") },
-            bechdel = (get("bechdel") as? Map<*, *>)?.toBechdel()
+            bechdel = (get("bechdel") as? Map<*, *>)?.toBechdel(),
+            titlePt = getString("titlePt"),
+            tagline = getString("tagline")?.takeIf { it.isNotBlank() },
+            budget = (get("budget") as? Number)?.toLong()?.takeIf { it > 0 },
+            revenue = (get("revenue") as? Number)?.toLong()?.takeIf { it > 0 },
+            boxOfficeUS = (get("boxOfficeUS") as? Number)?.toLong()?.takeIf { it > 0 },
+            certBR = getString("certBR")?.takeIf { it.isNotBlank() },
+            collection =
+                (get("collection") as? Map<*, *>)?.let { item ->
+                    MovieCollection(item.int("id") ?: return@let null, item.string("name") ?: return@let null)
+                },
+            keywords = (get("keywords") as? List<*>).orEmpty().filterIsInstance<String>(),
+            recs = (get("recs") as? List<*>).orEmpty().filterIsInstance<Number>().map { it.toInt() },
+            providersBR =
+                (get("providersBR") as? Map<*, *>)?.let { item ->
+                    ProvidersBR(item.strings("flatrate"), item.strings("previous"), item["fetchedAt"].asInstant())
+                },
+            awards = (get("awards") as? Map<*, *>)?.toAwards(),
+            popularity = (get("popularity") as? Number)?.toDouble(),
+            vote = (get("vote") as? Number)?.toDouble(),
+            votes = (get("votes") as? Number)?.toInt(),
+            extraFetchedAt = getTimestamp("extraFetchedAt")?.toDate()?.toInstant()
         )
     }
-
-    private fun Map<*, *>.int(key: String): Int? = (this[key] as? Number)?.toInt()
 
     // Fora do formato vira null: id que não é número, ou filme no site sem critérios de 0 a 3.
     private fun Map<*, *>.toBechdel(): Bechdel? {
