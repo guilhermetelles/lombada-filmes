@@ -18,7 +18,8 @@ function labelOf(binding: { value: string } | undefined): string | null {
 }
 
 /**
- * Converte uma linha da consulta num prêmio: premiação e categoria em português. Fica de fora a
+ * Converte uma linha da consulta num prêmio: premiação e categoria em português e, quando o
+ * qualificador P1686 vem (prêmios de pessoas), por qual filme. Fica de fora a
  * linha sem prêmio (item sem nenhum) e o prêmio que não é de uma premiação de cinema conhecida.
  *
  * @param row - Linha validada.
@@ -35,11 +36,13 @@ function toAwardItem(row: WikidataAwardRow): AwardItem | null {
   if (!org) return null;
 
   const year = row.year ? Number.parseInt(row.year.value, 10) : Number.NaN;
+  const work = labelOf(row.forLabel);
   return {
     org,
     cat: (category ? awardCategoryOf(category) : null) ?? awardCategoryOf(award),
     kind,
     year: Number.isFinite(year) ? year : null,
+    ...(work && { for: work }),
   };
 }
 

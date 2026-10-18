@@ -77,6 +77,36 @@ describe('mergeAwards', () => {
   });
 });
 
+describe('mergeAwards: filme do prêmio (for)', () => {
+  const forFilm = (item: AwardItem, film: string): AwardItem => ({ ...item, for: film });
+
+  test('o filme passa para o item junto, inclusive vindo do item repetido', () => {
+    assert.deepEqual(
+      mergeAwards(
+        [award('Oscar', 'melhor atriz', 'nom', 2022)],
+        [forFilm(award('Oscar', 'melhor atriz', 'nom', 2022), 'Spencer')],
+      ),
+      [forFilm(award('Oscar', 'melhor atriz', 'nom', 2022), 'Spencer')],
+    );
+  });
+
+  test('mesma categoria e ano por filmes diferentes continuam dois itens', () => {
+    const merged = mergeAwards([
+      forFilm(award('Globo de Ouro', 'melhor ator', 'nom', 1990), 'Filme A'),
+      forFilm(award('Globo de Ouro', 'melhor ator', 'nom', 1990), 'Filme B'),
+    ]);
+    assert.deepEqual(
+      merged.map((item) => item.for),
+      ['Filme A', 'Filme B'],
+    );
+  });
+
+  test('sem filme, o item sai sem a chave for', () => {
+    const [item] = mergeAwards([award('Oscar', 'melhor direção', 'win', 1998)]);
+    assert.equal(item && 'for' in item, false);
+  });
+});
+
 describe('prêmios das gravações reais (Wikidata e Wikipedia)', () => {
   /**
    * Junta os prêmios dos três filmes conferidos no passo 13 com as gravações das fontes.
