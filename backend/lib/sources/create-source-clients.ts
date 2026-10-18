@@ -1,3 +1,4 @@
+import { createTmdbDiscoverClient } from '../discover/tmdb-discover-client.js';
 import type { Fetch, SourceClients } from '../types/sources.js';
 import { createBechdelClient } from './bechdel/bechdel-client.js';
 import { createGeminiClient } from './gemini/gemini-client.js';
@@ -23,6 +24,7 @@ type SourceCredentials = { tmdbToken: string; omdbKey: string; geminiApiKey?: st
 function createSourceClients({ tmdbToken, omdbKey, geminiApiKey }: SourceCredentials, fetch: Fetch): SourceClients {
   return {
     tmdb: createTmdbClient({ token: tmdbToken, fetch }),
+    tmdbDiscover: createTmdbDiscoverClient({ token: tmdbToken, fetch }),
     omdb: createOmdbClient({ apiKey: omdbKey, fetch }),
     letterboxd: createLetterboxdClient({ fetch }),
     bechdel: createBechdelClient({ fetch }),

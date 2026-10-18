@@ -1,3 +1,4 @@
+import type { TmdbDiscoverClient } from '../discover/tmdb-discover-client.js';
 /**
  * Fontes externas de dados de filmes e o que cada uma devolve, já no formato do app.
  * Quando a fonte não tem o filme, as notas vêm null: é uma resposta válida, que também vale 7 dias.
@@ -148,6 +149,7 @@ export type GeminiClient = {
 /** Os clientes das fontes, como as rotas recebem. */
 export type SourceClients = {
   tmdb: TmdbClient;
+  tmdbDiscover: TmdbDiscoverClient; // busca avançada (/discover, em alta, detalhes extras)
   omdb: OmdbClient;
   letterboxd: LetterboxdClient;
   bechdel: BechdelClient;
