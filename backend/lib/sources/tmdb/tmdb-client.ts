@@ -13,6 +13,9 @@ import { toTmdbPerson, toTmdbPersonSearchResults } from './tmdb-person-mapper.js
 /** Endereço da API v3 do TMDb; o token vai no cabeçalho Authorization. */
 const BASE_URL = 'https://api.themoviedb.org/3';
 
+/** O que vem junto com os detalhes do filme, numa chamada só. */
+const MOVIE_APPEND = 'credits,external_ids,translations,keywords,recommendations,watch/providers,release_dates';
+
 /**
  * Cria o cliente do TMDb.
  *
@@ -28,7 +31,8 @@ function createTmdbClient({ token, fetch }: { token: string; fetch: Fetch }): Tm
   return {
     /**
      * Busca um filme numa chamada só: detalhes em pt-BR (gêneros e sinopse em português) com
-     * diretores, ids externos e a tradução em inglês (título e sinopse em inglês).
+     * diretores, ids externos, a tradução em inglês (título e sinopse em inglês) e os campos extras
+     * (palavras-chave, recomendações, streaming e classificação indicativa no Brasil).
      *
      * @param tmdbId - Id do filme no TMDb.
      * @returns O filme no formato do app.
@@ -36,7 +40,7 @@ function createTmdbClient({ token, fetch }: { token: string; fetch: Fetch }): Tm
      * @throws {SourceUnavailableError} Se o TMDb falhar ou responder fora do formato.
      */
     async getMovie(tmdbId) {
-      const path = `/movie/${tmdbId}?language=pt-BR&append_to_response=credits,external_ids,translations`;
+      const path = `/movie/${tmdbId}?language=pt-BR&append_to_response=${MOVIE_APPEND}`;
       return toTmdbMovie(await getFromTmdb(path, TmdbMovieResponse));
     },
 

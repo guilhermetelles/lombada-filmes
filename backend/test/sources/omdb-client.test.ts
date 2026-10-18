@@ -18,6 +18,13 @@ describe('OMDb: getRatings', () => {
     assert.deepEqual(ratings.metacritic, { value: 62 });
   });
 
+  test('resumo de prêmios em português e bilheteria nos EUA em número', async () => {
+    const ratings = await omdbClient().getRatings('tt0096754');
+
+    assert.equal(ratings.awardsSummary, 'Ganhou 1 Oscar. 9 prêmios e 16 indicações no total');
+    assert.equal(ratings.boxOfficeUS, 54_981_151);
+  });
+
   test('"N/A" vira null', async () => {
     const response = { Response: 'True', imdbRating: 'N/A', imdbVotes: 'N/A', Metascore: 'N/A', tomatoURL: 'N/A' };
     const ratings = await omdbClient(respondWith(response)).getRatings('tt1');
@@ -26,6 +33,8 @@ describe('OMDb: getRatings', () => {
       imdb: { value: null, votes: null },
       rottenTomatoes: { value: null, url: null },
       metacritic: { value: null },
+      awardsSummary: null,
+      boxOfficeUS: null,
     });
   });
 

@@ -24,6 +24,64 @@ describe('TMDb: getMovie', () => {
     assert.notEqual(movie.synopsis.pt, movie.synopsis.en);
   });
 
+  test('campos extras: título e slogan no Brasil, dinheiro, classificação, palavras-chave, parecidos e streaming', async () => {
+    const extras = (await tmdbClient().getMovie(2756)).extras;
+
+    assert.equal(extras?.titlePt, 'O Segredo do Abismo');
+    assert.match(extras?.tagline ?? '', /O Segredo do Abismo/);
+    assert.equal(extras?.budget, 43_000_000);
+    assert.equal(extras?.revenue, 90_000_098);
+    assert.equal(extras?.certBR, 'L');
+    assert.equal(extras?.collection, null);
+    assert.equal(extras?.keywords.length, 20);
+    assert.ok(extras?.keywords.includes('submarine'));
+    // A gravação tem 12 recomendações; ficam as 10 primeiras.
+    assert.deepEqual(extras?.recs, [14372, 10153, 1323244, 846, 33518, 169, 1141182, 507441, 600836, 8836]);
+    assert.deepEqual(extras?.providersBR, ['Disney Plus']);
+    assert.equal(extras?.votes, 3631);
+    assert.ok((extras?.vote ?? 0) > 7 && (extras?.popularity ?? 0) > 0);
+  });
+
+  test('campos extras: 0 vira null, palavras-chave cortadas em 25, saga e sem votos', async () => {
+    const response = {
+      id: 1,
+      title: 'Filme',
+      budget: 0,
+      revenue: 0,
+      vote_count: 0,
+      vote_average: 0,
+      belongs_to_collection: { id: 9, name: 'Coleção', poster_path: '/x.jpg' },
+      keywords: { keywords: Array.from({ length: 30 }, (_, index) => ({ id: index, name: `k${index}` })) },
+      release_dates: {
+        results: [{ iso_3166_1: 'BR', release_dates: [{ certification: '' }, { certification: '14' }] }],
+      },
+    };
+    const extras = (await tmdbClient(respondWith(response)).getMovie(1)).extras;
+
+    assert.equal(extras?.budget, null);
+    assert.equal(extras?.revenue, null);
+    assert.equal(extras?.vote, null);
+    assert.deepEqual(extras?.collection, { id: 9, name: 'Coleção' });
+    assert.equal(extras?.keywords.length, 25);
+    assert.equal(extras?.certBR, '14');
+    assert.deepEqual(extras?.providersBR, []);
+    assert.deepEqual(extras?.recs, []);
+  });
+
+  test('pede os campos extras na mesma chamada', async () => {
+    const urls: string[] = [];
+    const sources = fakeSources();
+    const recording: Fetch = async (input, init) => {
+      urls.push(String(input));
+      return sources.fetch(input, init);
+    };
+    await tmdbClient(recording).getMovie(2756);
+
+    assert.equal(urls.length, 1);
+    const append = new URL(urls[0] ?? '').searchParams.get('append_to_response');
+    assert.equal(append, 'credits,external_ids,translations,keywords,recommendations,watch/providers,release_dates');
+  });
+
   test('sem tradução em inglês, usa o título original', async () => {
     const response = { id: 1, original_title: 'Katakuri-ke no kōfuku', title: 'A Felicidade dos Katakuris' };
     const movie = await tmdbClient(respondWith(response)).getMovie(1);
