@@ -43,7 +43,12 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
+import io.github.guilhermetelles.lombada.AppContainer
 import io.github.guilhermetelles.lombada.data.model.MovieList
+import io.github.guilhermetelles.lombada.notify.DeviceRegistration
+import io.github.guilhermetelles.lombada.notify.PushRouter
+import io.github.guilhermetelles.lombada.notify.PushStep
+import io.github.guilhermetelles.lombada.notify.PushTarget
 import io.github.guilhermetelles.lombada.ui.about.AboutScreen
 import io.github.guilhermetelles.lombada.ui.advsearch.AdvancedSearchEntry
 import io.github.guilhermetelles.lombada.ui.appContainer
@@ -70,10 +75,20 @@ import io.github.guilhermetelles.lombada.ui.search.SearchViewModel
 import io.github.guilhermetelles.lombada.ui.theme.LombadaColors
 import io.github.guilhermetelles.lombada.ui.theme.LombadaMotion
 import kotlin.reflect.KClass
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.transformLatest
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 
 private const val TRANSITION_MS = 300
+
+// Quanto sair da conta espera o backend tirar o token antes de seguir sem ele.
+private const val SIGN_OUT_TIMEOUT_MS = 5_000L
 
 /**
  * App com uma lista aberta: as cinco abas, a navegação entre as telas e as folhas de registrar e
@@ -100,6 +115,21 @@ fun MainScreen(list: MovieList, uid: String, onSwitchList: () -> Unit, onSignOut
     val queueIds by queueFlow.collectAsStateWithLifecycle(initialValue = emptyList())
     // A fila esconde os filmes que já estão na lista.
     val queueCount = queueIds.count { it !in state.entryByTmdbId }
+    val members = remember(list) { list.memberUids.mapNotNull { list.memberProfiles[it] } }
+    val unseenFlow = remember(list.id, uid) { unseenFeedCount(container, list.id, uid) }
+    val unseenCount by unseenFlow.collectAsStateWithLifecycle(initialValue = 0L)
+    val pendingPush by PushRouter.pending.collectAsStateWithLifecycle()
+    // Sair da conta tira antes o token do backend, enquanto ainda há sessão para autenticar.
+    val signOut: () -> Unit =
+        remember(onSignOut) {
+            {
+                container.appScope.launch {
+                    withTimeoutOrNull(SIGN_OUT_TIMEOUT_MS) { DeviceRegistration(container.backend).unregister() }
+                    StartupSync.forget()
+                    onSignOut()
+                }
+            }
+        }
     val context =
         remember(list, uid, listViewModel, navController) {
             ScreenContext(
@@ -133,10 +163,14 @@ fun MainScreen(list: MovieList, uid: String, onSwitchList: () -> Unit, onSignOut
                     onOpenMovie = { navController.navigate(it) },
                     onOpenPerson = { navController.navigate(it) },
                     onAbout = { navController.navigate(AboutRoute) },
-                    onSignOut = onSignOut,
+                    onSignOut = signOut,
                     topBarActions = {
-                        // Contador e avatares chegam com a Atividade e os perfis dos membros.
-                        ListTopActions(unseenCount = 0, onOpenFeed = { navController.navigate(FeedRoute) })
+                        ListTopActions(
+                            unseenCount = unseenCount.toInt(),
+                            members = members,
+                            onOpenFeed = { navController.navigate(FeedRoute) },
+                            onOpenListInfo = { navController.navigate(ListInfoRoute) }
+                        )
                     }
                 )
             }
@@ -187,7 +221,7 @@ fun MainScreen(list: MovieList, uid: String, onSwitchList: () -> Unit, onSignOut
                 }, onOpenMovie = { navController.navigate(it) })
             }
             composable<UsageRoute> { UsageScreen(onBack = { navController.popBackStack() }) }
-            composable<AboutRoute> { AboutScreen(onBack = { navController.popBackStack() }, onSignOut = onSignOut) }
+            composable<AboutRoute> { AboutScreen(onBack = { navController.popBackStack() }, onSignOut = signOut) }
         }
         if (showTabs) {
             Tabs(
@@ -195,6 +229,26 @@ fun MainScreen(list: MovieList, uid: String, onSwitchList: () -> Unit, onSignOut
                 queueCount = queueCount,
                 onSelect = { tab -> if (tab != currentTab) navController.navigateTo(tab.route) }
             )
+        }
+    }
+
+    // Ao entrar: token do FCM e nome e foto em memberProfiles, uma vez por processo, sem esperar.
+    LaunchedEffect(uid) { StartupSync.run(container, uid) }
+
+    // Toque num aviso: troca para a lista do aviso, se for outra, e abre a tela dele.
+    LaunchedEffect(pendingPush) {
+        val target = pendingPush ?: return@LaunchedEffect
+        val otherList = target.listId?.takeIf { it != list.id }
+        val memberIds =
+            otherList?.let { runCatching { container.lists.fetchMine(uid).map { it.id }.toSet() }.getOrNull() }
+        when (val step = PushRouter.stepFor(target, list.id, memberIds)) {
+            // O MainScreen da outra lista recebe o mesmo destino e abre a tela.
+            is PushStep.SwitchList ->
+                if (runCatching { container.users.visit(uid, step.listId) }.isFailure) {
+                    navController.openPush(target)
+                }
+
+            PushStep.Open -> navController.openPush(target)
         }
     }
 
@@ -229,6 +283,77 @@ fun MainScreen(list: MovieList, uid: String, onSwitchList: () -> Unit, onSignOut
             onRemove = { listViewModel.remove(entry) },
             onDismiss = listViewModel::closeEditor
         )
+    }
+}
+
+/**
+ * Abre a tela de um aviso e o marca como aberto. Sem rota (ou com rota desconhecida), fica onde está.
+ *
+ * @param target Destino do aviso.
+ */
+private fun NavHostController.openPush(target: PushTarget) {
+    PushRouter.consume(target)
+    val route = target.route?.toRoute() ?: return
+    if (TABS.any { it.route == route }) {
+        navigateTo(route)
+    } else {
+        // O mesmo aviso tocado duas vezes não empilha a mesma tela.
+        navigate(route) { launchSingleTop = true }
+    }
+}
+
+/**
+ * Número do sino: itens do feed depois de `feedSeenAt`, recontados (`count()`) quando chega item novo
+ * ou a pessoa abre a Atividade. Sem rede, mantém o último número.
+ *
+ * @param container Dependências do app.
+ * @param listId Lista.
+ * @param uid Pessoa logada.
+ * @return Fluxo com o número.
+ */
+@OptIn(ExperimentalCoroutinesApi::class)
+private fun unseenFeedCount(container: AppContainer, listId: String, uid: String): Flow<Long> = combine(
+    container.users.observeFeedSeenAt(uid, listId),
+    container.feed.observe(listId, limit = 1)
+) { seenAt, latest -> seenAt to latest.firstOrNull() }
+    .distinctUntilChanged { old, new -> old.first == new.first && old.second?.id == new.second?.id }
+    .transformLatest { (seenAt, latest) ->
+        val latestAt = latest?.createdAt
+        when {
+            latest == null -> emit(0L)
+
+            // O mais novo já foi visto: zero, sem consultar o servidor.
+            seenAt != null && latestAt != null && !latestAt.isAfter(seenAt) -> emit(0L)
+
+            else -> runCatching { container.feed.countSince(listId, seenAt) }.onSuccess { emit(it) }
+        }
+    }.catch {}
+
+/** O que roda uma vez por processo e pessoa ao entrar, mesmo trocando de lista. */
+private object StartupSync {
+    @Volatile
+    private var syncedUid: String? = null
+
+    /**
+     * Registra o token do FCM e chama `GET /api/me`, que sincroniza nome e foto nas listas. Roda no
+     * escopo do app: trocar de lista no meio não cancela.
+     *
+     * @param container Dependências do app.
+     * @param uid Pessoa logada.
+     */
+    fun run(container: AppContainer, uid: String) {
+        container.appScope.launch { DeviceRegistration(container.backend).registerOnce(uid) }
+        if (syncedUid == uid) return
+        syncedUid = uid
+        container.appScope.launch {
+            // Falhou (sem rede): tenta de novo na próxima vez que o MainScreen abrir.
+            runCatching { container.backend.me() }.onFailure { if (syncedUid == uid) syncedUid = null }
+        }
+    }
+
+    /** Esquece a pessoa, ao sair da conta. */
+    fun forget() {
+        syncedUid = null
     }
 }
 
