@@ -7,6 +7,11 @@ export const MEMBER = 'uidB';
 /** Alguém de fora da lista L1. */
 export const OUTSIDER = 'uidC';
 
+/** Dia de quiz que a dona já respondeu e a integrante não. */
+export const ANSWERED_DAY = '2026-10-18';
+/** Dia de quiz que só a integrante respondeu. */
+export const OTHER_DAY = '2026-10-17';
+
 /** Momento no passado, para documentos já gravados. */
 export const PAST = Timestamp.fromDate(new Date('2020-01-01'));
 
