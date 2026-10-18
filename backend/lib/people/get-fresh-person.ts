@@ -30,7 +30,9 @@ async function getFreshPerson(
   }
 
   try {
-    const person: Person = { ...(await usage.track('tmdb', () => sources.tmdb.getPerson(personId))), fetchedAt };
+    const fresh = await usage.track('tmdb', () => sources.tmdb.getPerson(personId));
+    // Os prêmios vêm da rotina enrich (Wikidata), não do TMDb: a nova busca não pode apagá-los.
+    const person: Person = { ...fresh, fetchedAt, ...(stored?.awards ? { awards: stored.awards } : {}) };
     await savePerson(db, personId, person);
     return person;
   } catch (error) {
