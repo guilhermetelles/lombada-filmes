@@ -1,7 +1,7 @@
 import { joinPt, plural } from '../notify/portuguese-text.js';
 import type { RouteRef } from '../types/feed.js';
 import type { RankedEntry } from './list-entries.js';
-import type { ValidEvent } from './select-valid-events.js';
+import type { EntryEvent, RemovedEvent, ValidEvent } from './select-valid-events.js';
 
 /** Quantos filmes aparecem pelo nome no texto antes de virar "e mais N". */
 const NAMED_LIMIT = 3;
@@ -15,7 +15,8 @@ export type EventsSummary = {
 };
 
 /**
- * Resume um lote de eventos aceitos numa frase só: "Ana adicionou Speed e reordenou 3 filmes".
+ * Resume um lote de eventos aceitos numa frase só: "Ana adicionou Speed e reordenou 3 filmes" ou
+ * "Ana retirou Matrix da lista".
  * Entradas novas não contam de novo como reordenadas ou comentadas. O corpo diz as posições
  * calculadas no servidor; a citação é o comentário guardado da última entrada comentada (ou, sem
  * comentário novo, da última adicionada com comentário). Um filme só abre o filme; mais de um, a
@@ -38,12 +39,18 @@ function summarizeEvents(actorName: string, events: readonly ValidEvent[], total
   if (moved.length === 1 && onlyMoved) phrases.push(`moveu ${onlyMoved.movie.title} para #${onlyMoved.position}`);
   if (moved.length > 1) phrases.push(`reordenou ${plural(moved.length, 'filme', 'filmes')}`);
   if (commented.length > 0) phrases.push(`comentou ${namedOrCount(commented)}`);
+  const removed = uniqueRemoved(events);
+  if (removed.length > 0) phrases.push(`retirou ${titlesOrCount(removed.map((event) => event.title))} da lista`);
 
   const actor = actorName || 'Alguém da lista';
-  const distinct = new Map(events.map(({ entry }) => [entry.entryId, entry]));
+  const distinct = new Map(
+    events.map((event) =>
+      event.type === 'removed' ? [event.entryId, event.tmdbId] : [event.entry.entryId, event.entry.tmdbId],
+    ),
+  );
   const [single] = distinct.values();
   const route: RouteRef =
-    distinct.size === 1 && single ? { name: 'movie', args: { tmdbId: single.tmdbId } } : { name: 'feed' };
+    distinct.size === 1 && single ? { name: 'movie', args: { tmdbId: single } } : { name: 'feed' };
 
   return {
     title: `${actor} ${joinPt(phrases)}`,
@@ -60,10 +67,22 @@ function summarizeEvents(actorName: string, events: readonly ValidEvent[], total
  * @param type - Tipo procurado.
  * @returns As entradas.
  */
-function uniqueEntries(events: readonly ValidEvent[], type: ValidEvent['type']): RankedEntry[] {
+function uniqueEntries(events: readonly ValidEvent[], type: EntryEvent['type']): RankedEntry[] {
   const entries = new Map<string, RankedEntry>();
   for (const event of events) if (event.type === type) entries.set(event.entry.entryId, event.entry);
   return [...entries.values()];
+}
+
+/**
+ * Entradas que saíram da lista, sem repetição, na ordem do lote.
+ *
+ * @param events - Eventos aceitos.
+ * @returns Os eventos de saída.
+ */
+function uniqueRemoved(events: readonly ValidEvent[]): RemovedEvent[] {
+  const removed = new Map<string, RemovedEvent>();
+  for (const event of events) if (event.type === 'removed') removed.set(event.entryId, event);
+  return [...removed.values()];
 }
 
 /**
@@ -73,8 +92,18 @@ function uniqueEntries(events: readonly ValidEvent[], type: ValidEvent['type']):
  * @returns O pedaço da frase.
  */
 function namedOrCount(entries: readonly RankedEntry[]): string {
-  if (entries.length <= 2) return joinPt(entries.map((entry) => entry.movie.title));
-  return plural(entries.length, 'filme', 'filmes');
+  return titlesOrCount(entries.map((entry) => entry.movie.title));
+}
+
+/**
+ * Até dois títulos pelo nome ("Speed e Twister"); mais que isso, a contagem ("4 filmes").
+ *
+ * @param titles - Títulos.
+ * @returns O pedaço da frase.
+ */
+function titlesOrCount(titles: readonly string[]): string {
+  if (titles.length <= 2) return joinPt([...titles]);
+  return plural(titles.length, 'filme', 'filmes');
 }
 
 /**
@@ -115,8 +144,11 @@ function withPositions(entries: readonly RankedEntry[]): string {
  * @returns O comentário guardado, verbatim, ou undefined.
  */
 function quoteOf(events: readonly ValidEvent[]): string | undefined {
-  const lastWithComment = (type: ValidEvent['type']) =>
-    events.findLast((event) => event.type === type && event.entry.comment.trim() !== '')?.entry.comment;
+  const lastWithComment = (type: EntryEvent['type']) =>
+    events.findLast(
+      (event): event is EntryEvent =>
+        event.type !== 'removed' && event.type === type && event.entry.comment.trim() !== '',
+    )?.entry.comment;
   return lastWithComment('commented') ?? lastWithComment('added');
 }
 

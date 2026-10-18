@@ -2,7 +2,7 @@ import type { Firestore } from 'firebase-admin/firestore';
 import { brazilDay } from '../time/brazil-day.js';
 
 /** Lotes de eventos por pessoa por dia de Brasília que ainda geram Atividade e aviso. */
-export const EVENTS_DAILY_LIMIT = 30;
+export const EVENTS_DAILY_LIMIT = 300;
 
 /**
  * Conta um lote de eventos da pessoa no dia, numa transação, no campo `events` de

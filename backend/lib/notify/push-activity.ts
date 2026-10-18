@@ -16,8 +16,8 @@ type ActivityPush = {
 };
 
 /**
- * Manda um aviso de atividade da lista a um integrante, se notifyState liberar (preferência ligada,
- * intervalo de 15 minutos e máximo diário). Agrupado, vai com a tag `activity-{listId}`, que
+ * Manda um aviso de atividade da lista a um integrante, se a preferência de avisos de atividade
+ * estiver ligada. Agrupado, vai com a tag `activity-{listId}`, que
  * substitui o aviso anterior no aparelho. Uma falha só vai para o log.
  *
  * @param dependencies - Banco e FCM.

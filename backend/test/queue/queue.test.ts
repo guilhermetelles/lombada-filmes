@@ -139,7 +139,7 @@ describe('POST /api/lists/{listId}/queue', () => {
     assert.equal((await feedItems()).length, 0);
   });
 
-  test('avisa o outro integrante pela cota de atividade, e só uma vez em 15 minutos', async () => {
+  test('avisa o outro integrante a cada filme que entra na fila', async () => {
     await deviceTokenDocument(dependencies.db, ana.uid, 'token-ana').set({
       token: 'token-ana',
       platform: 'android',
@@ -152,11 +152,11 @@ describe('POST /api/lists/{listId}/queue', () => {
     assert.equal(fcm.sent[0]?.notification?.title, 'Bia quer ver The Abyss');
     assert.equal(fcm.sent[0]?.android?.notification?.tag, `activity-${listId}`);
 
-    // Tirar e pôr de novo 5 minutos depois entra na Atividade, mas não gera outro aviso.
-    clock = new Date(clock.getTime() + 5 * 60 * 1000);
+    // Tirar e pôr de novo um minuto depois avisa de novo: não há intervalo mínimo.
+    clock = new Date(clock.getTime() + 60 * 1000);
     await remove(bia, ABYSS);
     await add(bia, { tmdbId: ABYSS });
-    assert.equal(fcm.sent.length, 1);
+    assert.equal(fcm.sent.length, 2);
     assert.equal((await feedItems()).filter((item) => item.type === 'queue.added').length, 2);
   });
 

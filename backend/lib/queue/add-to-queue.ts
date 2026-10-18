@@ -56,7 +56,7 @@ async function addToQueue(
     route,
   });
 
-  // O aviso usa a mesma cota dos lotes de eventos: 1 a cada 15 minutos e no máximo 6 por dia.
+  // O aviso segue a mesma preferência dos avisos de atividade.
   const body = 'Entrou na fila Quero ver de vocês.';
   for (const recipient of list.memberUids.filter((member) => member !== uid)) {
     await pushActivity(dependencies, { recipient, listId, feedId, title, body, route, now: createdAt });

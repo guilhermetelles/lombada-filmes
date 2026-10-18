@@ -1,7 +1,12 @@
 import assert from 'node:assert/strict';
 import { describe, test } from 'node:test';
 import type { RankedEntry } from '../../lib/events/list-entries.js';
-import { type RequestedEvent, selectValidEvents, type ValidEvent } from '../../lib/events/select-valid-events.js';
+import {
+  type EntryEvent,
+  type RequestedEvent,
+  selectValidEvents,
+  type ValidEvent,
+} from '../../lib/events/select-valid-events.js';
 import { summarizeEvents } from '../../lib/events/summarize-events.js';
 import { rankedEntry } from '../daily/daily-samples.js';
 
@@ -21,7 +26,8 @@ const byId = (entryId: string): RankedEntry => {
   if (!entry) throw new Error(`entrada de teste ausente: ${entryId}`);
   return entry;
 };
-const event = (type: ValidEvent['type'], entryId: string): ValidEvent => ({ type, entry: byId(entryId) });
+const event = (type: EntryEvent['type'], entryId: string): ValidEvent => ({ type, entry: byId(entryId) });
+const noTitles = new Map<number, string>();
 
 describe('summarizeEvents', () => {
   test('um filme adicionado: abre o filme, diz a posição e cita o comentário guardado', () => {
@@ -88,9 +94,9 @@ describe('selectValidEvents', () => {
       { type: 'commented', entryId: 'e-speed' },
       { type: 'commented', entryId: 'e-speed' },
     ];
-    const valid = selectValidEvents(requested, list, 'ana', now);
+    const valid = selectValidEvents(requested, list, noTitles, 'ana', now);
     assert.deepEqual(
-      valid.map((item) => [item.type, item.entry.entryId]),
+      valid.map((item) => [item.type, item.type === 'removed' ? item.entryId : item.entry.entryId]),
       [['commented', 'e-speed']],
     );
   });
@@ -103,6 +109,7 @@ describe('selectValidEvents', () => {
         { type: 'moved', entryId: 'e-abyss' },
       ],
       edited,
+      noTitles,
       'ana',
       now,
     );
@@ -110,5 +117,34 @@ describe('selectValidEvents', () => {
       valid.map((item) => item.type),
       ['added'],
     );
+  });
+});
+
+describe("evento 'removed'", () => {
+  test('aceito só para entrada que não existe mais e filme guardado; o título vem do banco', () => {
+    const titles = new Map([[603, 'The Matrix']]);
+    const valid = selectValidEvents(
+      [
+        { type: 'removed', entryId: 'e-matrix', tmdbId: 603 },
+        { type: 'removed', entryId: 'e-matrix', tmdbId: 603 },
+        { type: 'removed', entryId: 'e-abyss', tmdbId: 2756 },
+        { type: 'removed', entryId: 'e-sumiu', tmdbId: 999 },
+      ],
+      entries,
+      titles,
+      'ana',
+      now,
+    );
+    assert.deepEqual(valid, [{ type: 'removed', entryId: 'e-matrix', tmdbId: 603, title: 'The Matrix' }]);
+  });
+
+  test('resumo: "retirou X da lista", abrindo o filme', () => {
+    const removed: ValidEvent = { type: 'removed', entryId: 'e-matrix', tmdbId: 603, title: 'The Matrix' };
+    assert.deepEqual(summarizeEvents('Debora', [removed], 3), {
+      title: 'Debora retirou The Matrix da lista',
+      body: undefined,
+      quote: undefined,
+      route: { name: 'movie', args: { tmdbId: 603 } },
+    });
   });
 });

@@ -147,10 +147,16 @@ export const QueueItemParams = z.object({ listId: ListParams.shape.listId, tmdbI
 export const ListEventsBody = z.object({
   items: z
     .array(
-      z.object({
-        type: z.enum(['added', 'moved', 'commented'], "type deve ser 'added', 'moved' ou 'commented'"),
-        entryId,
-      }),
+      z
+        .object({
+          type: z.enum(
+            ['added', 'moved', 'commented', 'removed'],
+            "type deve ser 'added', 'moved', 'commented' ou 'removed'",
+          ),
+          entryId,
+          tmdbId: tmdbIdNumber.nullish(),
+        })
+        .refine((event) => event.type !== 'removed' || event.tmdbId != null, 'removed precisa de tmdbId'),
       'items é obrigatório',
     )
     .min(1, 'items deve ter pelo menos 1 evento')

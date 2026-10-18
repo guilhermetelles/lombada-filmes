@@ -5,6 +5,7 @@ import { createListRoute } from '../../api/lists/index.js';
 import { joinListRoute } from '../../api/lists/join.js';
 import { DEFAULT_NOTIFY_PREFS } from '../../lib/notify/default-notify-prefs.js';
 import { deviceTokenDocument, notifyStateDocument } from '../../lib/notify/notify-repository.js';
+import { sampleMovie } from '../daily/daily-samples.js';
 import { createTestDependencies } from '../support/dependencies.js';
 import { resetEmulators, signUp } from '../support/emulators.js';
 import { createFakeMessaging, type FakeMessaging } from '../support/fake-messaging.js';
@@ -13,7 +14,7 @@ import { jsonRequest, readErrorCode } from '../support/requests.js';
 
 type Person = { uid: string; idToken: string };
 type CreatedList = { listId: string; inviteCode: string };
-type EventItem = { type: 'added' | 'moved' | 'commented'; entryId: string };
+type EventItem = { type: 'added' | 'moved' | 'commented' | 'removed'; entryId: string; tmdbId?: number };
 
 const MINUTE = 60_000;
 
@@ -149,23 +150,39 @@ describe('POST /api/lists/{listId}/events', () => {
     assert.ok(push?.data?.feedId);
   });
 
-  test('agrupamento: outro lote dentro de 15 minutos grava a Atividade sem novo aviso; depois, avisa', async () => {
+  test('sem limite de tempo: cada lote avisa, com a tag que substitui o aviso anterior', async () => {
     await putEntry('e-heat', 949, 'Heat', 'a4');
     assert.deepEqual(await (await send(ana, [{ type: 'moved', entryId: 'e-heat' }])).json(), { pushed: true });
 
-    clock = new Date(clock.getTime() + 10 * MINUTE);
+    clock = new Date(clock.getTime() + MINUTE);
     await putEntry('e-speed', 1637, 'Speed', 'a1', { comment: 'Ônibus.' });
-    assert.deepEqual(await (await send(ana, [{ type: 'commented', entryId: 'e-speed' }])).json(), { pushed: false });
-    assert.equal((await feedItems()).length, 2);
-    assert.equal(sentTo('token-bia').length, 1);
+    assert.deepEqual(await (await send(ana, [{ type: 'commented', entryId: 'e-speed' }])).json(), { pushed: true });
 
-    clock = new Date(clock.getTime() + 6 * MINUTE);
-    await putEntry('e-twister', 664, 'Twister', 'a3');
-    assert.deepEqual(await (await send(ana, [{ type: 'moved', entryId: 'e-twister' }])).json(), { pushed: true });
-    assert.equal(sentTo('token-bia').length, 2);
+    const pushes = sentTo('token-bia');
+    assert.equal(pushes.length, 2);
+    assert.equal(pushes[1]?.android?.notification?.tag, `activity-${listId}`);
+    assert.equal((await feedItems()).length, 2);
   });
 
-  test('sem agrupamento: avisa a cada lote, sem a tag, ainda com o máximo do dia', async () => {
+  test('filme retirado da lista: Atividade e aviso com o título guardado em movies/', async () => {
+    await dependencies.db.doc('movies/603').set(sampleMovie('The Matrix'));
+    const response = await send(bia, [{ type: 'removed', entryId: 'e-matrix', tmdbId: 603 }]);
+
+    assert.equal(response.status, 202);
+    assert.equal((await feedItems()).at(-1)?.title, 'Bia retirou The Matrix da lista');
+    assert.equal(sentTo('token-ana')[0]?.notification?.title, 'Bia retirou The Matrix da lista');
+  });
+
+  test("'removed' de entrada que ainda existe ou sem tmdbId não vale", async () => {
+    await dependencies.db.doc('movies/2756').set(sampleMovie('The Abyss'));
+    assert.deepEqual(await (await send(bia, [{ type: 'removed', entryId: 'e-abyss', tmdbId: 2756 }])).json(), {
+      pushed: false,
+    });
+    assert.equal((await send(bia, [{ type: 'removed', entryId: 'e-matrix' }])).status, 400);
+    assert.equal(fcm.sent.length, 0);
+  });
+
+  test('sem agrupamento: avisa a cada lote, sem a tag', async () => {
     await notifyStateDocument(dependencies.db, bia.uid).set({
       prefs: { ...DEFAULT_NOTIFY_PREFS, activityGrouped: false },
     });
@@ -180,22 +197,16 @@ describe('POST /api/lists/{listId}/events', () => {
     assert.deepEqual(pushes[1]?.android?.notification, { channelId: 'lista' });
   });
 
-  test('máximo de 6 avisos no dia de Brasília; no dia seguinte a contagem recomeça', async () => {
+  test('sem máximo diário: o contador do dia só registra', async () => {
     await notifyStateDocument(dependencies.db, bia.uid).set({
       prefs: DEFAULT_NOTIFY_PREFS,
       pushesDay: '2026-10-18',
       pushesCount: 6,
     });
     await putEntry('e-heat', 949, 'Heat', 'a4');
-    assert.deepEqual(await (await send(ana, [{ type: 'moved', entryId: 'e-heat' }])).json(), { pushed: false });
-    assert.equal((await feedItems()).length, 1, 'a Atividade é gravada mesmo sem aviso');
-
-    // 03:30 UTC do dia 19 já é dia 19 em Brasília.
-    clock = new Date('2026-10-19T03:30:00Z');
-    await putEntry('e-twister', 664, 'Twister', 'a3');
-    assert.deepEqual(await (await send(ana, [{ type: 'moved', entryId: 'e-twister' }])).json(), { pushed: true });
+    assert.deepEqual(await (await send(ana, [{ type: 'moved', entryId: 'e-heat' }])).json(), { pushed: true });
     const state = (await notifyStateDocument(dependencies.db, bia.uid).get()).data();
-    assert.deepEqual([state?.pushesDay, state?.pushesCount], ['2026-10-19', 1]);
+    assert.deepEqual([state?.pushesDay, state?.pushesCount], ['2026-10-18', 7]);
     assert.deepEqual(state?.prefs, DEFAULT_NOTIFY_PREFS, 'as preferências ficam como estavam');
   });
 
@@ -249,10 +260,10 @@ describe('POST /api/lists/{listId}/events', () => {
     assert.equal((await dependencies.db.doc(`lists/${listId}/queue/603`).get()).exists, true);
   });
 
-  test('acima de 30 lotes no dia: sem Atividade nem aviso, mas a fila ainda é limpa', async () => {
+  test('acima de 300 lotes no dia: sem Atividade nem aviso, mas a fila ainda é limpa', async () => {
     await dependencies.db
       .doc(`rateLimits/${ana.uid}_2026-10-18`)
-      .set({ uid: ana.uid, day: '2026-10-18', events: 30, updatedAt: clock });
+      .set({ uid: ana.uid, day: '2026-10-18', events: 300, updatedAt: clock });
     await dependencies.db.doc(`lists/${listId}/queue/2756`).set({ tmdbId: 2756, addedBy: bia.uid, createdAt: clock });
     await putEntry('e-abyss', 2756, 'The Abyss', 'a2');
 

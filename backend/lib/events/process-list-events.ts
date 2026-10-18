@@ -6,6 +6,7 @@ import { requireMember } from '../lists/list-access.js';
 import { listDocument } from '../lists/list-repository.js';
 import { readMemberProfile } from '../lists/member-profiles.js';
 import { logger } from '../logging/logger.js';
+import { findMovies } from '../movies/movie-repository.js';
 import { pushActivity } from '../notify/push-activity.js';
 import { queueDocument } from '../queue/queue-repository.js';
 import { onListChanged } from '../recs/on-list-changed.js';
@@ -24,10 +25,10 @@ const FALLBACK_PUSH_BODY = 'Veja na Atividade da lista.';
 
 /**
  * Trata um lote de eventos do app. Confere que a pessoa é integrante e aceita só os eventos que o
- * banco confirma (selectValidEvents); tira da fila "Quero ver" os filmes que viraram entrada; avisa
- * o motor de sugestões; e, dentro do limite diário de lotes, grava um item `member.activity` com o
- * resumo do lote e manda um aviso a cada outro integrante que aceita avisos de atividade,
- * respeitando o intervalo de 15 minutos e o máximo de 6 por dia.
+ * banco confirma (selectValidEvents), inclusive filmes retirados da lista; tira da fila "Quero ver"
+ * os filmes que viraram entrada; avisa o motor de sugestões; e, dentro do limite diário de lotes,
+ * grava um item `member.activity` com o resumo do lote e manda um aviso a cada outro integrante
+ * que aceita avisos de atividade.
  *
  * @param dependencies - Banco, Auth, FCM e relógio.
  * @param request - Quem manda, a lista e os eventos.
@@ -41,7 +42,13 @@ async function processListEvents(dependencies: Dependencies, { uid, listId, item
   const list = requireMember((await listDocument(db, listId).get()).data(), uid);
 
   const entries = await readRankedEntries(db, listId);
-  const events = selectValidEvents(items, entries, uid, now);
+  const removedIds = [
+    ...new Set(items.flatMap((item) => (item.type === 'removed' && item.tmdbId ? [item.tmdbId] : []))),
+  ];
+  const removedTitles = new Map(
+    [...(await findMovies(db, removedIds))].map(([tmdbId, movie]) => [tmdbId, movie.title]),
+  );
+  const events = selectValidEvents(items, entries, removedTitles, uid, now);
   if (events.length === 0) return false;
 
   await removeAddedFromQueue(db, listId, events);
@@ -78,7 +85,7 @@ async function processListEvents(dependencies: Dependencies, { uid, listId, item
  * @param events - Eventos aceitos.
  */
 async function removeAddedFromQueue(db: Firestore, listId: string, events: readonly ValidEvent[]): Promise<void> {
-  const added = [...new Set(events.filter((event) => event.type === 'added').map((event) => event.entry.tmdbId))];
+  const added = [...new Set(events.flatMap((event) => (event.type === 'added' ? [event.entry.tmdbId] : [])))];
   await writeInBatches(db, added, (batch, tmdbId) => batch.delete(queueDocument(db, listId, tmdbId)));
 }
 
