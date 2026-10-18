@@ -7,6 +7,7 @@ import io.github.guilhermetelles.lombada.AppContainer
 import io.github.guilhermetelles.lombada.data.auth.SignInException
 import io.github.guilhermetelles.lombada.data.model.MovieList
 import io.github.guilhermetelles.lombada.data.model.UserProfile
+import io.github.guilhermetelles.lombada.notify.DeviceRegistration
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -21,6 +22,7 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 
 /**
  * Decide o que o app mostra: entrar, escolher a primeira lista ou a lista ativa. Acompanha a
@@ -105,12 +107,16 @@ class SessionViewModel(private val container: AppContainer) : ViewModel() {
     }
 
     /**
-     * Sai da conta.
+     * Sai da conta. Antes, tira o token do FCM deste aparelho do backend, enquanto ainda há sessão
+     * para autenticar; sem rede, segue depois de alguns segundos sem ele.
      *
      * @param context Contexto do app.
      */
     fun signOut(context: Context) {
-        viewModelScope.launch { container.authRepository.signOut(context) }
+        viewModelScope.launch {
+            withTimeoutOrNull(UNREGISTER_TIMEOUT_MS) { DeviceRegistration(container.backend).unregister() }
+            container.authRepository.signOut(context)
+        }
     }
 
     /**
@@ -133,6 +139,9 @@ class SessionViewModel(private val container: AppContainer) : ViewModel() {
     }
 
     companion object {
+        // Quanto sair da conta espera o backend tirar o token.
+        private const val UNREGISTER_TIMEOUT_MS = 5_000L
+
         /**
          * Ordena as listas pela ordem de visita; as nunca visitadas vão para o fim, por nome.
          *
