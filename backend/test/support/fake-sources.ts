@@ -7,13 +7,24 @@ const SOURCE_BY_HOST: Record<string, SourceName> = {
   'www.omdbapi.com': 'omdb',
   'letterboxd.com': 'letterboxd',
   'bechdeltest.com': 'bechdel',
+  'query.wikidata.org': 'wikidata',
+  'www.wikidata.org': 'wikidata',
+  'en.wikipedia.org': 'wikipedia',
+  'pt.wikipedia.org': 'wikipedia',
+  'generativelanguage.googleapis.com': 'gemini',
 };
+
+/** Fontes que todo teste conta desde o início; as da versão 0.3 entram no contador no primeiro pedido. */
+type CountedFromStart = 'tmdb' | 'omdb' | 'letterboxd' | 'bechdel';
+
+/** Pedidos recebidos por fonte. */
+type SourceCalls = Record<CountedFromStart, number> & Partial<Record<SourceName, number>>;
 
 /** O fetch falso e o que ele registra. */
 export type FakeSources = {
   fetch: Fetch;
   /** Pedidos recebidos por fonte. */
-  calls: Record<SourceName, number>;
+  calls: SourceCalls;
   /** Fontes que respondem 503, para simular uma fonte fora do ar. */
   failing: Set<SourceName>;
 };
@@ -26,7 +37,7 @@ export type FakeSources = {
  * @throws {Error} Ao receber pedido para um host que não é de fonte (erro do teste).
  */
 export function fakeSources(): FakeSources {
-  const calls: Record<SourceName, number> = { tmdb: 0, omdb: 0, letterboxd: 0, bechdel: 0 };
+  const calls: SourceCalls = { tmdb: 0, omdb: 0, letterboxd: 0, bechdel: 0 };
   const failing = new Set<SourceName>();
 
   const fetch: Fetch = async (input) => {
@@ -34,7 +45,7 @@ export function fakeSources(): FakeSources {
     const source = SOURCE_BY_HOST[url.hostname];
     if (!source) throw new Error(`fetch inesperado em teste: ${url.hostname}`);
 
-    calls[source]++;
+    calls[source] = (calls[source] ?? 0) + 1;
     if (failing.has(source)) return new Response('fora do ar', { status: 503 });
     return recordedResponse(source, url);
   };
