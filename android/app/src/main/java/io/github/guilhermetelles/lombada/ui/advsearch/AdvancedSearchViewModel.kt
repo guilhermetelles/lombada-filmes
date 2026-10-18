@@ -8,8 +8,10 @@ import io.github.guilhermetelles.lombada.data.backend.BackendException
 import io.github.guilhermetelles.lombada.data.model.DiscoverItem
 import io.github.guilhermetelles.lombada.data.model.Filters
 import io.github.guilhermetelles.lombada.domain.DiscoverFilters
+import io.github.guilhermetelles.lombada.domain.DiscoverKeywords
 import io.github.guilhermetelles.lombada.domain.DiscoverResults
 import io.github.guilhermetelles.lombada.domain.FilterOption
+import io.github.guilhermetelles.lombada.domain.Keyword
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -29,6 +31,8 @@ const val INTERPRET_MAX_LENGTH = 200
  *
  * @property text Texto livre digitado.
  * @property filters Filtros ligados.
+ * @property keywords Palavras-chave do TMDb ligadas, vindas do texto livre (até 5, da mais antiga
+ *   para a mais nova).
  * @property interpreting Se o `interpret` está respondendo.
  * @property interpretedText Frase que o Gemini interpretou por último; null antes de interpretar.
  * @property explanation O que o Gemini disse que entendeu.
@@ -43,6 +47,7 @@ const val INTERPRET_MAX_LENGTH = 200
 data class AdvancedSearchUiState(
     val text: String = "",
     val filters: Filters = Filters(),
+    val keywords: List<Keyword> = emptyList(),
     val interpreting: Boolean = false,
     val interpretedText: String? = null,
     val explanation: String? = null,
@@ -56,12 +61,21 @@ data class AdvancedSearchUiState(
 ) {
     /** Se há mais páginas para carregar. */
     val canLoadMore: Boolean get() = !loading && page in 1 until totalPages
+
+    /** Se há algo para limpar: filtros, palavras-chave, texto ou o que foi interpretado. */
+    val hasAnything: Boolean
+        get() =
+            DiscoverFilters.active(filters).isNotEmpty() ||
+                keywords.isNotEmpty() ||
+                text.isNotEmpty() ||
+                interpretedText != null
 }
 
 /**
- * Busca avançada: texto livre interpretado pelo `POST /api/search/interpret` em filtros e os
- * resultados de `GET /api/discover`, ordenados pela compatibilidade. Sem Gemini (limite do dia,
- * chave ausente, sem rede), os filtros manuais continuam valendo.
+ * Busca avançada: texto livre interpretado pelo `POST /api/search/interpret` em filtros e
+ * palavras-chave, somados ao que já estava ligado, e os resultados de `GET /api/discover` (os de
+ * mais palavras-chave primeiro, depois pela compatibilidade). Sem Gemini (limite do dia, chave
+ * ausente, sem rede), os filtros manuais continuam valendo.
  *
  * @param container Dependências do app.
  * @param listId Lista ativa, para a compatibilidade e a marca dos filmes que já estão nela.
@@ -87,7 +101,10 @@ class AdvancedSearchViewModel(private val container: AppContainer, private val l
         mutableState.update { it.copy(text = text.take(INTERPRET_MAX_LENGTH)) }
     }
 
-    /** Interpreta o texto livre e troca os filtros pelos que o Gemini entendeu. */
+    /**
+     * Interpreta o texto livre e soma o que o Gemini entendeu (filtros e palavras-chave) ao que
+     * já estava ligado. Numa falha, o que estava ligado fica como estava.
+     */
     fun interpret() {
         val current = mutableState.value
         val text = current.text.trim()
@@ -101,16 +118,19 @@ class AdvancedSearchViewModel(private val container: AppContainer, private val l
             try {
                 val result = container.backend.interpret(text)
                 val filters = DiscoverFilters.clean(result.filters)
-                val nothing = DiscoverFilters.active(filters).isEmpty()
+                val keywords = DiscoverKeywords.merge(emptyList(), result.keywords.map { Keyword(it.id, it.label) })
+                val nothing = DiscoverFilters.active(filters).isEmpty() && keywords.isEmpty()
                 mutableState.update {
                     it.copy(
                         interpreting = false,
                         interpretedText = text,
                         explanation = result.explanation.trim().ifEmpty { null },
-                        filters = filters,
+                        filters = DiscoverFilters.union(it.filters, filters),
+                        keywords = DiscoverKeywords.merge(it.keywords, keywords),
                         notice =
                             if (nothing) {
-                                "Não achei filtros nessa frase. Tente falar de duração, gênero, década, humor ou tema."
+                                "Não achei filtros nessa frase. Tente falar de duração, gênero, década, humor, " +
+                                    "tema ou de algo que aparece no filme."
                             } else {
                                 null
                             }
@@ -133,10 +153,27 @@ class AdvancedSearchViewModel(private val container: AppContainer, private val l
         search(FILTER_DEBOUNCE_MS)
     }
 
-    /** Tira todos os filtros, o texto e o que foi interpretado. */
+    /**
+     * Tira uma palavra-chave e busca de novo.
+     *
+     * @param keyword Palavra tocada.
+     */
+    fun removeKeyword(keyword: Keyword) {
+        mutableState.update { state -> state.copy(keywords = state.keywords.filter { it.id != keyword.id }) }
+        search(debounceMs = 0)
+    }
+
+    /** Tira todos os filtros, as palavras-chave, o texto e o que foi interpretado. */
     fun clear() {
         mutableState.update {
-            it.copy(text = "", filters = Filters(), interpretedText = null, explanation = null, notice = null)
+            it.copy(
+                text = "",
+                filters = Filters(),
+                keywords = emptyList(),
+                interpretedText = null,
+                explanation = null,
+                notice = null
+            )
         }
         search(debounceMs = 0)
     }
@@ -151,12 +188,13 @@ class AdvancedSearchViewModel(private val container: AppContainer, private val l
         val current = mutableState.value
         if (!current.canLoadMore || current.loadingMore) return
         val filters = current.filters
+        val keywords = DiscoverKeywords.param(current.keywords)
         val next = current.page + 1
         mutableState.update { it.copy(loadingMore = true, error = null) }
         searchJob =
             viewModelScope.launch {
                 try {
-                    val response = container.backend.discover(listId, filters, next)
+                    val response = container.backend.discover(listId, filters, keywords, next)
                     mutableState.update {
                         it.copy(
                             results = DiscoverResults.append(it.results, response.results),
@@ -178,8 +216,9 @@ class AdvancedSearchViewModel(private val container: AppContainer, private val l
             viewModelScope.launch {
                 if (debounceMs > 0) delay(debounceMs)
                 val filters = mutableState.value.filters
+                val keywords = DiscoverKeywords.param(mutableState.value.keywords)
                 try {
-                    val response = container.backend.discover(listId, filters, 1)
+                    val response = container.backend.discover(listId, filters, keywords, 1)
                     mutableState.update {
                         it.copy(
                             results = DiscoverResults.append(emptyList(), response.results),
