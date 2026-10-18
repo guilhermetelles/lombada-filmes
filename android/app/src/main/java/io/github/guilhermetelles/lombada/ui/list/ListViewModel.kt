@@ -13,6 +13,8 @@ import io.github.guilhermetelles.lombada.data.model.PersonRef
 import io.github.guilhermetelles.lombada.domain.EntryOrder
 import io.github.guilhermetelles.lombada.domain.Formatting
 import io.github.guilhermetelles.lombada.domain.FractionalIndex
+import io.github.guilhermetelles.lombada.events.ListEventType
+import io.github.guilhermetelles.lombada.events.ListEvents
 import java.time.LocalDate
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -75,18 +77,25 @@ data class AddDraft(val tmdbId: Int, val movie: MovieSnapshot)
 private data class AddState(
     val draft: AddDraft? = null,
     val preparingTmdbId: Int? = null,
-    val justAddedId: String? = null
+    val justAddedId: String? = null,
+    val stayOnPage: Boolean = false
 )
 
 /**
  * Lista ativa: ranking em tempo real, arrastar para reordenar, editar e remover com "Desfazer".
+ * Adicionar, mover e comentar entram na fila de eventos ([ListEvents]) da Atividade.
  *
  * @param container Dependências do app.
  * @param listId Lista aberta.
  * @param uid Pessoa logada, gravada em `updatedBy`.
+ * @param events Fila de eventos da lista.
  */
-class ListViewModel(private val container: AppContainer, private val listId: String, private val uid: String) :
-    ViewModel() {
+class ListViewModel(
+    private val container: AppContainer,
+    private val listId: String,
+    private val uid: String,
+    private val events: ListEvents
+) : ViewModel() {
     private val sortMode = MutableStateFlow(SortMode.Ranking)
     private val newestFirst = MutableStateFlow(true)
     private val editing = MutableStateFlow<String?>(null)
@@ -189,6 +198,7 @@ class ListViewModel(private val container: AppContainer, private val listId: Str
             }
         waitingForMove = true
         container.entries.move(listId, entryId, rankKey, uid)
+        events.record(listId, ListEventType.Moved, entryId)
         message("${Formatting.shortTitle(order[toIndex].movie.title)} agora é o #${toIndex + 1}")
     }
 
@@ -230,7 +240,9 @@ class ListViewModel(private val container: AppContainer, private val listId: Str
      */
     fun save(entry: Entry, watchedOn: LocalDate?, comment: String) {
         editing.value = null
-        container.entries.edit(listId, entry.id, watchedOn, comment.trim().take(5_000), uid)
+        val text = comment.trim().take(5_000)
+        container.entries.edit(listId, entry.id, watchedOn, text, uid)
+        if (text.isNotEmpty() && text != entry.comment.trim()) events.record(listId, ListEventType.Commented, entry.id)
         message("Registro salvo")
     }
 
@@ -267,8 +279,10 @@ class ListViewModel(private val container: AppContainer, private val listId: Str
      * abre a folha. Se o filme já está na lista, só avisa.
      *
      * @param tmdbId Filme escolhido.
+     * @param stayOnPage Se quem adiciona fica na página do filme (que vira a de um filme da lista)
+     *   em vez de voltar para a lista.
      */
-    fun startAdd(tmdbId: Int) {
+    fun startAdd(tmdbId: Int, stayOnPage: Boolean = false) {
         val current = state.value
         current.ranking.firstOrNull { it.tmdbId == tmdbId }?.let { entry ->
             message(
@@ -279,7 +293,7 @@ class ListViewModel(private val container: AppContainer, private val listId: Str
             return
         }
         if (add.value.preparingTmdbId != null) return
-        add.update { it.copy(preparingTmdbId = tmdbId) }
+        add.update { it.copy(preparingTmdbId = tmdbId, stayOnPage = stayOnPage) }
         viewModelScope.launch {
             try {
                 val movie = container.backend.refreshMovie(tmdbId)
@@ -312,7 +326,8 @@ class ListViewModel(private val container: AppContainer, private val listId: Str
     }
 
     /**
-     * Registra o filme no fim da lista.
+     * Registra o filme no fim da lista, com "Desfazer". Pela página do filme, a pessoa fica nela;
+     * de outro lugar, a lista rola até a entrada nova.
      *
      * @param draft Filme escolhido.
      * @param watchedOn Data em que viram.
@@ -330,8 +345,36 @@ class ListViewModel(private val container: AppContainer, private val listId: Str
             draft.movie,
             uid
         )
-        add.value = AddState(justAddedId = entryId)
-        message("${Formatting.shortTitle(draft.movie.title)} entrou como #${ranking.size + 1}")
+        events.record(listId, ListEventType.Added, entryId)
+        val stay = add.value.stayOnPage
+        add.value = AddState(justAddedId = entryId.takeUnless { stay })
+        val title = Formatting.shortTitle(draft.movie.title)
+        val position = ranking.size + 1
+        val added = "$title entrou como #$position"
+        val text = if (stay) "$added; arraste na lista para posicionar" else added
+        // No escopo do app: o "Desfazer" vale mesmo se a pessoa sair da tela.
+        container.appScope.launch {
+            val result = container.snackbar.showSnackbar(
+                text,
+                actionLabel = "Desfazer",
+                duration = SnackbarDuration.Long
+            )
+            if (result == SnackbarResult.ActionPerformed) {
+                events.forget(listId, entryId)
+                container.entries.remove(listId, entryId)
+                container.snackbar.showSnackbar("$title saiu da lista")
+            }
+        }
+    }
+
+    /**
+     * Registra um evento feito por outra tela, como a troca do duelo pela `EntryRepository.move`.
+     *
+     * @param type Tipo.
+     * @param entryId Entrada.
+     */
+    fun recordEvent(type: ListEventType, entryId: String) {
+        events.record(listId, type, entryId)
     }
 
     /** A tela já rolou até a entrada nova. */

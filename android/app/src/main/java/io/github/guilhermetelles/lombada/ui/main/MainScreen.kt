@@ -32,6 +32,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavBackStackEntry
@@ -45,6 +46,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import io.github.guilhermetelles.lombada.AppContainer
 import io.github.guilhermetelles.lombada.data.model.MovieList
+import io.github.guilhermetelles.lombada.events.ListEvents
 import io.github.guilhermetelles.lombada.notify.DeviceRegistration
 import io.github.guilhermetelles.lombada.notify.PushRouter
 import io.github.guilhermetelles.lombada.notify.PushStep
@@ -102,7 +104,9 @@ private const val SIGN_OUT_TIMEOUT_MS = 5_000L
 @Composable
 fun MainScreen(list: MovieList, uid: String, onSwitchList: () -> Unit, onSignOut: () -> Unit) {
     val container = appContainer()
-    val listViewModel = viewModel(key = "list-${list.id}") { ListViewModel(container, list.id, uid) }
+    val appContext = LocalContext.current.applicationContext
+    val listViewModel =
+        viewModel(key = "list-${list.id}") { ListViewModel(container, list.id, uid, ListEvents(appContext)) }
     val searchViewModel = viewModel(key = "search-${list.id}") { SearchViewModel(container, list.id) }
     val state by listViewModel.state.collectAsStateWithLifecycle()
     val navController = rememberNavController()
@@ -187,16 +191,7 @@ fun MainScreen(list: MovieList, uid: String, onSwitchList: () -> Unit, onSignOut
             composable<RouletteRoute> { RouletteEntry(context) }
             composable<NotifySettingsRoute> { NotifySettingsEntry(context) }
             composable<MovieRoute> { entry: NavBackStackEntry ->
-                val route = entry.toRoute<MovieRoute>()
-                MovieDetailScreen(
-                    route = route,
-                    ranking = state.ranking,
-                    preparingAdd = state.preparingTmdbId == route.tmdbId,
-                    onBack = { navController.popBackStack() },
-                    onOpenPerson = { navController.navigate(it) },
-                    onEdit = { listViewModel.openEditor(it.id) },
-                    onAdd = listViewModel::startAdd
-                )
+                MovieDetailScreen(route = entry.toRoute<MovieRoute>(), context = context)
             }
             composable<PersonRoute> { entry: NavBackStackEntry ->
                 PersonScreen(
@@ -252,7 +247,8 @@ fun MainScreen(list: MovieList, uid: String, onSwitchList: () -> Unit, onSignOut
         }
     }
 
-    // Filme registrado a partir do detalhe: volta para a lista, que rola até a entrada nova.
+    // Filme registrado fora da página do filme: volta para a lista, que rola até a entrada nova.
+    // Pela página do filme, justAddedId fica null e a pessoa continua nela.
     LaunchedEffect(state.justAddedId) {
         if (state.justAddedId != null) navController.popBackStack(ListRoute, inclusive = false)
     }
