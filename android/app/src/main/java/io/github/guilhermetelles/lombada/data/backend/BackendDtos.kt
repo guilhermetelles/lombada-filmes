@@ -1,5 +1,7 @@
 package io.github.guilhermetelles.lombada.data.backend
 
+import io.github.guilhermetelles.lombada.data.model.DiscoverItem
+import io.github.guilhermetelles.lombada.data.model.Filters
 import kotlinx.serialization.Serializable
 
 /** Corpo de `POST /api/lists`. */
@@ -67,7 +69,14 @@ data class RatingDto(val value: Double? = null)
 @Serializable
 data class MovieRatingsDto(val imdb: RatingDto? = null, val letterboxd: RatingDto? = null)
 
-/** O que o app usa da resposta de `GET /api/movies/{tmdbId}`: os campos da cópia resumida. */
+/** Compatibilidade do filme com a lista, de 0 a 100, em `GET /api/movies/{tmdbId}?listId=`. */
+@Serializable
+data class CompatDto(val score: Double, val reason: String)
+
+/**
+ * O que o app usa da resposta de `GET /api/movies/{tmdbId}`: os campos da cópia resumida e, com
+ * `listId`, a compatibilidade. Os campos novos do filme o app lê de `movies/{tmdbId}`.
+ */
 @Serializable
 data class MovieResponse(
     val tmdbId: Int,
@@ -75,7 +84,78 @@ data class MovieResponse(
     val year: Int? = null,
     val posterPath: String? = null,
     val directors: List<PersonRefDto> = emptyList(),
-    val ratings: MovieRatingsDto = MovieRatingsDto()
+    val ratings: MovieRatingsDto = MovieRatingsDto(),
+    val compat: CompatDto? = null
+)
+
+/** Resposta de `GET /api/me`: quantas listas tiveram nome e foto sincronizados. */
+@Serializable
+data class MeResponse(val uid: String, val profileSynced: Int = 0)
+
+/** Corpo de `POST /api/me/devices`. */
+@Serializable
+data class RegisterDeviceRequest(val token: String, val platform: String = "android")
+
+/** Corpo de `DELETE /api/me/devices`. */
+@Serializable
+data class UnregisterDeviceRequest(val token: String)
+
+/** Resposta de `POST /api/me/notify-test`: quantos aparelhos receberam. */
+@Serializable
+data class NotifyTestResponse(val sent: Int)
+
+/** Resposta de `GET /api/discover`. */
+@Serializable
+data class DiscoverResponse(val results: List<DiscoverItem>, val page: Int = 1, val totalPages: Int = 1)
+
+/** Corpo de `POST /api/search/interpret`, de 2 a 200 caracteres. */
+@Serializable
+data class InterpretRequest(val text: String)
+
+/** Resposta de `POST /api/search/interpret`: os filtros e uma frase explicando. */
+@Serializable
+data class InterpretResponse(val filters: Filters, val explanation: String = "")
+
+/** Corpo de `POST /api/lists/{id}/queue`. */
+@Serializable
+data class QueueAddRequest(val tmdbId: Int)
+
+/** Resposta de `POST /api/lists/{id}/queue`. */
+@Serializable
+data class QueueAddResponse(val tmdbId: Int)
+
+/**
+ * Um evento da lista para `POST /api/lists/{id}/events`.
+ *
+ * @property type `added`, `moved` ou `commented`.
+ * @property entryId Entrada.
+ */
+@Serializable
+data class ListEventDto(val type: String, val entryId: String)
+
+/** Corpo de `POST /api/lists/{id}/events`, com até 50 eventos. */
+@Serializable
+data class ListEventsRequest(val items: List<ListEventDto>)
+
+/** Resposta de `POST /api/lists/{id}/events`: se algum push saiu. */
+@Serializable
+data class ListEventsResponse(val pushed: Boolean)
+
+/** Corpo de `POST /api/lists/{id}/quiz/{dia}/answer`. */
+@Serializable
+data class QuizAnswerRequest(val optionId: String)
+
+/** Resposta de outro membro que já respondeu, em [QuizAnswerResponse.others]. */
+@Serializable
+data class QuizOtherAnswer(val uid: String, val correct: Boolean, val optionId: String)
+
+/** Resposta de `POST /api/lists/{id}/quiz/{dia}/answer`. */
+@Serializable
+data class QuizAnswerResponse(
+    val correct: Boolean,
+    val rightOptionId: String,
+    val explanation: String = "",
+    val others: List<QuizOtherAnswer> = emptyList()
 )
 
 /** Corpo de erro do backend: `{ "error": { "code", "message" } }`. */

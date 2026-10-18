@@ -52,6 +52,36 @@ export class ForbiddenError extends AppError {
   readonly code = 'forbidden';
 }
 
+/** O pedido conflita com o que já está gravado, como responder o quiz do dia duas vezes (409). */
+export class ConflictError extends AppError {
+  readonly status = 409;
+  readonly code = 'conflict';
+}
+
+/** A pessoa já respondeu a pergunta do quiz deste dia (409). */
+export class AlreadyAnsweredError extends AppError {
+  readonly status = 409;
+  readonly code = 'already_answered';
+}
+
+/** A resposta do quiz é para um dia que não é hoje no fuso de Brasília (400). */
+export class NotTodayError extends AppError {
+  readonly status = 400;
+  readonly code = 'not_today';
+}
+
+/** A pessoa passou do limite diário da rota, como o da interpretação de texto livre (429). */
+export class RateLimitedError extends AppError {
+  readonly status = 429;
+  readonly code = 'rate_limited';
+}
+
+/** A rota existe no contrato, mas ainda não foi implementada (501). */
+export class NotImplementedError extends AppError {
+  readonly status = 501;
+  readonly code = 'not_implemented';
+}
+
 /** O código de convite existe, mas passou dos 7 dias (410). */
 export class InviteExpiredError extends AppError {
   readonly status = 410;

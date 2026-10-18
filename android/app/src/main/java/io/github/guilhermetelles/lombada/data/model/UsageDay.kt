@@ -16,7 +16,7 @@ data class SourceUsage(val calls: Int, val errors: Int, val cacheHits: Int, val 
  * Documento `usage/{yyyy-mm-dd}`, escrito pelo backend.
  *
  * @property day Dia, no fuso de São Paulo.
- * @property sources Consumo por fonte (`tmdb`, `omdb`, `letterboxd`).
+ * @property sources Consumo por fonte (`tmdb`, `omdb`, `letterboxd`, `bechdel`, `wikidata`, `wikipedia`, `gemini`).
  */
 data class UsageDay(val day: LocalDate, val sources: Map<String, SourceUsage>) {
     /** Pedidos do dia, somando as fontes. */

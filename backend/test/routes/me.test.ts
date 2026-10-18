@@ -35,6 +35,6 @@ describe('GET /api/me (autenticação)', () => {
     const response = await getMe(getRequest('/api/me', withBearer(idToken)));
 
     assert.equal(response.status, 200);
-    assert.deepEqual(await response.json(), { uid });
+    assert.deepEqual(await response.json(), { uid, profileSynced: 0 });
   });
 });

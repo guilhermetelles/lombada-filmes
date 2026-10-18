@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import io.github.guilhermetelles.lombada.AppContainer
 import io.github.guilhermetelles.lombada.data.model.Entry
+import io.github.guilhermetelles.lombada.domain.AwardsReport
 import io.github.guilhermetelles.lombada.domain.Bar
 import io.github.guilhermetelles.lombada.domain.BechdelReport
 import io.github.guilhermetelles.lombada.domain.Calendar
@@ -31,6 +32,7 @@ import kotlinx.coroutines.flow.stateIn
  * @property directors Diretores mais vistos.
  * @property actors Atores mais vistos.
  * @property bechdel Teste de Bechdel; null sem nenhum filme avaliado.
+ * @property awards "Oscar contra Framboesa"; null quando nenhum filme tem prêmios buscados.
  * @property genres Gêneros.
  * @property decades Décadas.
  */
@@ -43,6 +45,7 @@ data class ReportsUiState(
     val directors: List<Bar> = emptyList(),
     val actors: TopActors? = null,
     val bechdel: BechdelReport? = null,
+    val awards: AwardsReport? = null,
     val genres: List<Bar> = emptyList(),
     val decades: List<Bar> = emptyList()
 )
@@ -74,6 +77,7 @@ class ReportsViewModel(container: AppContainer, listId: String) : ViewModel() {
                 directors = Reports.directors(entries, byId),
                 actors = Reports.actors(entries, byId),
                 bechdel = Reports.bechdel(entries, byId),
+                awards = Reports.awards(entries, byId),
                 genres = Reports.genres(entries, byId),
                 decades = Reports.decades(entries)
             )

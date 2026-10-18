@@ -54,14 +54,17 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.AsyncImage
+import io.github.guilhermetelles.lombada.data.model.AwardItem
 import io.github.guilhermetelles.lombada.data.model.Credit
 import io.github.guilhermetelles.lombada.data.model.Person
+import io.github.guilhermetelles.lombada.domain.AwardGroups
 import io.github.guilhermetelles.lombada.domain.Formatting
 import io.github.guilhermetelles.lombada.domain.PersonFilm
 import io.github.guilhermetelles.lombada.ui.appContainer
 import io.github.guilhermetelles.lombada.ui.components.MovieCover
 import io.github.guilhermetelles.lombada.ui.components.TmdbImages
 import io.github.guilhermetelles.lombada.ui.components.initialsOf
+import io.github.guilhermetelles.lombada.ui.detail.AwardsContent
 import io.github.guilhermetelles.lombada.ui.detail.MovieLinks
 import io.github.guilhermetelles.lombada.ui.detail.RefreshStatus
 import io.github.guilhermetelles.lombada.ui.main.MovieRoute
@@ -126,6 +129,7 @@ fun PersonScreen(route: PersonRoute, listId: String, onBack: () -> Unit, onOpenM
             onRetry = viewModel::retry
         )
         InListSection(state.films, onOpenMovie)
+        person?.awards?.let { AwardsSection(it.items) }
         person?.biography?.let { Biography(it, person.biographyInEnglish) }
         person?.let { full ->
             if (directing) {
@@ -311,6 +315,21 @@ private fun Section(title: String, content: @Composable () -> Unit) {
             }
         )
         content()
+    }
+}
+
+/**
+ * "Prêmios e indicações" da pessoa: total de vitórias, Oscar e Framboesa à parte e os grupos por
+ * premiação. Sem prêmios, não aparece.
+ *
+ * @param items Prêmios e indicações da pessoa.
+ */
+@Composable
+private fun AwardsSection(items: List<AwardItem>) {
+    val groups = AwardGroups.of(items)
+    if (groups.isEmpty()) return
+    Section("Prêmios e indicações") {
+        AwardsContent(groups, AwardGroups.personSummary(groups), razzieNote = null, cardColor = LombadaColors.ShelfHigh)
     }
 }
 

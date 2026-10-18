@@ -1,14 +1,19 @@
+import { withoutUndefined } from '../firestore/without-undefined.js';
+import { brazilDay } from '../time/brazil-day.js';
 import type { FetchedSources, Movie } from '../types/movie.js';
-import type { LetterboxdRating, OmdbRatings, TmdbMovie } from '../types/sources.js';
+import type { LetterboxdRating, OmdbRatings, TmdbMovie, TmdbMovieExtras } from '../types/sources.js';
 
 /**
  * Junta o documento guardado com o que as fontes trouxeram agora. O que não veio continua como
- * estava, com a data em que foi buscado.
+ * estava, com a data em que foi buscado: atualizar só as notas preserva os campos extras, e
+ * atualizar o TMDb preserva as notas, o Teste de Bechdel, os prêmios e a bilheteria da OMDb.
+ * `extraFetchedAt` não muda aqui: quem busca todas as fontes extras (abertura do filme ou rotina
+ * enrich) é quem grava a data.
  *
  * @param stored - Documento guardado, se existir.
  * @param fetched - O que cada fonte trouxe neste pedido.
  * @param now - Data a gravar nas fontes que vieram.
- * @returns O documento atualizado (sem alterar o guardado).
+ * @returns O documento atualizado (sem alterar o guardado), sem chaves undefined.
  * @throws {Error} Se não houver documento guardado nem dados do TMDb, que dão título, ano e o id do IMDb.
  */
 export function mergeMovie(stored: Movie | undefined, fetched: FetchedSources, now: Date): Movie {
@@ -17,12 +22,14 @@ export function mergeMovie(stored: Movie | undefined, fetched: FetchedSources, n
 
   if (fetched.letterboxd) movie = applyLetterboxd(movie, fetched.letterboxd, now);
   if (fetched.omdb) movie = applyOmdb(movie, fetched.omdb, now);
-  return movie;
+  // O Firestore recusa campos undefined (campos extras que nunca foram buscados).
+  return withoutUndefined(movie);
 }
 
 /**
- * Troca o catálogo inteiro pelo do TMDb e mantém as notas, o endereço do Letterboxd e o Teste de
- * Bechdel guardados.
+ * Troca o catálogo inteiro pelo do TMDb, com os campos extras quando vieram, e mantém o que vem de
+ * outras fontes: notas, endereço do Letterboxd, Teste de Bechdel, prêmios, bilheteria da OMDb e a
+ * data dos campos extras.
  *
  * @param stored - Documento guardado, se existir.
  * @param tmdb - Filme vindo do TMDb.
@@ -31,6 +38,8 @@ export function mergeMovie(stored: Movie | undefined, fetched: FetchedSources, n
  */
 function applyTmdb(stored: Movie | undefined, tmdb: TmdbMovie, now: Date): Movie {
   return {
+    // Primeiro o guardado, para os campos que o TMDb não traz (ou extras que não vieram) continuarem.
+    ...stored,
     title: tmdb.title,
     year: tmdb.year,
     directors: tmdb.directors,
@@ -42,9 +51,52 @@ function applyTmdb(stored: Movie | undefined, tmdb: TmdbMovie, now: Date): Movie
     ids: { imdb: tmdb.imdbId, letterboxd: stored?.ids.letterboxd ?? null },
     ratings: stored?.ratings ?? {},
     tmdbFetchedAt: now,
-    // Sem a chave quando nunca foi buscado: o Firestore recusa campo undefined.
-    ...(stored?.bechdel && { bechdel: stored.bechdel }),
+    ...(tmdb.extras && applyTmdbExtras(stored, tmdb.extras, now)),
   };
+}
+
+/**
+ * Campos extras do TMDb no formato de movies/{tmdbId}. Em `providersBR`, `previous` guarda os
+ * serviços da última busca de um dia anterior (Brasília), para a notificação "Chegou no streaming"
+ * comparar: uma segunda busca no mesmo dia (abertura do filme depois da rotina) não apaga a
+ * diferença. Na primeira busca, `previous` é igual ao atual (nada chegou ainda).
+ *
+ * @param stored - Documento guardado, se existir.
+ * @param extras - Campos extras vindos do TMDb.
+ * @param now - Data da busca.
+ * @returns Os campos a gravar.
+ */
+function applyTmdbExtras(stored: Movie | undefined, extras: TmdbMovieExtras, now: Date): Partial<Movie> {
+  return {
+    titlePt: extras.titlePt,
+    tagline: extras.tagline,
+    budget: extras.budget,
+    revenue: extras.revenue,
+    certBR: extras.certBR,
+    collection: extras.collection,
+    keywords: extras.keywords,
+    recs: extras.recs,
+    recsInfo: extras.recsInfo,
+    release: extras.release,
+    providersBR: { flatrate: extras.providersBR, previous: previousProviders(stored, extras, now), fetchedAt: now },
+    popularity: extras.popularity,
+    vote: extras.vote,
+    votes: extras.votes,
+  };
+}
+
+/**
+ * Serviços de streaming a guardar como `previous`: os da busca de um dia anterior.
+ *
+ * @param stored - Documento guardado, se existir.
+ * @param extras - Campos extras vindos agora do TMDb.
+ * @param now - Data da busca.
+ * @returns O `previous` guardado, se a última busca foi hoje; senão, o atual guardado (ou o novo, na primeira busca).
+ */
+function previousProviders(stored: Movie | undefined, extras: TmdbMovieExtras, now: Date): string[] {
+  const current = stored?.providersBR;
+  if (!current) return extras.providersBR;
+  return brazilDay(current.fetchedAt) === brazilDay(now) ? current.previous : current.flatrate;
 }
 
 /**
@@ -67,7 +119,9 @@ function applyLetterboxd(movie: Movie, letterboxd: LetterboxdRating, now: Date):
 }
 
 /**
- * Grava as três notas que a OMDb traz juntas (IMDb, Rotten Tomatoes e Metacritic).
+ * Grava as três notas que a OMDb traz juntas (IMDb, Rotten Tomatoes e Metacritic), a bilheteria nos
+ * EUA e, se os prêmios já existem, o resumo de prêmios em português. Sem prêmios guardados, o resumo
+ * fica para a rotina enrich, que grava os prêmios inteiros.
  *
  * @param movie - Documento a atualizar.
  * @param omdb - Notas vindas da OMDb.
@@ -75,6 +129,7 @@ function applyLetterboxd(movie: Movie, letterboxd: LetterboxdRating, now: Date):
  * @returns O documento com as notas novas.
  */
 function applyOmdb(movie: Movie, omdb: OmdbRatings, now: Date): Movie {
+  const { awardsSummary, boxOfficeUS } = omdb;
   return {
     ...movie,
     ratings: {
@@ -83,5 +138,7 @@ function applyOmdb(movie: Movie, omdb: OmdbRatings, now: Date): Movie {
       rottenTomatoes: { ...omdb.rottenTomatoes, fetchedAt: now },
       metacritic: { ...omdb.metacritic, fetchedAt: now },
     },
+    ...(boxOfficeUS !== undefined && { boxOfficeUS }),
+    ...(awardsSummary !== undefined && movie.awards && { awards: { ...movie.awards, summary: awardsSummary } }),
   };
 }

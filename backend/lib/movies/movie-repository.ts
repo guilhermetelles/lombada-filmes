@@ -39,6 +39,27 @@ export async function findMovie(db: Firestore, tmdbId: number): Promise<Movie | 
 }
 
 /**
+ * Lê vários movies/{tmdbId} numa ida só ao banco. Um documento fora do formato conta como ausente
+ * (registrado no log), para não derrubar a rotina que pediu.
+ *
+ * @param db - Firestore.
+ * @param tmdbIds - Ids dos filmes no TMDb.
+ * @returns Os documentos encontrados, por id; quem não existe fica fora do mapa.
+ */
+export async function findMovies(db: Firestore, tmdbIds: number[]): Promise<Map<number, Movie>> {
+  const movies = new Map<number, Movie>();
+  if (tmdbIds.length === 0) return movies;
+  const snapshots = await db.getAll(...tmdbIds.map((tmdbId) => db.doc(`movies/${tmdbId}`)));
+  for (const snapshot of snapshots) {
+    if (!snapshot.exists) continue;
+    const parsed = MovieSchema.safeParse(snapshot.data());
+    if (parsed.success) movies.set(Number(snapshot.id), parsed.data);
+    else logger.warn('filme fora do formato, pulado', { tmdbId: snapshot.id });
+  }
+  return movies;
+}
+
+/**
  * Grava movies/{tmdbId} por inteiro.
  *
  * @param db - Firestore.

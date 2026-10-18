@@ -44,7 +44,8 @@ class PersonRepository(private val db: FirebaseFirestore) {
             directed = credits("directed"),
             actedCount = getLong("actedCount")?.toInt() ?: 0,
             acted = credits("acted"),
-            fetchedAt = getTimestamp("fetchedAt")?.toDate()?.toInstant()
+            fetchedAt = getTimestamp("fetchedAt")?.toDate()?.toInstant(),
+            awards = (get("awards") as? Map<*, *>)?.toAwards()
         )
     }
 

@@ -16,6 +16,8 @@ rules_version = '2';
 //   activeListId    id 1–64 | null: lista que abre ao iniciar
 //   createdAt       timestamp: hora do servidor na criação, imutável
 //   updatedAt       timestamp: hora do servidor a cada gravação
+//   feedSeenAt      map, opcional: id da lista → timestamp em que a pessoa viu o feed pela última
+//                   vez; até 200 listas. As regras não conferem o tipo de cada valor (não há laço).
 //
 // lists/{listId}                    membros leem; o app só edita nome e descrição. Criar, entrar,
 //                                   sair e apagar passam pelo backend (POST /api/lists e afins).
@@ -24,6 +26,8 @@ rules_version = '2';
 //   ownerUid        string 1–128, imutável
 //   memberUids      list<string>: quem lê e edita; só o backend altera (código de convite).
 //   source          map, opcional, só o backend grava: origem num export do Letterboxd
+//   memberProfiles  map, opcional, só o backend grava: uid → { name, photoUrl } dos membros.
+//                   O app 0.2.0 não conhece o campo e continua editando nome e descrição.
 //   createdAt       timestamp, imutável
 //   updatedAt       timestamp: hora do servidor a cada gravação
 //
@@ -40,6 +44,22 @@ rules_version = '2';
 //                   { title 1–300, year int 1870–2100 | null, posterPath 0–200 | null,
 //                     imdb 0–10 | null, letterboxd 0–5 | null,
 //                     directors: até 8 × { id int > 0, name 1–200 } }
+//
+// Dentro de lists/{listId}, gerados pelo backend (formatos em docs/contrato-v0.3.md §1):
+//   queue/{tmdbId}                  membros leem; só o backend grava (POST /api/lists/{id}/queue)
+//   dismissed/{tmdbId}              membros leem, criam e apagam; id = tmdbId em texto
+//     by            uid de quem dispensou (a própria pessoa)
+//     at            timestamp: hora do servidor na criação
+//   recs/current, feed/{feedId},    membros leem; só o backend grava
+//   quizzes/{dia}, scores/{mês},
+//   retros/{mês}
+//   quizzes/{dia}/answers/{uid}     só o backend grava (POST …/quiz/{dia}/answer). Membro lê as
+//                                   respostas do dia só depois de ter a própria.
+//   quizKeys/{dia}                  ninguém: gabarito e explicação, entregues na resposta
+//
+// devices/{uid}/tokens/{sha256},    ninguém: tokens de push, preferências e registro de envios,
+// notifyState/{uid},                só pelo backend (rotas /api/me/…)
+// notifyLog/{uid}_{dia}
 //
 // invites/{code}                    só o backend
 // movies/{tmdbId}, usage/{dia},     logados leem; só o backend grava
@@ -163,18 +183,24 @@ service cloud.firestore {
     // Validadores de documento (usados na criação e na edição)
     // ---------------------------------------------------------------
 
+    // Mapa lista → última vez que viu o feed. Só tipo e tamanho: as regras não percorrem os valores.
+    function isFeedSeenMap(value) {
+      return value is map && value.size() <= 200;
+    }
+
     function isValidUser(data) {
-      return hasFields(data, ['displayName', 'photoUrl', 'recentListIds', 'activeListId', 'createdAt', 'updatedAt'], []) &&
+      return hasFields(data, ['displayName', 'photoUrl', 'recentListIds', 'activeListId', 'createdAt', 'updatedAt'], ['feedSeenAt']) &&
              isText(data.displayName, 1, 80) &&
              (data.photoUrl == null || isHttpsUrl(data.photoUrl)) &&
              isIdList(data.recentListIds, 200) &&
              (data.activeListId == null || isId(data.activeListId)) &&
+             (!('feedSeenAt' in data) || isFeedSeenMap(data.feedSeenAt)) &&
              data.createdAt is timestamp &&
              data.updatedAt == request.time;
     }
 
     function isValidList(data) {
-      return hasFields(data, ['name', 'description', 'ownerUid', 'memberUids', 'createdAt', 'updatedAt'], ['source']) &&
+      return hasFields(data, ['name', 'description', 'ownerUid', 'memberUids', 'createdAt', 'updatedAt'], ['source', 'memberProfiles']) &&
              isText(data.name, 1, 80) && data.name.trim().size() >= 1 &&
              isText(data.description, 0, 280) &&
              isUid(data.ownerUid) &&
@@ -228,7 +254,7 @@ service cloud.firestore {
       // Criar passa pelo backend (POST /api/lists), que já gera o primeiro código de convite.
       allow create: if false;
 
-      // Membros editam só nome e descrição. Dono, membros e origem mudam só pelo backend.
+      // Membros editam só nome e descrição. Dono, membros, origem e perfis mudam só pelo backend.
       allow update: if isMemberOf(resource.data) &&
                        isValidList(request.resource.data) &&
                        changesOnly(['name', 'description', 'updatedAt']);
@@ -252,6 +278,61 @@ service cloud.firestore {
                          isValidEntry(request.resource.data) &&
                          keepsFields(['tmdbId', 'addedBy', 'createdAt', 'movie']);
       }
+
+      // Fila "Quero ver": entrar e sair passa pelo backend, que confere o filme.
+      match /queue/{tmdbId} {
+        allow read: if isListMember(listId);
+        allow write: if false;
+      }
+
+      // Sugestões dispensadas: a pessoa marca e desmarca por conta própria. Não há edição.
+      match /dismissed/{tmdbId} {
+        allow read, delete: if isListMember(listId);
+        allow create: if isListMember(listId) &&
+                         tmdbId.matches('^[1-9][0-9]{0,7}$') &&
+                         hasFields(request.resource.data, ['by', 'at'], []) &&
+                         request.resource.data.by == request.auth.uid &&
+                         request.resource.data.at == request.time;
+        allow update: if false;
+      }
+
+      match /recs/{recsId} {
+        allow read: if isListMember(listId);
+        allow write: if false;
+      }
+
+      match /feed/{feedId} {
+        allow read: if isListMember(listId);
+        allow write: if false;
+      }
+
+      match /quizzes/{day} {
+        allow read: if isListMember(listId);
+        allow write: if false;
+
+        // Ver o que a outra pessoa marcou só depois de responder. O exists depende só de quem
+        // pede, então a consulta da coleção inteira também passa.
+        match /answers/{answerUid} {
+          allow read: if isListMember(listId) &&
+                         exists(/databases/$(database)/documents/lists/$(listId)/quizzes/$(day)/answers/$(request.auth.uid));
+          allow write: if false;
+        }
+      }
+
+      // Gabarito do quiz: nem membros leem; o backend devolve na resposta.
+      match /quizKeys/{day} {
+        allow read, write: if false;
+      }
+
+      match /scores/{month} {
+        allow read: if isListMember(listId);
+        allow write: if false;
+      }
+
+      match /retros/{month} {
+        allow read: if isListMember(listId);
+        allow write: if false;
+      }
     }
 
     match /invites/{code} {
@@ -271,6 +352,19 @@ service cloud.firestore {
     match /usage/{day} {
       allow read: if isSignedIn();
       allow write: if false;
+    }
+
+    // Notificações: tudo pelo backend, nem a própria pessoa lê.
+    match /devices/{uid}/{document=**} {
+      allow read, write: if false;
+    }
+
+    match /notifyState/{uid} {
+      allow read, write: if false;
+    }
+
+    match /notifyLog/{logId} {
+      allow read, write: if false;
     }
   }
 }

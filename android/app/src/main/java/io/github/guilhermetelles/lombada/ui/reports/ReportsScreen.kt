@@ -53,7 +53,7 @@ private const val DIRECTORS_SUBTITLE =
 
 /**
  * Relatórios: resumo, prévia de "Vocês contra a crítica", filmes por mês, diretores, atores,
- * Teste de Bechdel, gêneros, décadas e o acesso ao consumo das APIs. Tudo calculado da lista em memória.
+ * Teste de Bechdel, "Oscar contra Framboesa", gêneros, décadas e o acesso ao consumo das APIs. Tudo calculado da lista em memória.
  *
  * @param listId Lista ativa.
  * @param onOpenMovie Abre um filme.
@@ -210,6 +210,14 @@ private fun Content(
 
     state.bechdel?.let { BechdelCard(it) }
 
+    state.awards?.let { report ->
+        AwardsCard(report) { row ->
+            onOpenMovie(
+                MovieRoute(row.entry.tmdbId, row.entry.movie.title, row.entry.movie.year, row.entry.movie.posterPath)
+            )
+        }
+    }
+
     ReportSection("Gêneros", AnnotatedString("Os 10 gêneros mais frequentes. Um filme pode contar em mais de um.")) {
         BarChart(state.genres)
     }
@@ -224,7 +232,7 @@ private fun Content(
     Text(
         "Notas do IMDb, Rotten Tomatoes e Metacritic pela OMDb; nota do Letterboxd pelas páginas " +
             "públicas do Letterboxd; Teste de Bechdel pelo bechdeltest.com; catálogo, elenco e fichas " +
-            "pelo TMDb. Este app usa a API do TMDb, " +
+            "pelo TMDb; prêmios pela Wikidata, Wikipedia e OMDb. Este app usa a API do TMDb, " +
             "mas não é endossado nem certificado pelo TMDb.",
         style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.5.sp, lineHeight = 19.sp),
         color = LombadaColors.Paper3,

@@ -1,11 +1,12 @@
-import type { Firestore } from 'firebase-admin/firestore';
+import { FieldValue, type Firestore } from 'firebase-admin/firestore';
 import { deleteListData } from './delete-list-data.js';
 import { requireMember } from './list-access.js';
-import { listDocument } from './list-repository.js';
+import { listDocument, memberProfileField } from './list-repository.js';
 
 /**
  * Tira a pessoa da lista. Se a dona sair, a posse passa para a próxima integrante, para a lista
- * nunca ficar sem ninguém que possa apagá-la. Se ninguém sobrar, a lista é apagada por inteiro.
+ * nunca ficar sem ninguém que possa apagá-la. O perfil da pessoa sai de memberProfiles na mesma
+ * gravação. Se ninguém sobrar, a lista é apagada por inteiro.
  *
  * @param db - Firestore.
  * @param uid - Quem está saindo.
@@ -29,7 +30,17 @@ async function leaveList(db: Firestore, uid: string, listId: string, now: Date):
     }
 
     const ownerUid = list.ownerUid === uid ? nextOwner : list.ownerUid;
-    transaction.update(listRef, { memberUids: remaining, ownerUid, updatedAt: now });
+    transaction.update(
+      listRef,
+      'memberUids',
+      remaining,
+      'ownerUid',
+      ownerUid,
+      'updatedAt',
+      now,
+      memberProfileField(uid),
+      FieldValue.delete(),
+    );
     return false;
   });
 

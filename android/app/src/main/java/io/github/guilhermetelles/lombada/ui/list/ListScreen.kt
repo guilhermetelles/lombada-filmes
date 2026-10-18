@@ -55,6 +55,9 @@ import io.github.guilhermetelles.lombada.ui.search.SearchViewModel
 import io.github.guilhermetelles.lombada.ui.search.searchResults
 import io.github.guilhermetelles.lombada.ui.theme.LombadaColors
 import io.github.guilhermetelles.lombada.ui.theme.rememberReducedMotion
+import io.github.guilhermetelles.lombada.ui.tiers.ListModeBar
+import io.github.guilhermetelles.lombada.ui.tiers.TierList
+import io.github.guilhermetelles.lombada.ui.tiers.TiersMeta
 import kotlinx.coroutines.launch
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
@@ -75,6 +78,8 @@ private const val LIST_HEADER_ITEMS = 5
  * @param onOpenPerson Abre a tela de uma pessoa achada na busca.
  * @param onAbout Abre "Sobre".
  * @param onSignOut Sair da conta.
+ * @param onOpenAdvancedSearch Abre a busca avançada pelo atalho da busca.
+ * @param topBarActions Ações da barra do app antes do menu ⋮: o sino da Atividade e os membros.
  */
 @Composable
 fun ListScreen(
@@ -85,7 +90,9 @@ fun ListScreen(
     onOpenMovie: (MovieRoute) -> Unit,
     onOpenPerson: (PersonRoute) -> Unit,
     onAbout: () -> Unit,
-    onSignOut: () -> Unit
+    onSignOut: () -> Unit,
+    onOpenAdvancedSearch: () -> Unit = {},
+    topBarActions: @Composable () -> Unit = {}
 ) {
     val onOpenEntry: (Entry) -> Unit = { entry ->
         onOpenMovie(MovieRoute(entry.tmdbId, entry.movie.title, entry.movie.year, entry.movie.posterPath))
@@ -98,7 +105,9 @@ fun ListScreen(
     val reducedMotion = rememberReducedMotion()
     val focusManager = LocalFocusManager.current
     var expanded by rememberSaveable { mutableStateOf(setOf<String>()) }
-    val dragEnabled = state.sortMode == SortMode.Ranking
+    // Modo Tiers: outra forma de ver o ranking, no lugar das fitas; só vive nesta tela.
+    var tiers by rememberSaveable { mutableStateOf(false) }
+    val dragEnabled = state.sortMode == SortMode.Ranking && !tiers
 
     val reorderState =
         rememberReorderableLazyListState(lazyState) { from, to ->
@@ -119,10 +128,20 @@ fun ListScreen(
             contentPadding = WindowInsets.navigationBars.asPaddingValues(),
             modifier = Modifier.fillMaxSize()
         ) {
-            item(key = "topbar") { LombadaTopBar { AccountMenu(onAbout, onSignOut) } }
+            item(key = "topbar") {
+                LombadaTopBar {
+                    topBarActions()
+                    AccountMenu(onAbout, onSignOut)
+                }
+            }
             item(key = "title") { ListTitle(list.name, list.description, onSwitchList) }
             stickyHeader(key = "search") {
-                SearchBar(search.query, searchViewModel::onQueryChange, searchViewModel::clear)
+                SearchBar(
+                    search.query,
+                    searchViewModel::onQueryChange,
+                    searchViewModel::clear,
+                    onAdvanced = onOpenAdvancedSearch
+                )
             }
             if (search.active) {
                 searchResults(
@@ -140,14 +159,25 @@ fun ListScreen(
                 )
                 return@LazyColumn
             }
-            item(key = "sort") { SortBar(state.sortMode, viewModel::setSortMode) }
+            item(key = "sort") {
+                ListModeBar(state.sortMode, tiers, onModeChange = { mode ->
+                    tiers = false
+                    viewModel.setSortMode(mode)
+                }, onTiers = { tiers = true })
+            }
             item(key = "meta") {
-                ListMeta(state.ranking.size, state.sortMode, state.newestFirst, viewModel::toggleDateDirection)
+                if (tiers) {
+                    TiersMeta(state.ranking.size)
+                } else {
+                    ListMeta(state.ranking.size, state.sortMode, state.newestFirst, viewModel::toggleDateDirection)
+                }
             }
             when {
                 state.loading -> item(key = "loading") { Loading() }
 
                 state.ranking.isEmpty() -> item(key = "empty") { EmptyShelf() }
+
+                tiers -> item(key = "tiers") { TierList(state.ranking, onOpenEntry) }
 
                 else -> {
                     items(state.shown, key = { it.id }) { entry ->
@@ -223,8 +253,13 @@ fun ListScreen(
     }
 
     // Depois de adicionar: sai da busca, rola até a entrada nova e deixa a etiqueta colar.
-    LaunchedEffect(state.justAddedId, search.active, state.shown.size) {
+    LaunchedEffect(state.justAddedId, search.active, state.shown.size, tiers) {
         val newId = state.justAddedId ?: return@LaunchedEffect
+        if (tiers) {
+            // A entrada nova aparece nas fitas: sai do modo Tiers e volta aqui.
+            tiers = false
+            return@LaunchedEffect
+        }
         if (search.active) {
             // Volta aqui quando a busca fechar e as fitas estiverem na lista.
             searchViewModel.clear()

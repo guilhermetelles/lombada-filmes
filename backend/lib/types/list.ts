@@ -4,6 +4,15 @@ export type ListSource = {
   importedAt: Date;
 };
 
+/** Nome e foto de um membro, copiados da conta Google pelo backend. */
+export type MemberProfile = {
+  name: string;
+  photoUrl: string | null;
+};
+
+/** lists/{listId}.memberProfiles: perfil de cada membro, por uid. */
+export type MemberProfiles = Record<string, MemberProfile>;
+
 /** Documento lists/{listId}. */
 export type List = {
   name: string;
@@ -11,6 +20,7 @@ export type List = {
   ownerUid: string;
   memberUids: string[];
   source?: ListSource | undefined;
+  memberProfiles?: MemberProfiles | undefined; // só o backend grava
   createdAt: Date;
   updatedAt: Date;
 };

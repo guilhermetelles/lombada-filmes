@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Só o que o sistema usa antes do Compose: ícone e janela de abertura. O resto fica em LombadaColors. -->
+    <!-- Só o que o sistema usa fora do Compose: ícone, janela de abertura e avisos. O resto fica em LombadaColors. -->
     <color name="ground">#121433</color>
+    <!-- Amarelo da etiqueta (LombadaColors.Sticker), no ícone dos avisos. -->
+    <color name="notification_accent">#FFD93B</color>
 </resources>

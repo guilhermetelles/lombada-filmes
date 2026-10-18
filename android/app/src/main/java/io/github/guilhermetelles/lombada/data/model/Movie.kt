@@ -83,6 +83,22 @@ data class Bechdel(
  * @property missingDirectorPhotos Se algum diretor está no formato antigo, sem o campo de foto; o
  *   backend completa na próxima abertura do filme.
  * @property bechdel Teste de Bechdel; null quando o backend ainda não buscou.
+ * @property titlePt Título no Brasil.
+ * @property tagline Slogan em português.
+ * @property budget Orçamento em US$.
+ * @property revenue Bilheteria mundial em US$.
+ * @property boxOfficeUS Bilheteria nos EUA em US$ (OMDb).
+ * @property certBR Classificação indicativa no Brasil.
+ * @property collection Coleção (saga) do TMDb.
+ * @property keywords Até 25 palavras-chave do TMDb, em inglês.
+ * @property recs Até 10 ids de filmes recomendados pelo TMDb.
+ * @property recsInfo Título, ano e capa dos mesmos filmes de [recs], para a fileira de parecidos.
+ * @property providersBR Streaming por assinatura no Brasil.
+ * @property awards Prêmios e indicações.
+ * @property popularity Popularidade no TMDb.
+ * @property vote Nota média no TMDb, de 0 a 10.
+ * @property votes Quantidade de votos no TMDb.
+ * @property extraFetchedAt Quando os campos extras (de [titlePt] em diante) foram buscados.
  */
 data class Movie(
     val tmdbId: Int,
@@ -103,7 +119,23 @@ data class Movie(
     val metacritic: Rating?,
     val tmdbFetchedAt: Instant?,
     val missingDirectorPhotos: Boolean = false,
-    val bechdel: Bechdel? = null
+    val bechdel: Bechdel? = null,
+    val titlePt: String? = null,
+    val tagline: String? = null,
+    val budget: Long? = null,
+    val revenue: Long? = null,
+    val boxOfficeUS: Long? = null,
+    val certBR: String? = null,
+    val collection: MovieCollection? = null,
+    val keywords: List<String> = emptyList(),
+    val recs: List<Int> = emptyList(),
+    val recsInfo: List<MovieRecInfo> = emptyList(),
+    val providersBR: ProvidersBR? = null,
+    val awards: Awards? = null,
+    val popularity: Double? = null,
+    val vote: Double? = null,
+    val votes: Int? = null,
+    val extraFetchedAt: Instant? = null
 ) {
     /** Cópia resumida para gravar numa entrada nova. */
     fun toSnapshot(): MovieSnapshot = MovieSnapshot(
@@ -115,3 +147,13 @@ data class Movie(
         directors = directors.take(8).map { PersonRef(it.id, it.name) }
     )
 }
+
+/**
+ * Um filme recomendado pelo TMDb, em `movies/{tmdbId}.recsInfo`.
+ *
+ * @property tmdbId Filme.
+ * @property title Título (em português quando o TMDb tem).
+ * @property year Ano.
+ * @property posterPath Capa.
+ */
+data class MovieRecInfo(val tmdbId: Int, val title: String, val year: Int?, val posterPath: String?)

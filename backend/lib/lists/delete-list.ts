@@ -4,7 +4,8 @@ import { requireOwner } from './list-access.js';
 import { listDocument } from './list-repository.js';
 
 /**
- * Apaga uma lista, as entradas e os códigos de convite. Só a dona pode.
+ * Apaga uma lista, as entradas, a fila e os códigos de convite. Só a dona pode. Os perfis de
+ * memberProfiles saem junto com o documento.
  *
  * @param db - Firestore.
  * @param uid - Quem pede a exclusão.

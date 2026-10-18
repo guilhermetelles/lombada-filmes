@@ -2,6 +2,7 @@ import { describe, test } from 'node:test';
 import {
   collection,
   deleteDoc,
+  deleteField,
   doc,
   getDoc,
   getDocs,
@@ -18,6 +19,9 @@ import { MEMBER, newList, OUTSIDER, OWNER, updatedNow } from './support/samples.
 const firestoreAs = useRulesEnvironment();
 const existingList = (as: string | null) => doc(firestoreAs(as), 'lists/L1');
 const newListDoc = (as: string | null) => doc(firestoreAs(as), 'lists/L2');
+const listWithProfiles = (as: string | null) => doc(firestoreAs(as), 'lists/LP');
+const editProfilesListAsMember = (fields: Record<string, unknown>) =>
+  updateDoc(listWithProfiles(MEMBER), { ...fields, ...updatedNow() });
 const editAsMember = (fields: Record<string, unknown>) =>
   updateDoc(existingList(MEMBER), { ...fields, ...updatedNow() });
 
@@ -56,6 +60,20 @@ describe('lists: edição', () => {
   test('nome com 1000 caracteres', () => denies(editAsMember({ name: 'x'.repeat(1000) })));
   test('campo extra', () => denies(editAsMember({ hacked: true })));
   test('muda createdAt', () => denies(editAsMember({ createdAt: serverTimestamp() })));
+});
+
+describe('lists: memberProfiles (só o backend grava)', () => {
+  test('membro edita nome e descrição de lista com memberProfiles, como o app 0.2.0', () =>
+    allows(editProfilesListAsMember({ name: 'Novo nome', description: 'Nova' })));
+  test('membro lê lista com memberProfiles', () => allows(getDoc(listWithProfiles(MEMBER))));
+  test('quem não é membro lê lista com memberProfiles', () => denies(getDoc(listWithProfiles(OUTSIDER))));
+  test('membro troca o próprio nome em memberProfiles', () =>
+    denies(editProfilesListAsMember({ [`memberProfiles.${MEMBER}.name`]: 'Outro' })));
+  test('membro inclui alguém em memberProfiles', () =>
+    denies(editProfilesListAsMember({ [`memberProfiles.${OUTSIDER}`]: { name: 'X', photoUrl: null } })));
+  test('membro apaga memberProfiles', () => denies(editProfilesListAsMember({ memberProfiles: deleteField() })));
+  test('membro cria memberProfiles numa lista sem o campo', () =>
+    denies(editAsMember({ memberProfiles: { [MEMBER]: { name: 'X', photoUrl: null } } })));
 });
 
 describe('lists: exclusão', () => {

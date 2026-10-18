@@ -1,5 +1,6 @@
 import * as z from 'zod';
 import type { CastMember, Director, Person, PersonRef } from '../types/person.js';
+import { AwardsSchema } from './awards.js';
 import { firestoreDate } from './firestore.js';
 
 /** Referência a uma pessoa do TMDb dentro de um filme (diretores). */
@@ -45,4 +46,5 @@ export const PersonSchema: z.ZodType<Person> = z.object({
     )
     .default([]),
   fetchedAt: firestoreDate,
+  awards: AwardsSchema.optional(),
 });
