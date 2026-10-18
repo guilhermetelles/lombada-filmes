@@ -5,6 +5,7 @@ import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.snapshots
+import io.github.guilhermetelles.lombada.data.model.MemberProfile
 import io.github.guilhermetelles.lombada.data.model.MovieList
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filter
@@ -93,7 +94,16 @@ class ListRepository(private val db: FirebaseFirestore) {
             name = getString("name").orEmpty(),
             description = getString("description").orEmpty(),
             ownerUid = getString("ownerUid").orEmpty(),
-            memberUids = (get("memberUids") as? List<String>).orEmpty()
+            memberUids = (get("memberUids") as? List<String>).orEmpty(),
+            memberProfiles = (get("memberProfiles") as? Map<*, *>).orEmpty().toMemberProfiles()
         )
     }
+
+    // Membro sem nome fica de fora; foto só em https, como no resto do app.
+    private fun Map<*, *>.toMemberProfiles(): Map<String, MemberProfile> = mapNotNull { (key, value) ->
+        val uid = key as? String ?: return@mapNotNull null
+        val fields = value as? Map<*, *> ?: return@mapNotNull null
+        val name = fields.string("name")?.trim()?.takeIf { it.isNotEmpty() } ?: return@mapNotNull null
+        uid to MemberProfile(name = name, photoUrl = fields.string("photoUrl")?.takeIf { it.startsWith("https://") })
+    }.toMap()
 }
