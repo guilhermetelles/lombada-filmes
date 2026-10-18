@@ -6,7 +6,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 object ListRoute
 
-/** Relatórios, a segunda aba. */
+/** Relatórios, a quinta aba. */
 @Serializable
 object ReportsRoute
 
@@ -22,8 +22,75 @@ object AboutRoute
 @Serializable
 object UsageRoute
 
+/** Fila "Quero ver", a segunda aba. */
+@Serializable
+object QueueRoute
+
+/** Sugestões, a terceira aba. */
+@Serializable
+object RecsRoute
+
+/** Quiz: a pergunta de hoje, o placar e o histórico; a quarta aba. */
+@Serializable
+object QuizRoute
+
 /**
- * Detalhe de um filme. Título, ano e capa vêm junto para a tela abrir na hora, antes do Firestore.
+ * Pergunta do quiz.
+ *
+ * @property day Dia `AAAA-MM-DD` em Brasília; null é hoje.
+ * @property type Tipo da pergunta, quando já se sabe antes de ler o documento.
+ */
+@Serializable
+data class QuizPlayRoute(val day: String? = null, val type: String? = null)
+
+/** Atividade da lista (o sino). */
+@Serializable
+object FeedRoute
+
+/** Detalhes da lista: membros, placar, vencedores e convite. */
+@Serializable
+object ListInfoRoute
+
+/**
+ * Comentário do dia.
+ *
+ * @property entryId Entrada; null deixa a tela escolher a de hoje.
+ */
+@Serializable
+data class MemoryRoute(val entryId: String? = null)
+
+/**
+ * Retrospectiva de um mês.
+ *
+ * @property month Mês `AAAA-MM`.
+ */
+@Serializable
+data class RetroRoute(val month: String)
+
+/**
+ * Duelo entre duas entradas.
+ *
+ * @property entryIdA Primeira entrada; null deixa a tela sortear.
+ * @property entryIdB Segunda entrada; null deixa a tela sortear.
+ */
+@Serializable
+data class DuelRoute(val entryIdA: String? = null, val entryIdB: String? = null)
+
+/** Busca avançada, com filtros e texto livre. */
+@Serializable
+object AdvancedSearchRoute
+
+/** Sorteio de um filme da fila. */
+@Serializable
+object RouletteRoute
+
+/** Configurações de notificação. */
+@Serializable
+object NotifySettingsRoute
+
+/**
+ * Detalhe de um filme, da lista ou de fora dela. Título, ano e capa vêm junto para a tela abrir na
+ * hora, antes do Firestore.
  *
  * @property tmdbId Filme.
  * @property title Título conhecido.
