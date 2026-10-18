@@ -16,6 +16,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -40,9 +41,10 @@ import io.github.guilhermetelles.lombada.ui.theme.LombadaColors
  * @param query Termo.
  * @param onQueryChange Termo novo.
  * @param onClear Limpa a busca.
+ * @param onAdvanced Abre a busca avançada; null esconde o atalho.
  */
 @Composable
-fun SearchBar(query: String, onQueryChange: (String) -> Unit, onClear: () -> Unit) {
+fun SearchBar(query: String, onQueryChange: (String) -> Unit, onClear: () -> Unit, onAdvanced: (() -> Unit)? = null) {
     val interaction = remember { MutableInteractionSource() }
     val focused by interaction.collectIsFocusedAsState()
     val focusManager = LocalFocusManager.current
@@ -99,6 +101,11 @@ fun SearchBar(query: String, onQueryChange: (String) -> Unit, onClear: () -> Uni
             if (query.isNotEmpty()) {
                 IconButton(onClick = onClear, modifier = Modifier.size(48.dp)) {
                     Icon(Icons.Filled.Close, contentDescription = "Limpar busca", tint = LombadaColors.Paper2)
+                }
+            }
+            if (onAdvanced != null) {
+                IconButton(onClick = onAdvanced, modifier = Modifier.size(48.dp)) {
+                    Icon(Icons.Filled.Tune, contentDescription = "Busca avançada", tint = LombadaColors.Paper2)
                 }
             }
         }
