@@ -1,37 +1,87 @@
-import { SourceUnavailableError } from '../../errors/app-errors.js';
-import type { Fetch, WikidataClient } from '../../types/sources.js';
+import { WikidataAwardsResponse } from '../../schemas/sources/wikidata.js';
+import type { AwardsById, Fetch, WikidataClient } from '../../types/sources.js';
+import { DEFAULT_RETRY, fetchJsonWithRetry, type RetryOptions } from '../shared/fetch-json-with-retry.js';
+import { toAwardsById, toEnwikiTitles } from './award-rows.js';
+import { buildAwardsQuery, type TmdbIdProperty } from './awards-query.js';
+
+/** Serviço SPARQL do Wikidata. */
+const SPARQL_URL = 'https://query.wikidata.org/sparql';
 
 /**
- * Cria o cliente do Wikidata (consulta SPARQL por lote: P4947/P4985, id do TMDb, com P166 e P1411).
- * Ainda é um esqueleto: a versão real chega na Fase 1 (B1), com o fetch injetado.
- *
- * @param options - O fetch a usar.
- * @returns Cliente de prêmios por id do TMDb.
+ * User-Agent dos pedidos à Wikimedia (Wikidata e Wikipedia), com contato, como a política de uso
+ * pede.
  */
-function createWikidataClient({ fetch }: { fetch: Fetch }): WikidataClient {
-  // Guardado para a versão real; o esqueleto não faz pedidos.
-  void fetch;
+export const WIKIMEDIA_USER_AGENT =
+  'lombada/1.0 (app pessoal; +https://lombada-lovat.vercel.app; guilhermegts@gmail.com)';
+
+/** Maior lote numa consulta só; acima disso a URL fica longa e a consulta pode passar de 60 s. */
+const MAX_BATCH = 50;
+
+/**
+ * Cria o cliente do Wikidata: prêmios por id do TMDb, uma consulta SPARQL por lote (lotes acima de
+ * 50 viram mais de uma consulta). Responde 429 (pedidos demais)? Espera e tenta de novo.
+ *
+ * @param options - O fetch a usar e, nos testes, as novas tentativas sem espera.
+ * @returns Cliente de prêmios de filmes e de pessoas.
+ */
+function createWikidataClient({
+  fetch,
+  retry = DEFAULT_RETRY,
+}: {
+  fetch: Fetch;
+  retry?: RetryOptions;
+}): WikidataClient {
+  /**
+   * Roda a consulta de prêmios de um lote, em pedaços de até 50.
+   *
+   * @param tmdbIds - Ids do TMDb.
+   * @param property - P4947 (filmes) ou P4985 (pessoas).
+   * @returns As linhas de todas as consultas.
+   * @throws {SourceUnavailableError} Se o Wikidata falhar ou responder fora do formato.
+   */
+  const queryAwards = async (tmdbIds: number[], property: TmdbIdProperty) => {
+    const ids = [...new Set(tmdbIds)];
+    const rows = [];
+    for (let start = 0; start < ids.length; start += MAX_BATCH) {
+      const query = buildAwardsQuery(ids.slice(start, start + MAX_BATCH), property, property === 'P4947');
+      const params = new URLSearchParams({ query, format: 'json' });
+      const response = await fetchJsonWithRetry(
+        fetch,
+        'wikidata',
+        `${SPARQL_URL}?${params}`,
+        WikidataAwardsResponse,
+        { headers: { accept: 'application/sparql-results+json', 'user-agent': WIKIMEDIA_USER_AGENT } },
+        retry,
+      );
+      rows.push(...response.results.bindings);
+    }
+    return rows;
+  };
+
   return {
     /**
-     * Busca prêmios e indicações de filmes, em lote.
+     * Busca prêmios e indicações de filmes (P4947), com o artigo de cada um na Wikipedia em inglês.
      *
-     * @param _tmdbIds - Ids de filme do TMDb.
-     * @returns Prêmios por id do TMDb.
-     * @throws {SourceUnavailableError} Sempre, até a versão real.
+     * @param tmdbIds - Ids de filme do TMDb.
+     * @returns Prêmios (ainda com repetições) e títulos dos artigos, por id do TMDb.
+     * @throws {SourceUnavailableError} Se o Wikidata falhar ou responder fora do formato.
      */
-    async awardsByTmdbIds(_tmdbIds) {
-      throw new SourceUnavailableError('wikidata', 'prêmios de filmes não implementado');
+    async awardsByTmdbIds(tmdbIds) {
+      if (tmdbIds.length === 0) return { awards: new Map(), enwikiTitles: new Map() };
+      const rows = await queryAwards(tmdbIds, 'P4947');
+      return { awards: toAwardsById(rows), enwikiTitles: toEnwikiTitles(rows) };
     },
 
     /**
-     * Busca prêmios e indicações de pessoas, em lote.
+     * Busca prêmios e indicações de pessoas (P4985).
      *
-     * @param _personIds - Ids de pessoa do TMDb.
-     * @returns Prêmios por id de pessoa do TMDb.
-     * @throws {SourceUnavailableError} Sempre, até a versão real.
+     * @param personIds - Ids de pessoa do TMDb.
+     * @returns Prêmios por id de pessoa (ainda com repetições).
+     * @throws {SourceUnavailableError} Se o Wikidata falhar ou responder fora do formato.
      */
-    async personAwardsByTmdbIds(_personIds) {
-      throw new SourceUnavailableError('wikidata', 'prêmios de pessoas não implementado');
+    async personAwardsByTmdbIds(personIds): Promise<AwardsById> {
+      if (personIds.length === 0) return new Map();
+      return toAwardsById(await queryAwards(personIds, 'P4985'));
     },
   };
 }

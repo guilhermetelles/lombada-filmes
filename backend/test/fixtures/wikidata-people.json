@@ -1,0 +1,2497 @@
+{
+ "head": {
+  "vars": [
+   "tmdb",
+   "kind",
+   "awardLabel",
+   "catLabel",
+   "forLabel",
+   "year",
+   "article"
+  ]
+ },
+ "results": {
+  "bindings": [
+   {
+    "kind": {
+     "type": "literal",
+     "value": "win"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "37917"
+    },
+    "awardLabel": {
+     "xml:lang": "en",
+     "type": "literal",
+     "value": "Jupiter Awards"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "win"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "2710"
+    },
+    "awardLabel": {
+     "xml:lang": "pt",
+     "type": "literal",
+     "value": "Premios do Sindicato de Diretores"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "win"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "2710"
+    },
+    "awardLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Companheiro da Ordem do Canadá"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "win"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "2710"
+    },
+    "awardLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "estrela na calçada da fama de Hollywood"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "nom"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "37917"
+    },
+    "awardLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Oscar de Melhor Atriz"
+    },
+    "forLabel": {
+     "xml:lang": "pt",
+     "type": "literal",
+     "value": "Spencer"
+    },
+    "year": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+     "type": "literal",
+     "value": "2022"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "nom"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "37917"
+    },
+    "awardLabel": {
+     "xml:lang": "pt",
+     "type": "literal",
+     "value": "vencedores do MTV Movie Award de melhor atriz"
+    },
+    "forLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "New Moon"
+    },
+    "year": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+     "type": "literal",
+     "value": "2010"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "nom"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "37917"
+    },
+    "awardLabel": {
+     "xml:lang": "pt",
+     "type": "literal",
+     "value": "vencedores do MTV Movie Award de melhor atriz"
+    },
+    "forLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Crepúsculo"
+    },
+    "year": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+     "type": "literal",
+     "value": "2009"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "nom"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "11288"
+    },
+    "awardLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Prêmio MTV Movie de Melhor Beijo"
+    },
+    "forLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Crepúsculo"
+    },
+    "year": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+     "type": "literal",
+     "value": "2009"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "nom"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "11288"
+    },
+    "awardLabel": {
+     "xml:lang": "en",
+     "type": "literal",
+     "value": "Teen Choice Award for Choice Movie Actor - Sci-Fi/Fantasy"
+    },
+    "forLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Amanhecer – Parte 1"
+    },
+    "year": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+     "type": "literal",
+     "value": "2012"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "nom"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "11288"
+    },
+    "awardLabel": {
+     "xml:lang": "en",
+     "type": "literal",
+     "value": "Teen Choice Award for Choice Movie Actor - Sci-Fi/Fantasy"
+    },
+    "forLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Amanhecer – Parte 2"
+    },
+    "year": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+     "type": "literal",
+     "value": "2013"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "nom"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "11288"
+    },
+    "awardLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Framboesa de Ouro de pior ator"
+    },
+    "forLabel": {
+     "xml:lang": "pt",
+     "type": "literal",
+     "value": "Remember Me"
+    },
+    "year": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+     "type": "literal",
+     "value": "2010"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "nom"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "11288"
+    },
+    "awardLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Prêmio MTV Movie de Melhor Beijo"
+    },
+    "forLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "New Moon"
+    },
+    "year": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+     "type": "literal",
+     "value": "2010"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "nom"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "11288"
+    },
+    "awardLabel": {
+     "xml:lang": "en",
+     "type": "literal",
+     "value": "Golden Raspberry Award for Worst Screen Couple/Ensemble"
+    },
+    "forLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "New Moon"
+    },
+    "year": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+     "type": "literal",
+     "value": "2009"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "nom"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "11288"
+    },
+    "awardLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Framboesa de Ouro de pior ator"
+    },
+    "forLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Amanhecer – Parte 2"
+    },
+    "year": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+     "type": "literal",
+     "value": "2012"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "nom"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "11288"
+    },
+    "awardLabel": {
+     "xml:lang": "en",
+     "type": "literal",
+     "value": "Golden Raspberry Award for Worst Screen Couple/Ensemble"
+    },
+    "forLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Amanhecer – Parte 2"
+    },
+    "year": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+     "type": "literal",
+     "value": "2012"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "nom"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "11288"
+    },
+    "awardLabel": {
+     "xml:lang": "en",
+     "type": "literal",
+     "value": "Golden Raspberry Award for Worst Screen Couple/Ensemble"
+    },
+    "forLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Amanhecer – Parte 1"
+    },
+    "year": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+     "type": "literal",
+     "value": "2011"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "nom"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "11288"
+    },
+    "awardLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Framboesa de Ouro de pior ator"
+    },
+    "forLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Eclipse"
+    },
+    "year": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+     "type": "literal",
+     "value": "2010"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "nom"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "11288"
+    },
+    "awardLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Framboesa de Ouro de pior ator"
+    },
+    "forLabel": {
+     "xml:lang": "pt",
+     "type": "literal",
+     "value": "Remember Me"
+    },
+    "year": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+     "type": "literal",
+     "value": "2010"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "nom"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "11288"
+    },
+    "awardLabel": {
+     "xml:lang": "en",
+     "type": "literal",
+     "value": "MTV Movie Award for Best Male Performance"
+    },
+    "forLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "New Moon"
+    },
+    "year": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+     "type": "literal",
+     "value": "2010"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "nom"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "11288"
+    },
+    "awardLabel": {
+     "xml:lang": "pt",
+     "type": "literal",
+     "value": "Prêmio MTV Movie & TV de melhor luta"
+    },
+    "forLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Crepúsculo"
+    },
+    "year": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+     "type": "literal",
+     "value": "2009"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "nom"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "11288"
+    },
+    "awardLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Prêmio MTV Movie de Melhor Beijo"
+    },
+    "forLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Amanhecer – Parte 1"
+    },
+    "year": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+     "type": "literal",
+     "value": "2012"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "nom"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "11288"
+    },
+    "awardLabel": {
+     "xml:lang": "pt",
+     "type": "literal",
+     "value": "Framboesa de Ouro de pior ator coadjuvante"
+    },
+    "forLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "New Moon"
+    },
+    "year": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+     "type": "literal",
+     "value": "2009"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "nom"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "11288"
+    },
+    "awardLabel": {
+     "xml:lang": "en",
+     "type": "literal",
+     "value": "MTV Award for Global Superstar"
+    },
+    "year": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+     "type": "literal",
+     "value": "2010"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "nom"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "11288"
+    },
+    "awardLabel": {
+     "xml:lang": "en",
+     "type": "literal",
+     "value": "Teen Choice Award for Choice Movie Actor - Sci-Fi/Fantasy"
+    },
+    "forLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Eclipse"
+    },
+    "year": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+     "type": "literal",
+     "value": "2011"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "nom"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "11288"
+    },
+    "awardLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Prêmio MTV Movie de Melhor Beijo"
+    },
+    "forLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Eclipse"
+    },
+    "year": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+     "type": "literal",
+     "value": "2011"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "nom"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "11288"
+    },
+    "awardLabel": {
+     "xml:lang": "en",
+     "type": "literal",
+     "value": "MTV Movie Award for Best Male Performance"
+    },
+    "forLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Eclipse"
+    },
+    "year": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+     "type": "literal",
+     "value": "2011"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "nom"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "11288"
+    },
+    "awardLabel": {
+     "xml:lang": "pt",
+     "type": "literal",
+     "value": "Prêmio MTV Movie & TV de melhor luta"
+    },
+    "forLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Eclipse"
+    },
+    "year": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+     "type": "literal",
+     "value": "2011"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "nom"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "2710"
+    },
+    "awardLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Oscar de melhor diretor"
+    },
+    "forLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Avatar"
+    },
+    "year": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+     "type": "literal",
+     "value": "2010"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "nom"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "2710"
+    },
+    "awardLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Oscar de melhor filme"
+    },
+    "forLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Avatar: O Caminho da Água"
+    },
+    "year": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+     "type": "literal",
+     "value": "2023"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "nom"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "2710"
+    },
+    "awardLabel": {
+     "xml:lang": "pt",
+     "type": "literal",
+     "value": "Golden Globe Award de melhor direção"
+    },
+    "forLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Avatar: O Caminho da Água"
+    },
+    "year": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+     "type": "literal",
+     "value": "2023"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "nom"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "2710"
+    },
+    "awardLabel": {
+     "xml:lang": "en",
+     "type": "literal",
+     "value": "Golden Raspberry Award for Worst Screenplay"
+    },
+    "forLabel": {
+     "xml:lang": "pt",
+     "type": "literal",
+     "value": "Rambo: First Blood Part II"
+    },
+    "year": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+     "type": "literal",
+     "value": "1986"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "nom"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "2710"
+    },
+    "awardLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Oscar de melhor filme"
+    },
+    "forLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Titanic"
+    },
+    "year": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+     "type": "literal",
+     "value": "1998"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "nom"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "2710"
+    },
+    "awardLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Oscar de melhor diretor"
+    },
+    "forLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Titanic"
+    },
+    "year": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+     "type": "literal",
+     "value": "1998"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "nom"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "2710"
+    },
+    "awardLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Oscar de melhor filme"
+    },
+    "forLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Avatar"
+    },
+    "year": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+     "type": "literal",
+     "value": "2010"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "nom"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "2710"
+    },
+    "awardLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Oscar de melhor edição"
+    },
+    "forLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Titanic"
+    },
+    "year": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+     "type": "literal",
+     "value": "1998"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "nom"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "2710"
+    },
+    "awardLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Oscar de melhor edição"
+    },
+    "forLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Avatar"
+    },
+    "year": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+     "type": "literal",
+     "value": "2010"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "win"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "37917"
+    },
+    "awardLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Prêmio MTV Movie de Melhor Beijo"
+    },
+    "forLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "New Moon"
+    },
+    "year": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+     "type": "literal",
+     "value": "2010"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "win"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "37917"
+    },
+    "awardLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "César de melhor atriz secundária"
+    },
+    "forLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Clouds of Sils Maria"
+    },
+    "year": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+     "type": "literal",
+     "value": "2015"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "win"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "37917"
+    },
+    "awardLabel": {
+     "xml:lang": "pt",
+     "type": "literal",
+     "value": "vencedores do MTV Movie Award de melhor atriz"
+    },
+    "forLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Crepúsculo"
+    },
+    "year": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+     "type": "literal",
+     "value": "2009"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "win"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "37917"
+    },
+    "awardLabel": {
+     "xml:lang": "pt",
+     "type": "literal",
+     "value": "vencedores do MTV Movie Award de melhor atriz"
+    },
+    "forLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "New Moon"
+    },
+    "year": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+     "type": "literal",
+     "value": "2010"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "win"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "37917"
+    },
+    "awardLabel": {
+     "xml:lang": "pt",
+     "type": "literal",
+     "value": "Framboesa de Ouro de pior atriz"
+    },
+    "forLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Amanhecer – Parte 2"
+    },
+    "year": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+     "type": "literal",
+     "value": "2012"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "win"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "37917"
+    },
+    "awardLabel": {
+     "xml:lang": "pt",
+     "type": "literal",
+     "value": "Framboesa de Ouro de pior atriz"
+    },
+    "forLabel": {
+     "xml:lang": "pt",
+     "type": "literal",
+     "value": "Snow White and the Huntsman"
+    },
+    "year": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+     "type": "literal",
+     "value": "2012"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "win"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "37917"
+    },
+    "awardLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Prêmio MTV Movie de Melhor Beijo"
+    },
+    "forLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Crepúsculo"
+    },
+    "year": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+     "type": "literal",
+     "value": "2009"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "win"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "37917"
+    },
+    "awardLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Prêmio MTV Movie de Melhor Beijo"
+    },
+    "forLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Amanhecer – Parte 1"
+    },
+    "year": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+     "type": "literal",
+     "value": "2012"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "win"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "37917"
+    },
+    "awardLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Prêmio MTV Movie de Melhor Beijo"
+    },
+    "forLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Eclipse"
+    },
+    "year": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+     "type": "literal",
+     "value": "2011"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "win"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "37917"
+    },
+    "awardLabel": {
+     "xml:lang": "pt",
+     "type": "literal",
+     "value": "vencedores do MTV Movie Award de melhor atriz"
+    },
+    "forLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Eclipse"
+    },
+    "year": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+     "type": "literal",
+     "value": "2011"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "win"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "11288"
+    },
+    "awardLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Prêmio MTV Movie de Melhor Beijo"
+    },
+    "forLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Eclipse"
+    },
+    "year": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+     "type": "literal",
+     "value": "2011"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "win"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "11288"
+    },
+    "awardLabel": {
+     "xml:lang": "pt",
+     "type": "literal",
+     "value": "Prêmio MTV Movie & TV de melhor luta"
+    },
+    "forLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Crepúsculo"
+    },
+    "year": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+     "type": "literal",
+     "value": "2009"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "win"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "11288"
+    },
+    "awardLabel": {
+     "xml:lang": "pt",
+     "type": "literal",
+     "value": "Prêmio MTV Movie & TV de melhor luta"
+    },
+    "forLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Eclipse"
+    },
+    "year": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+     "type": "literal",
+     "value": "2011"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "win"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "11288"
+    },
+    "awardLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Prêmio MTV Movie de Melhor Beijo"
+    },
+    "forLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Crepúsculo"
+    },
+    "year": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+     "type": "literal",
+     "value": "2009"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "win"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "11288"
+    },
+    "awardLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Prêmio MTV Movie de Melhor Beijo"
+    },
+    "forLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "New Moon"
+    },
+    "year": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+     "type": "literal",
+     "value": "2010"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "win"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "11288"
+    },
+    "awardLabel": {
+     "xml:lang": "en",
+     "type": "literal",
+     "value": "MTV Movie Award for Best Male Performance"
+    },
+    "forLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "New Moon"
+    },
+    "year": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+     "type": "literal",
+     "value": "2010"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "win"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "11288"
+    },
+    "awardLabel": {
+     "xml:lang": "en",
+     "type": "literal",
+     "value": "MTV Award for Global Superstar"
+    },
+    "year": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+     "type": "literal",
+     "value": "2010"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "win"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "11288"
+    },
+    "awardLabel": {
+     "xml:lang": "en",
+     "type": "literal",
+     "value": "MTV Movie Award for Best Male Performance"
+    },
+    "forLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Eclipse"
+    },
+    "year": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+     "type": "literal",
+     "value": "2011"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "win"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "11288"
+    },
+    "awardLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Prêmio MTV Movie de Melhor Beijo"
+    },
+    "forLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Amanhecer – Parte 1"
+    },
+    "year": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+     "type": "literal",
+     "value": "2012"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "win"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "2710"
+    },
+    "awardLabel": {
+     "xml:lang": "pt",
+     "type": "literal",
+     "value": "Prémio Nierenberg"
+    },
+    "year": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+     "type": "literal",
+     "value": "2013"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "win"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "2710"
+    },
+    "awardLabel": {
+     "xml:lang": "pt",
+     "type": "literal",
+     "value": "Golden Globe Award de melhor direção"
+    },
+    "forLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Avatar"
+    },
+    "year": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+     "type": "literal",
+     "value": "2009"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "win"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "2710"
+    },
+    "awardLabel": {
+     "xml:lang": "en",
+     "type": "literal",
+     "value": "Dallas-Fort Worth Film Critics Association Award for Best Director"
+    },
+    "forLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Titanic"
+    },
+    "year": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+     "type": "literal",
+     "value": "1997"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "win"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "2710"
+    },
+    "awardLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Oscar de melhor edição"
+    },
+    "forLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Titanic"
+    },
+    "year": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+     "type": "literal",
+     "value": "1998"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "win"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "2710"
+    },
+    "awardLabel": {
+     "xml:lang": "pt",
+     "type": "literal",
+     "value": "Golden Globe Award de melhor direção"
+    },
+    "forLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Titanic"
+    },
+    "year": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+     "type": "literal",
+     "value": "1997"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "win"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "2710"
+    },
+    "awardLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Hall da Fama de Ficção Científica e Fantasia"
+    },
+    "year": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+     "type": "literal",
+     "value": "2012"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "win"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "2710"
+    },
+    "awardLabel": {
+     "xml:lang": "en",
+     "type": "literal",
+     "value": "Hans Hass Award"
+    },
+    "year": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+     "type": "literal",
+     "value": "2004"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "win"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "2710"
+    },
+    "awardLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Oscar de melhor diretor"
+    },
+    "forLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Titanic"
+    },
+    "year": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+     "type": "literal",
+     "value": "1998"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "win"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "2710"
+    },
+    "awardLabel": {
+     "xml:lang": "pt",
+     "type": "literal",
+     "value": "Canada's Walk of Fame"
+    },
+    "year": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+     "type": "literal",
+     "value": "2008"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "win"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "2710"
+    },
+    "awardLabel": {
+     "xml:lang": "en",
+     "type": "literal",
+     "value": "Golden Raspberry Award for Worst Screenplay"
+    },
+    "forLabel": {
+     "xml:lang": "pt",
+     "type": "literal",
+     "value": "Rambo: First Blood Part II"
+    },
+    "year": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+     "type": "literal",
+     "value": "1986"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "win"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "2710"
+    },
+    "awardLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Medalha Hubbard"
+    },
+    "year": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+     "type": "literal",
+     "value": "2013"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "win"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "2710"
+    },
+    "awardLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Prêmio Hugo de melhor apresentação dramática"
+    },
+    "forLabel": {
+     "xml:lang": "pt",
+     "type": "literal",
+     "value": "Aliens"
+    },
+    "year": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+     "type": "literal",
+     "value": "1987"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "win"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "2710"
+    },
+    "awardLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Prêmio Hugo de melhor apresentação dramática"
+    },
+    "forLabel": {
+     "xml:lang": "pt",
+     "type": "literal",
+     "value": "Aliens"
+    },
+    "year": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+     "type": "literal",
+     "value": "1992"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "win"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "2710"
+    },
+    "awardLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Prêmio Hugo de melhor apresentação dramática"
+    },
+    "forLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Terminator 2: Judgment Day"
+    },
+    "year": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+     "type": "literal",
+     "value": "1987"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "win"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "2710"
+    },
+    "awardLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Prêmio Hugo de melhor apresentação dramática"
+    },
+    "forLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Terminator 2: Judgment Day"
+    },
+    "year": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+     "type": "literal",
+     "value": "1992"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "win"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "2710"
+    },
+    "awardLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Oscar de melhor filme"
+    },
+    "forLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Titanic"
+    },
+    "year": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+     "type": "literal",
+     "value": "1998"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "win"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "2710"
+    },
+    "awardLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Hall da Fama da Califórnia"
+    },
+    "year": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+     "type": "literal",
+     "value": "2010"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "win"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "2710"
+    },
+    "awardLabel": {
+     "xml:lang": "pt",
+     "type": "literal",
+     "value": "Disney Legends"
+    },
+    "year": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+     "type": "literal",
+     "value": "2024"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "win"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "37917"
+    },
+    "awardLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Prêmio MTV Movie de Melhor Beijo"
+    },
+    "forLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "New Moon"
+    },
+    "year": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+     "type": "literal",
+     "value": "2010"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "win"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "37917"
+    },
+    "awardLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Prêmio MTV Movie de Melhor Beijo"
+    },
+    "forLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Crepúsculo"
+    },
+    "year": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+     "type": "literal",
+     "value": "2009"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "win"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "37917"
+    },
+    "awardLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Prêmio MTV Movie de Melhor Beijo"
+    },
+    "forLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Eclipse"
+    },
+    "year": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+     "type": "literal",
+     "value": "2011"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "win"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "37917"
+    },
+    "awardLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Prêmio MTV Movie de Melhor Beijo"
+    },
+    "forLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Amanhecer – Parte 1"
+    },
+    "year": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+     "type": "literal",
+     "value": "2012"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "win"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "37917"
+    },
+    "awardLabel": {
+     "xml:lang": "pt",
+     "type": "literal",
+     "value": "vencedores do MTV Movie Award de melhor atriz"
+    },
+    "forLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "New Moon"
+    },
+    "year": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+     "type": "literal",
+     "value": "2010"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "win"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "37917"
+    },
+    "awardLabel": {
+     "xml:lang": "pt",
+     "type": "literal",
+     "value": "vencedores do MTV Movie Award de melhor atriz"
+    },
+    "forLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Crepúsculo"
+    },
+    "year": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+     "type": "literal",
+     "value": "2009"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "win"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "37917"
+    },
+    "awardLabel": {
+     "xml:lang": "pt",
+     "type": "literal",
+     "value": "vencedores do MTV Movie Award de melhor atriz"
+    },
+    "forLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Eclipse"
+    },
+    "year": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+     "type": "literal",
+     "value": "2011"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "win"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "37917"
+    },
+    "awardLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "César de melhor atriz secundária"
+    },
+    "forLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Clouds of Sils Maria"
+    },
+    "year": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+     "type": "literal",
+     "value": "2015"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "win"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "37917"
+    },
+    "awardLabel": {
+     "xml:lang": "pt",
+     "type": "literal",
+     "value": "BAFTA de Melhor Ator/Atriz em Ascensão"
+    },
+    "year": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+     "type": "literal",
+     "value": "2010"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "win"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "11288"
+    },
+    "awardLabel": {
+     "xml:lang": "en",
+     "type": "literal",
+     "value": "MTV Award for Global Superstar"
+    },
+    "year": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+     "type": "literal",
+     "value": "2010"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "win"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "11288"
+    },
+    "awardLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Prêmio MTV Movie de Melhor Beijo"
+    },
+    "forLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Crepúsculo"
+    },
+    "year": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+     "type": "literal",
+     "value": "2009"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "win"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "11288"
+    },
+    "awardLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Prêmio MTV Movie de Melhor Beijo"
+    },
+    "forLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Amanhecer – Parte 1"
+    },
+    "year": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+     "type": "literal",
+     "value": "2012"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "win"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "11288"
+    },
+    "awardLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Prêmio MTV Movie de Melhor Beijo"
+    },
+    "forLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "New Moon"
+    },
+    "year": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+     "type": "literal",
+     "value": "2010"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "win"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "11288"
+    },
+    "awardLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Prêmio MTV Movie de Melhor Beijo"
+    },
+    "forLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Eclipse"
+    },
+    "year": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+     "type": "literal",
+     "value": "2011"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "win"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "11288"
+    },
+    "awardLabel": {
+     "xml:lang": "en",
+     "type": "literal",
+     "value": "MTV Movie Award for Best Male Performance"
+    },
+    "forLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "New Moon"
+    },
+    "year": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+     "type": "literal",
+     "value": "2010"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "win"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "11288"
+    },
+    "awardLabel": {
+     "xml:lang": "en",
+     "type": "literal",
+     "value": "MTV Movie Award for Best Male Performance"
+    },
+    "forLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Eclipse"
+    },
+    "year": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+     "type": "literal",
+     "value": "2011"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "win"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "11288"
+    },
+    "awardLabel": {
+     "xml:lang": "pt",
+     "type": "literal",
+     "value": "Prêmio MTV Movie & TV de melhor luta"
+    },
+    "forLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Eclipse"
+    },
+    "year": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+     "type": "literal",
+     "value": "2011"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "win"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "11288"
+    },
+    "awardLabel": {
+     "xml:lang": "pt",
+     "type": "literal",
+     "value": "Prêmio MTV Movie & TV de melhor luta"
+    },
+    "forLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Crepúsculo"
+    },
+    "year": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+     "type": "literal",
+     "value": "2009"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "win"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "2710"
+    },
+    "awardLabel": {
+     "xml:lang": "en",
+     "type": "literal",
+     "value": "Saturn Award for Best Director"
+    },
+    "forLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Terminator 2: Judgment Day"
+    },
+    "year": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+     "type": "literal",
+     "value": "1992"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "win"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "2710"
+    },
+    "awardLabel": {
+     "xml:lang": "en",
+     "type": "literal",
+     "value": "Saturn Award for Best Director"
+    },
+    "forLabel": {
+     "xml:lang": "pt",
+     "type": "literal",
+     "value": "Aliens"
+    },
+    "year": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+     "type": "literal",
+     "value": "1987"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "win"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "2710"
+    },
+    "awardLabel": {
+     "xml:lang": "en",
+     "type": "literal",
+     "value": "Saturn Award for Best Director"
+    },
+    "forLabel": {
+     "xml:lang": "pt",
+     "type": "literal",
+     "value": "True Lies"
+    },
+    "year": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+     "type": "literal",
+     "value": "1995"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "win"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "2710"
+    },
+    "awardLabel": {
+     "xml:lang": "en",
+     "type": "literal",
+     "value": "Saturn Award for Best Director"
+    },
+    "forLabel": {
+     "xml:lang": "pt",
+     "type": "literal",
+     "value": "The Abyss"
+    },
+    "year": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+     "type": "literal",
+     "value": "1991"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "win"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "2710"
+    },
+    "awardLabel": {
+     "xml:lang": "en",
+     "type": "literal",
+     "value": "Saturn Award for Best Director"
+    },
+    "forLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Avatar"
+    },
+    "year": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+     "type": "literal",
+     "value": "2010"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "win"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "2710"
+    },
+    "awardLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Prêmio Hugo de melhor apresentação dramática"
+    },
+    "forLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Terminator 2: Judgment Day"
+    },
+    "year": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+     "type": "literal",
+     "value": "1992"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "win"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "2710"
+    },
+    "awardLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Prêmio Hugo de melhor apresentação dramática"
+    },
+    "forLabel": {
+     "xml:lang": "pt",
+     "type": "literal",
+     "value": "Aliens"
+    },
+    "year": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+     "type": "literal",
+     "value": "1987"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "win"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "2710"
+    },
+    "awardLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Prêmio do Sindicato dos Diretores da América para a melhor direção - Longa Metragem"
+    },
+    "forLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Titanic"
+    },
+    "year": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+     "type": "literal",
+     "value": "1997"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "win"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "2710"
+    },
+    "awardLabel": {
+     "xml:lang": "pt",
+     "type": "literal",
+     "value": "Producers Guild of America de melhor filme"
+    },
+    "forLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Titanic"
+    },
+    "year": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+     "type": "literal",
+     "value": "1998"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "win"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "2710"
+    },
+    "awardLabel": {
+     "xml:lang": "en",
+     "type": "literal",
+     "value": "MTV Movie Award for Best Action Sequence"
+    },
+    "forLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Terminator 2: Judgment Day"
+    },
+    "year": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+     "type": "literal",
+     "value": "1992"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "win"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "2710"
+    },
+    "awardLabel": {
+     "xml:lang": "pt",
+     "type": "literal",
+     "value": "Critics Choice Award de Melhor Diretor"
+    },
+    "forLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Titanic"
+    },
+    "year": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+     "type": "literal",
+     "value": "1997"
+    }
+   },
+   {
+    "kind": {
+     "type": "literal",
+     "value": "win"
+    },
+    "tmdb": {
+     "type": "literal",
+     "value": "2710"
+    },
+    "awardLabel": {
+     "xml:lang": "en",
+     "type": "literal",
+     "value": "Saturn Award for Best Director"
+    },
+    "forLabel": {
+     "xml:lang": "pt-br",
+     "type": "literal",
+     "value": "Avatar: O Caminho da Água"
+    },
+    "year": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+     "type": "literal",
+     "value": "2024"
+    }
+   }
+  ]
+ }
+}
