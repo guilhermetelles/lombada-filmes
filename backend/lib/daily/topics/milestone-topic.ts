@@ -43,10 +43,12 @@ async function composeMilestone({ list, now }: DailyContext): Promise<DailyConte
     .filter(isDay)
     .sort()[0];
   const sinceFirst = first ? ` desde ${formatDay(first)}` : '';
+  // Sem duração guardada nos filmes, o texto fala só da contagem.
+  const hours = minutes > 0 ? ` e ${formatHours(minutes)} de filme` : '';
   return {
     type: 'daily.milestone',
     title,
-    body: `São ${plural(films, 'filme', 'filmes')} e ${formatHours(minutes)} de filme juntos${sinceFirst}.`,
+    body: `São ${plural(films, 'filme', 'filmes')}${hours} juntos${sinceFirst}.`,
     route: { name: 'reports' },
   };
 }
