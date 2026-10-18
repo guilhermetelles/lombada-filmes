@@ -5,7 +5,7 @@ export type Retro = {
   minutes: number;
   bestEntryId: string | null;
   worstEntryId: string | null;
-  genres: [string, number][]; // gênero e quantos filmes, do mais visto para o menos
+  genres: { genre: string; count: number }[]; // do mais visto para o menos (Firestore não aceita lista de listas)
   text: string | null; // Gemini, a partir dos comentários do mês
   generatedAt: Date;
 };

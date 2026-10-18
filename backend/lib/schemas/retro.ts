@@ -10,7 +10,7 @@ export const RetroSchema: z.ZodType<Retro> = z.object({
   minutes: z.number().nonnegative(),
   bestEntryId: z.string().nullable(),
   worstEntryId: z.string().nullable(),
-  genres: z.array(z.tuple([z.string(), z.number().int()])),
+  genres: z.array(z.object({ genre: z.string(), count: z.number().int() })),
   text: z.string().nullable(),
   generatedAt: firestoreDate,
 });
