@@ -18,6 +18,7 @@ export type RecItem = {
   score: number; // compatibilidade de 0 a 100
   reason: string; // frase curta (Gemini a partir dos comentários; reserva pelas variáveis)
   reasonFrom: string[]; // movieIds/entryIds da lista que justificam
+  reasonBy?: 'gemini' | 'rules' | undefined; // quem escreveu o motivo (ausente nos documentos antigos)
   source: RecSource;
   kind: RecKind;
 };

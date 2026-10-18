@@ -94,13 +94,18 @@ async function computeListRecs(run: RecsRun, listId: string, list: List): Promis
     index,
     memberNames(list),
   );
-  const reasonOf = (rec: ScoredRec) => reasons.get(rec.tmdbId) ?? fallbackReason(rec, index, fitted.model);
+  const toItem = (rec: ScoredRec) => {
+    const written = reasons.get(rec.tmdbId);
+    return written
+      ? toRecItem(rec, written, 'gemini')
+      : toRecItem(rec, fallbackReason(rec, index, fitted.model), 'rules');
+  };
   const doc: RecsDoc = {
     computedAt: run.dependencies.now(),
     modelVersion: MODEL_VERSION,
     model: fitted.model,
-    items: items.map((rec) => toRecItem(rec, reasonOf(rec))),
-    trending: trending.map((rec) => toRecItem(rec, reasonOf(rec))),
+    items: items.map(toItem),
+    trending: trending.map(toItem),
   };
   await recsDocument(db, listId).set(doc);
 

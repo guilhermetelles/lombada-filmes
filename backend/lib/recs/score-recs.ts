@@ -142,9 +142,10 @@ export function scoreCandidate(model: RecsModel, candidate: DiscoverCandidate, s
  *
  * @param rec - Sugestão pontuada.
  * @param reason - Motivo já escrito.
+ * @param reasonBy - Quem escreveu o motivo: o Gemini ou a reserva pelas variáveis.
  * @returns O item.
  */
-export function toRecItem(rec: ScoredRec, reason: string): RecItem {
+export function toRecItem(rec: ScoredRec, reason: string, reasonBy: 'gemini' | 'rules'): RecItem {
   const { movie, candidate } = rec;
   return {
     tmdbId: rec.tmdbId,
@@ -157,6 +158,7 @@ export function toRecItem(rec: ScoredRec, reason: string): RecItem {
     score: rec.score,
     reason,
     reasonFrom: rec.reasonFrom,
+    reasonBy,
     source: rec.source,
     kind: rec.kind,
   };

@@ -20,6 +20,7 @@ export const RecItemSchema: z.ZodType<RecItem> = z.object({
   score: z.number().min(0).max(100),
   reason: z.string(),
   reasonFrom: z.array(z.string()),
+  reasonBy: z.enum(['gemini', 'rules']).optional(),
   source: RecSourceSchema,
   kind: RecKindSchema,
 });

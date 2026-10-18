@@ -73,9 +73,11 @@ describe('runRecs', () => {
     assert.equal(saga?.kind, 'saga');
     assert.equal(saga?.reason, 'Continua a saga que vocês puseram no topo da lista');
     assert.equal(saga?.reasonFrom[0], 'e101');
+    assert.equal(saga?.reasonBy, 'gemini');
     const director = recs.items.find((item) => item.tmdbId === 211);
     assert.equal(director?.kind, 'diretor');
     assert.equal(director?.reason, 'Mesmo diretor de Topo da Saga (Diretora Recorrente), #1 na lista de vocês');
+    assert.equal(director?.reasonBy, 'rules');
     for (const item of [...recs.items, ...recs.trending]) {
       assert.ok(Number.isInteger(item.score) && item.score >= 0 && item.score <= 100);
       assert.ok(item.reason.length > 0);

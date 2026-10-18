@@ -125,9 +125,10 @@ describe('scoreMovie', () => {
     const rec = scoreMovie(BASELINE, index, 96, makeMovie({ genres: ['Animação'], year: null }), 'trending');
     assert.equal(rec.kind, 'emAlta');
     assert.equal(fallbackReason(rec, index, BASELINE), 'Em alta nesta semana');
-    const item = toRecItem(rec, 'motivo');
+    const item = toRecItem(rec, 'motivo', 'rules');
     assert.equal(item.source, 'trending');
     assert.ok(Number.isInteger(item.score) && item.score >= 0 && item.score <= 100);
+    assert.equal(item.reasonBy, 'rules');
   });
 });
 
