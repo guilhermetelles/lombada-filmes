@@ -57,7 +57,7 @@ data class UsageTableRow(val source: String, val name: String, val calls: List<I
 /**
  * Consumo por fonte e por dia.
  *
- * @property days Dias, do mais antigo para o mais recente.
+ * @property days Dias, do mais recente (hoje, à esquerda) para o mais antigo.
  * @property rows Uma linha por fonte com algum pedido no período, na ordem fixa das fontes.
  */
 data class UsageTable(val days: List<LocalDate>, val rows: List<UsageTableRow>)
@@ -68,7 +68,7 @@ data class UsageTable(val days: List<LocalDate>, val rows: List<UsageTableRow>)
  * @property model Nome do modelo.
  * @property calls Pedidos hoje.
  * @property errors Erros hoje.
- * @property quota Cota diária, quando o backend sabe.
+ * @property quota Respostas 429 de hoje (modelo sem cota), quando o backend sabe.
  */
 data class GeminiModelLine(val model: String, val calls: Int, val errors: Int, val quota: Int?)
 
@@ -159,7 +159,7 @@ object StatusLines {
         val byDay =
             usage
                 .mapNotNull { day -> runCatching { LocalDate.parse(day.day) }.getOrNull()?.let { it to day } }
-                .sortedBy { it.first }
+                .sortedByDescending { it.first }
         val days = byDay.map { it.first }
         val known = SOURCE_NAMES.map { it.first }.toSet()
         val extra = byDay.flatMap { it.second.sources.keys }.filter { it !in known }.distinct().sorted()

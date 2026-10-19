@@ -30,14 +30,6 @@ const val GEMINI_LIMIT_TEXT =
 @Composable
 fun GeminiModels(gemini: GeminiInfo?, lines: List<GeminiModelLine>) {
     Column {
-        gemini?.dailyLimitNote?.takeIf { it.isNotBlank() }?.let {
-            Text(
-                it,
-                style = MaterialTheme.typography.bodySmall.copy(fontSize = 13.sp, lineHeight = 18.sp),
-                color = LombadaColors.Paper2,
-                modifier = Modifier.padding(bottom = 10.dp)
-            )
-        }
         OrderLine("Busca em texto livre", gemini?.interpret.orEmpty())
         OrderLine("Motivos, quiz e retrospectiva", gemini?.text.orEmpty())
         if (lines.isEmpty()) {
@@ -74,12 +66,16 @@ private fun OrderLine(label: String, models: List<String>) {
 
 @Composable
 private fun ModelRow(line: GeminiModelLine) {
-    val quota = line.quota?.let { " de $it" }.orEmpty()
-    val errors =
-        when (line.errors) {
-            0 -> ""
-            1 -> ", 1 erro"
-            else -> ", ${line.errors} erros"
+    // `quota` conta as respostas 429 do dia: o modelo ficou sem cota e o backend passou para o próximo.
+    val outOfQuota = (line.quota ?: 0) > 0
+    val otherErrors = line.errors - (line.quota ?: 0)
+    val calls = if (line.calls == 1) "1 pedido" else "${line.calls} pedidos"
+    val tail =
+        when {
+            outOfQuota -> " · sem cota hoje"
+            otherErrors == 1 -> " · 1 erro"
+            otherErrors > 1 -> " · $otherErrors erros"
+            else -> ""
         }
     Row(modifier = Modifier.fillMaxWidth().padding(vertical = 3.dp).semantics(mergeDescendants = true) {}) {
         Text(
@@ -88,9 +84,9 @@ private fun ModelRow(line: GeminiModelLine) {
             modifier = Modifier.weight(1f).padding(end = 8.dp)
         )
         Text(
-            "${line.calls}$quota pedidos$errors",
+            "$calls$tail",
             style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp),
-            color = if (line.errors > 0) LombadaColors.Error else LombadaColors.Paper2,
+            color = if (tail.isNotEmpty()) LombadaColors.Error else LombadaColors.Paper2,
             textAlign = TextAlign.End
         )
     }

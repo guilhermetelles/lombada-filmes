@@ -53,9 +53,9 @@ class StatusLinesTest {
                 StatusUsageDay("2026-10-17", mapOf("bechdel" to CallCount(0)))
             )
         val table = StatusLines.usageTable(usage)
-        assertEquals(listOf("2026-10-17", "2026-10-18", "2026-10-19"), table.days.map { it.toString() })
+        assertEquals(listOf("2026-10-19", "2026-10-18", "2026-10-17"), table.days.map { it.toString() })
         assertEquals(listOf("tmdb", "omdb", "novo"), table.rows.map { it.source })
-        assertEquals(listOf(0, 5, 10), table.rows[0].calls)
+        assertEquals(listOf(10, 5, 0), table.rows[0].calls)
         assertEquals(15, table.rows[0].totalCalls)
         assertEquals(1, table.rows[1].totalErrors)
     }
