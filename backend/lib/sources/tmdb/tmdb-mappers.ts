@@ -1,3 +1,4 @@
+import { normalizeStreamingServices } from '../../discover/streaming-names.js';
 import {
   releaseDay,
   releaseYear,
@@ -51,7 +52,8 @@ export function toTmdbMovie(response: TmdbMovieResponse): TmdbMovie {
  * Tira da resposta de detalhes os campos extras da versão 0.3: título e slogan no Brasil,
  * orçamento e bilheteria (0 vira null, porque o TMDb usa 0 para "não sei"), classificação
  * indicativa no Brasil, saga, palavras-chave, recomendações (ids e resumo para a fileira de
- * parecidos), data de estreia, streaming por assinatura no Brasil, popularidade e nota.
+ * parecidos), data de estreia, streaming por assinatura no Brasil (com os nomes normalizados:
+ * sem planos repetidos nem canais de serviço que já está na lista), popularidade e nota.
  *
  * @param response - Resposta validada de /movie/{id}.
  * @returns Os campos extras no formato de movies/{tmdbId}.
@@ -74,7 +76,7 @@ export function toTmdbExtras(response: TmdbMovieResponse): TmdbMovieExtras {
     recs: recommendations.map((result) => result.id),
     recsInfo: recommendations.map(toRecInfo),
     release: releaseDay.parse(response.release_date),
-    providersBR: [...new Set(providers.map((provider) => provider.provider_name))],
+    providersBR: normalizeStreamingServices(providers.map((provider) => provider.provider_name)),
     popularity: response.popularity,
     vote: response.vote_count > 0 ? response.vote_average : null,
     votes: response.vote_count,

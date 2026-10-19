@@ -1,3 +1,4 @@
+import { normalizeStreamingServices } from '../../discover/streaming-names.js';
 import { findMovies } from '../../movies/movie-repository.js';
 import { joinPt } from '../../notify/portuguese-text.js';
 import { QueueItemSchema } from '../../schemas/queue.js';
@@ -28,7 +29,8 @@ async function composeStreaming({ dependencies, list, day }: DailyContext): Prom
     const movie = movies.get(tmdbId);
     const providers = movie?.providersBR;
     if (!movie || !providers || brazilDay(providers.fetchedAt) !== day) continue;
-    const arrived = providers.flatrate.filter((service) => !providers.previous.includes(service));
+    const previous = normalizeStreamingServices(providers.previous);
+    const arrived = normalizeStreamingServices(providers.flatrate).filter((service) => !previous.includes(service));
     if (arrived.length === 0) continue;
     return {
       type: 'daily.streaming',

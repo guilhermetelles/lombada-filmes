@@ -115,6 +115,28 @@ describe('TMDb: getMovie', () => {
     ]);
   });
 
+  test('streaming no Brasil com nomes normalizados: sem planos repetidos nem canal do serviço que já está', async () => {
+    const provider = (provider_name: string, provider_id: number) => ({ provider_name, provider_id });
+    const response = {
+      id: 1,
+      title: 'Filme',
+      'watch/providers': {
+        results: {
+          BR: {
+            flatrate: [
+              provider('Paramount Plus', 531),
+              provider('Paramount+ Amazon Channel', 582),
+              provider('HBO Max Amazon Channel', 1825),
+              provider('Netflix basic with Ads', 1796),
+            ],
+          },
+        },
+      },
+    };
+    const movie = await tmdbClient(respondWith(response)).getMovie(1);
+    assert.deepEqual(movie.extras?.providersBR, ['Paramount Plus', 'HBO Max Amazon Channel', 'Netflix']);
+  });
+
   test('pede os campos extras na mesma chamada', async () => {
     const urls: string[] = [];
     const sources = fakeSources();

@@ -1,4 +1,5 @@
 import { candidateFeatures, candidateGenres } from '../discover/score-candidates.js';
+import { normalizeStreamingServices } from '../discover/streaming-names.js';
 import type { DiscoverCandidate } from '../discover/tmdb-discover-client.js';
 import type { Movie } from '../types/movie.js';
 import type { RecItem, RecKind, RecSource, RecsModel } from '../types/recs.js';
@@ -156,7 +157,7 @@ export function toRecItem(rec: ScoredRec, reason: string, reasonBy: 'gemini' | '
     posterPath: movie ? movie.posterPath : (candidate?.posterPath ?? null),
     runtime: movie?.runtime ?? null,
     genres: movie ? movie.genres : candidate ? candidateGenres(candidate) : [],
-    providers: movie?.providersBR?.flatrate ?? [],
+    providers: normalizeStreamingServices(movie?.providersBR?.flatrate ?? []),
     score: rec.score,
     reason,
     reasonFrom: rec.reasonFrom,
