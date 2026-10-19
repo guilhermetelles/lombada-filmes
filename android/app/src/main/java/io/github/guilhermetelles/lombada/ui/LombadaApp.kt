@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import io.github.guilhermetelles.lombada.ui.components.LombadaButton
+import io.github.guilhermetelles.lombada.ui.components.LombadaButtonStyle
 import io.github.guilhermetelles.lombada.ui.lists.ListsSheet
 import io.github.guilhermetelles.lombada.ui.main.MainScreen
 import io.github.guilhermetelles.lombada.ui.onboarding.OnboardingFlow
@@ -92,7 +93,8 @@ fun LombadaApp() {
 
                 is SessionState.Ready -> ReadyApp(current, session, showMessage)
 
-                is SessionState.Failed -> Failure(current.message, onSignOut = { session.signOut(context) })
+                is SessionState.Failed ->
+                    Failure(current.message, onRetry = session::retry, onSignOut = { session.signOut(context) })
             }
         }
     }
@@ -104,7 +106,7 @@ private fun Splash() {
 }
 
 @Composable
-private fun Failure(message: String, onSignOut: () -> Unit) {
+private fun Failure(message: String, onRetry: () -> Unit, onSignOut: () -> Unit) {
     Column(
         modifier =
             Modifier
@@ -117,7 +119,13 @@ private fun Failure(message: String, onSignOut: () -> Unit) {
             style = MaterialTheme.typography.bodyLarge,
             modifier = Modifier.padding(top = 88.dp, bottom = 16.dp)
         )
-        LombadaButton("Sair da conta", onClick = onSignOut)
+        LombadaButton("Tentar de novo", onClick = onRetry)
+        LombadaButton(
+            "Sair da conta",
+            onClick = onSignOut,
+            style = LombadaButtonStyle.Text,
+            modifier = Modifier.padding(top = 8.dp)
+        )
     }
 }
 
