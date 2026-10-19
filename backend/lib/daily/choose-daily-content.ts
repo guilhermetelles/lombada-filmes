@@ -53,21 +53,26 @@ const COMPOSERS: Record<DailyTopic, DailyComposer> = {
 };
 
 /**
- * Ordem em que os assuntos ligados são tentados para uma pessoa num dia: primeiro os de data certa
- * (retrospectiva, chegou no streaming), depois o assunto do dia (sorteado entre os ligados do
- * rodízio, com semente fixa pela pessoa e pelo dia) e, se ele não tiver conteúdo, os outros na
+ * Ordem em que os assuntos ligados são tentados num dia: primeiro os de data certa (retrospectiva,
+ * chegou no streaming), depois o assunto do dia (sorteado entre os ligados do rodízio, com semente
+ * fixa pelo dia e pela chave, que é a lista) e, se ele não tiver conteúdo, os outros na
  * ordem de recurso.
  *
  * @param types - Assuntos que a pessoa ligou.
- * @param uid - Pessoa.
+ * @param seedKey - Semente do sorteio junto com o dia (a lista, para o assunto ser o mesmo para todos).
  * @param day - Dia de Brasília, AAAA-MM-DD.
  * @param excluded - Assuntos que ficam de fora, como o quiz, que tem aviso próprio.
  * @returns Os assuntos, sem repetição.
  */
-function topicOrder(types: NotifyTypes, uid: string, day: string, excluded: readonly DailyTopic[] = []): DailyTopic[] {
+function topicOrder(
+  types: NotifyTypes,
+  seedKey: string,
+  day: string,
+  excluded: readonly DailyTopic[] = [],
+): DailyTopic[] {
   const enabled = (topic: DailyTopic) => types[TOPIC_PREFERENCE[topic]] && !excluded.includes(topic);
   const rotation = FALLBACK_TOPICS.filter(enabled);
-  const topicOfDay = pickSeeded(rotation, `${day}:${uid}:assunto`);
+  const topicOfDay = pickSeeded(rotation, `${day}:${seedKey}:assunto`);
   return [...new Set([...PRIORITY_TOPICS.filter(enabled), ...(topicOfDay ? [topicOfDay] : []), ...rotation])];
 }
 
@@ -82,6 +87,7 @@ export type ChosenContent = { content: DailyContent; list: DailyList };
  * @param lists - Listas da pessoa, já lidas.
  * @param types - Assuntos que a pessoa ligou.
  * @param excluded - Assuntos que ficam de fora.
+ * @param seedKey - Semente do sorteio do assunto (a lista, para todos os membros receberem o mesmo).
  * @returns O conteúdo e a lista, ou null se nenhum assunto tiver o que dizer.
  */
 async function chooseDailyContent(
@@ -89,8 +95,9 @@ async function chooseDailyContent(
   lists: readonly DailyList[],
   types: NotifyTypes,
   excluded: readonly DailyTopic[] = [],
+  seedKey: string = base.uid,
 ): Promise<ChosenContent | null> {
-  const order = topicOrder(types, base.uid, base.day, excluded);
+  const order = topicOrder(types, seedKey, base.day, excluded);
   for (const list of lists) {
     for (const topic of order) {
       try {

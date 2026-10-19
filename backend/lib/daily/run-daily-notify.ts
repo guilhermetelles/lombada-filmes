@@ -1,4 +1,5 @@
 import type { Firestore } from 'firebase-admin/firestore';
+import { feedCollection } from '../feed/feed-repository.js';
 import { writeFeedItem } from '../feed/write-feed-item.js';
 import { createIfAbsent } from '../firestore/idempotent.js';
 import { listsOfMember } from '../lists/list-repository.js';
@@ -8,10 +9,18 @@ import { notifyLogDocument, notifyStateCollection, notifyStateDocument } from '.
 import { sendFcm } from '../notify/send-fcm.js';
 import { brazilDay } from '../time/brazil-day.js';
 import type { Dependencies } from '../types/dependencies.js';
-import type { NotifyHour, NotifyPrefs } from '../types/notify.js';
+import type { FeedItem } from '../types/feed.js';
+import type { NotifyHour, NotifyPrefs, NotifyTypes } from '../types/notify.js';
 import type { UsageRecorder } from '../types/usage.js';
 import { type ChosenContent, chooseDailyContent } from './choose-daily-content.js';
-import { DAILY_KIND, type DailyContext, type DailyList } from './daily-content.js';
+import {
+  DAILY_KIND,
+  type DailyContent,
+  type DailyContext,
+  type DailyFeedType,
+  type DailyList,
+  TYPE_PREFERENCE,
+} from './daily-content.js';
 import { addDays } from './day-math.js';
 import { loadDailyList } from './load-daily-list.js';
 import { composeQuiz } from './topics/quiz-topic.js';
@@ -19,28 +28,34 @@ import { composeQuiz } from './topics/quiz-topic.js';
 /** Tempo de trabalho por execução, abaixo do maxDuration de 300 s da função. */
 const TIME_BUDGET_MS = 240_000;
 
+/** A pergunta do quiz sai sempre na rotina das 9h, qualquer que seja o horário escolhido. */
+export const QUIZ_HOUR: NotifyHour = 9;
+
 /** O que aconteceu com uma pessoa. */
-type PersonOutcome = 'sent' | 'alreadySent' | 'frequency' | 'noContent';
+type PersonOutcome = 'sent' | 'alreadySent' | 'frequency' | 'noContent' | 'typeOff';
 
 /** Relatório de uma execução de notify-*. */
 export type DailyNotifyReport = {
   hour: NotifyHour;
   day: string; // dia de Brasília a que as notificações se referem
-  people: number; // quem escolheu este horário com a notificação ligada
+  people: number; // quem recebe algo nesta rotina (assunto no horário escolhido ou quiz às 9h)
   sent: number; // assuntos do dia enviados (sem o quiz)
   quizSent: number; // perguntas do quiz enviadas
   alreadySent: number; // já tinha notifyLog do dia (execução repetida)
   frequency: number; // recebeu há menos dias que a frequência escolhida
   noContent: number;
+  typeOff: number; // o assunto do dia da lista é de um tipo que a pessoa desligou
   failed: number;
   unfinished: number; // ficaram para depois por falta de tempo
 };
 
 /**
- * Rotina notify-{hora}: manda a notificação do dia a quem escolheu esse horário de Brasília. O dia
- * é o de Brasília no momento da execução (a das 21h roda às 00:00 UTC, que ainda é o dia anterior
- * em Brasília). Cada pessoa recebe a pergunta do quiz (se ligou o quiz e ainda não respondeu) e um
- * assunto sorteado entre os outros tipos ligados (notifyPerson), cada um respeitando a frequência.
+ * Rotina notify-{hora}. O dia é o de Brasília no momento da execução (a das 21h roda às 00:00 UTC,
+ * que ainda é o dia anterior em Brasília). Às 9h, todo mundo com o quiz ligado recebe a pergunta do
+ * dia, se ainda não respondeu. Em cada horário, quem o escolheu recebe o assunto do dia da lista,
+ * que é o mesmo para todos os membros: sorteado uma vez por lista e dia, entre os tipos que algum
+ * membro ligou, e gravado num item só da Atividade. Quem desligou o tipo sorteado fica sem o aviso naquele dia. Cada aviso respeita a
+ * frequência da pessoa.
  *
  * @param dependencies - Banco, fontes, FCM e relógio.
  * @param usage - Medidor de consumo da execução.
@@ -55,7 +70,9 @@ async function runDailyNotify(
   const startedAt = Date.now();
   const now = dependencies.now();
   const day = brazilDay(now);
-  const people = await peopleForHour(dependencies.db, hour);
+  const topicPeople = await peopleForHour(dependencies.db, hour);
+  const quizPeople = hour === QUIZ_HOUR ? await peopleWithNotifications(dependencies.db) : new Map();
+  const people = new Map<string, NotifyPrefs>([...quizPeople, ...topicPeople]);
   const report: DailyNotifyReport = {
     hour,
     day,
@@ -65,6 +82,7 @@ async function runDailyNotify(
     alreadySent: 0,
     frequency: 0,
     noContent: 0,
+    typeOff: 0,
     failed: 0,
     unfinished: 0,
   };
@@ -76,8 +94,11 @@ async function runDailyNotify(
       continue;
     }
     try {
-      const outcomes = await notifyPerson({ dependencies, usage, uid, prefs, day, now, lists });
-      report[outcomes.topic]++;
+      const outcomes = await notifyPerson(
+        { dependencies, usage, uid, prefs, day, now, lists },
+        { quiz: quizPeople.has(uid), topic: topicPeople.has(uid) },
+      );
+      if (outcomes.topic) report[outcomes.topic]++;
       if (outcomes.quiz === 'sent') report.quizSent++;
     } catch (error) {
       report.failed++;
@@ -97,22 +118,53 @@ async function runDailyNotify(
  * @returns Preferências por uid.
  */
 async function peopleForHour(db: Firestore, hour: NotifyHour): Promise<Map<string, NotifyPrefs>> {
-  const people = new Map<string, NotifyPrefs>();
   const chosen = await notifyStateCollection(db).where('prefs.hour', '==', hour).where('prefs.freq', '>', 0).get();
-  for (const doc of chosen.docs) {
+  const people = readPrefs(chosen.docs);
+  if (hour === DEFAULT_NOTIFY_PREFS.hour) await addDefaultPeople(db, people);
+  return people;
+}
+
+/**
+ * Todo mundo com a notificação diária ligada, em qualquer horário, mais quem nunca gravou
+ * preferências e tem aparelho registrado: são os que recebem o quiz às 9h.
+ *
+ * @param db - Firestore.
+ * @returns Preferências por uid.
+ */
+async function peopleWithNotifications(db: Firestore): Promise<Map<string, NotifyPrefs>> {
+  const people = readPrefs((await notifyStateCollection(db).where('prefs.freq', '>', 0).get()).docs);
+  await addDefaultPeople(db, people);
+  return people;
+}
+
+/**
+ * Lê as preferências dos documentos de notifyState, pulando os que estão fora do formato.
+ *
+ * @param docs - Documentos lidos.
+ * @returns Preferências por uid.
+ */
+function readPrefs(docs: readonly { id: string; data(): { prefs: NotifyPrefs } }[]): Map<string, NotifyPrefs> {
+  const people = new Map<string, NotifyPrefs>();
+  for (const doc of docs) {
     try {
       people.set(doc.id, doc.data().prefs);
     } catch (error) {
       logger.warn('notifyState fora do formato, pulado', { uid: doc.id, error });
     }
   }
-
-  if (hour === DEFAULT_NOTIFY_PREFS.hour) {
-    const owners = (await db.collection('devices').listDocuments()).map((ref) => ref.id);
-    const states = owners.length > 0 ? await db.getAll(...owners.map((uid) => notifyStateDocument(db, uid))) : [];
-    for (const state of states) if (!state.exists) people.set(state.id, DEFAULT_NOTIFY_PREFS);
-  }
   return people;
+}
+
+/**
+ * Acrescenta quem tem aparelho registrado e nunca gravou preferências, com o padrão.
+ *
+ * @param db - Firestore.
+ * @param people - Preferências por uid, completadas aqui.
+ */
+async function addDefaultPeople(db: Firestore, people: Map<string, NotifyPrefs>): Promise<void> {
+  const owners = (await db.collection('devices').listDocuments()).map((ref) => ref.id);
+  const states = owners.length > 0 ? await db.getAll(...owners.map((uid) => notifyStateDocument(db, uid))) : [];
+  for (const state of states) if (!state.exists) people.set(state.id, DEFAULT_NOTIFY_PREFS);
 }
 
 /** O que notifyPerson precisa. */
@@ -126,22 +178,21 @@ type PersonRun = {
   lists: Map<string, Promise<DailyList>>; // listas já lidas nesta execução
 };
 
-/** O que aconteceu com uma pessoa: o assunto do dia e a pergunta do quiz (null se desligada). */
-type PersonOutcomes = { topic: PersonOutcome; quiz: PersonOutcome | null };
+/** O que aconteceu com uma pessoa: o assunto do dia e a pergunta do quiz (null se não era a vez). */
+type PersonOutcomes = { topic: PersonOutcome | null; quiz: PersonOutcome | null };
 
-/** Aviso do dia: o assunto sorteado (sem o quiz) ou a pergunta do quiz, cada um com o próprio registro. */
+/** Aviso do dia: o assunto da lista (sem o quiz) ou a pergunta do quiz, cada um com o próprio registro. */
 type DailySlot = 'topic' | 'quiz';
 
 /**
- * Manda (ou não) as notificações do dia a uma pessoa: a pergunta do quiz, se ela ligou o quiz e
- * ainda não respondeu, e um assunto sorteado entre os outros tipos ligados. Cada uma respeita a
- * frequência pelo próprio registro em notifyLog.
+ * Manda (ou não) as notificações desta rotina a uma pessoa.
  *
  * @param run - Dependências, pessoa, preferências, dia e o cache de listas.
+ * @param due - Se é a vez do quiz (rotina das 9h) e do assunto (horário escolhido).
  * @returns O que aconteceu com o assunto e com o quiz.
  * @throws O erro do Firestore ou do FCM, se a gravação ou o envio falhar.
  */
-async function notifyPerson(run: PersonRun): Promise<PersonOutcomes> {
+async function notifyPerson(run: PersonRun, due: { quiz: boolean; topic: boolean }): Promise<PersonOutcomes> {
   const { db } = run.dependencies;
   const memberOf = (await listsOfMember(db, run.uid).get()).docs.sort(
     (a, b) => a.data().createdAt.getTime() - b.data().createdAt.getTime(),
@@ -154,16 +205,16 @@ async function notifyPerson(run: PersonRun): Promise<PersonOutcomes> {
     }),
   );
 
-  const quiz = run.prefs.types.quiz ? await notifySlot(run, dailyLists, 'quiz') : null;
-  const topic = await notifySlot(run, dailyLists, 'topic');
+  const quiz = due.quiz && run.prefs.types.quiz ? await notifySlot(run, dailyLists, 'quiz') : null;
+  const topic = due.topic ? await notifySlot(run, dailyLists, 'topic') : null;
   return { topic, quiz };
 }
 
 /**
  * Manda um dos avisos do dia. O registro é notifyLog/{uid}_{dia} para o assunto e
  * notifyLog/{uid}_{dia}-quiz para o quiz, criado com create() (rodar de novo não reenvia). O
- * assunto grava o item `daily-{uid}-{dia}` na Atividade; o quiz aponta para o item `quiz-{dia}`
- * da lista, que a rotina quiz-and-month já gravou.
+ * assunto aponta para o item `daily-{lista}-{dia}` da Atividade, o mesmo para todos os membros; o
+ * quiz, para o item `quiz-{dia}` da lista, que a rotina quiz-and-month já gravou.
  *
  * @param run - Dependências, pessoa, preferências, dia e momento.
  * @param lists - Listas da pessoa, já lidas.
@@ -180,8 +231,8 @@ async function notifySlot(run: PersonRun, lists: readonly DailyList[], slot: Dai
   if (logs.some((log) => log.exists)) return 'frequency';
 
   const base = { dependencies, usage, uid, day, now };
-  const chosen =
-    slot === 'quiz' ? await chooseQuiz(base, lists) : await chooseDailyContent(base, lists, prefs.types, ['quiz']);
+  const chosen = slot === 'quiz' ? await chooseQuiz(base, lists) : await chooseListTopic(base, lists, prefs.types);
+  if (chosen === 'typeOff') return 'typeOff';
   if (!chosen) return 'noContent';
   const { content, list } = chosen;
 
@@ -193,7 +244,8 @@ async function notifySlot(run: PersonRun, lists: readonly DailyList[], slot: Dai
   if (!claimed) return 'alreadySent';
 
   const kind = DAILY_KIND[content.type];
-  const { feedId } = await writeFeedItem(
+  const feedId = slot === 'quiz' ? `quiz-${day}` : listTopicId(list.listId, day);
+  await writeFeedItem(
     db,
     list.listId,
     {
@@ -205,7 +257,7 @@ async function notifySlot(run: PersonRun, lists: readonly DailyList[], slot: Dai
       quote: content.quote,
       route: content.route,
     },
-    slot === 'quiz' ? `quiz-${day}` : `daily-${uid}-${day}`,
+    feedId,
   );
   await sendFcm(dependencies, uid, {
     title: content.title,
@@ -234,6 +286,113 @@ async function chooseQuiz(
     if (content) return { content, list };
   }
   return null;
+}
+
+/**
+ * O assunto do dia de uma das listas da pessoa, o mesmo para todos os membros. A primeira rotina do
+ * dia sorteia o assunto (semente: dia e lista, entre os tipos que algum membro ligou) e grava o item
+ * `daily-{lista}-{dia}` na Atividade; as rotinas dos outros horários reaproveitam esse item.
+ *
+ * @param base - Dependências, consumo, pessoa, dia e momento.
+ * @param lists - Listas da pessoa, da mais antiga para a mais nova.
+ * @param types - Tipos que a pessoa ligou.
+ * @returns O conteúdo e a lista; 'typeOff' se havia assunto mas de um tipo que a pessoa desligou; null sem assunto.
+ */
+async function chooseListTopic(
+  base: Omit<DailyContext, 'list'>,
+  lists: readonly DailyList[],
+  types: NotifyTypes,
+): Promise<ChosenContent | 'typeOff' | null> {
+  let typeOff = false;
+  for (const list of lists) {
+    const content = await listTopic(base, list);
+    if (!content) continue;
+    if (types[TYPE_PREFERENCE[content.type]]) return { content, list };
+    typeOff = true;
+  }
+  return typeOff ? 'typeOff' : null;
+}
+
+/**
+ * Lê o assunto do dia já gravado da lista ou, se ainda não há, sorteia e grava.
+ *
+ * @param base - Dependências, consumo, pessoa, dia e momento.
+ * @param list - Lista.
+ * @returns O assunto, ou null se nenhum tipo tiver o que dizer hoje.
+ */
+async function listTopic(base: Omit<DailyContext, 'list'>, list: DailyList): Promise<DailyContent | null> {
+  const { db } = base.dependencies;
+  const ref = feedCollection(db, list.listId).doc(listTopicId(list.listId, base.day));
+  const stored = toDailyContent((await ref.get()).data());
+  if (stored) return stored;
+
+  const chosen = await chooseDailyContent(base, [list], await membersTypes(db, list), ['quiz'], list.listId);
+  if (!chosen) return null;
+  const { content } = chosen;
+  const { created } = await writeFeedItem(
+    db,
+    list.listId,
+    {
+      type: content.type,
+      kind: DAILY_KIND[content.type],
+      createdAt: base.now,
+      title: content.title,
+      body: content.body,
+      quote: content.quote,
+      route: content.route,
+    },
+    ref.id,
+  );
+  // Outra rotina gravou antes: vale o que ficou gravado, para todos verem o mesmo.
+  return created ? content : (toDailyContent((await ref.get()).data()) ?? content);
+}
+
+/**
+ * Tipos que pelo menos um membro da lista deixou ligados (com a notificação diária ligada). Quem
+ * nunca gravou preferências conta com o padrão. O assunto do dia é sorteado entre eles.
+ *
+ * @param db - Firestore.
+ * @param list - Lista.
+ * @returns Os tipos ligados por alguém.
+ */
+async function membersTypes(db: Firestore, list: DailyList): Promise<NotifyTypes> {
+  const uids = list.list.memberUids;
+  const states = uids.length > 0 ? await db.getAll(...uids.map((uid) => notifyStateDocument(db, uid))) : [];
+  const union = Object.fromEntries(Object.keys(DEFAULT_NOTIFY_PREFS.types).map((type) => [type, false])) as NotifyTypes;
+  for (const state of states) {
+    const prefs = state.exists ? state.data()?.prefs : DEFAULT_NOTIFY_PREFS;
+    if (!prefs || prefs.freq === 0) continue;
+    for (const type of Object.keys(union) as (keyof NotifyTypes)[]) if (prefs.types[type]) union[type] = true;
+  }
+  return union;
+}
+
+/**
+ * Converte o item da Atividade de volta no assunto do dia.
+ *
+ * @param item - Item lido, ou undefined.
+ * @returns O assunto, ou null se não for um item diário.
+ */
+function toDailyContent(item: FeedItem | undefined): DailyContent | null {
+  if (!item || !(item.type in DAILY_KIND)) return null;
+  return {
+    type: item.type as DailyFeedType,
+    title: item.title,
+    ...(item.body ? { body: item.body } : {}),
+    ...(item.quote ? { quote: item.quote } : {}),
+    route: item.route,
+  };
+}
+
+/**
+ * Id do item do assunto do dia de uma lista.
+ *
+ * @param listId - Lista.
+ * @param day - Dia de Brasília.
+ * @returns `daily-{lista}-{dia}`.
+ */
+function listTopicId(listId: string, day: string): string {
+  return `daily-${listId}-${day}`;
 }
 
 export { runDailyNotify };

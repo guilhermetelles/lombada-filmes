@@ -74,7 +74,20 @@ const NO_TYPES: NotifyTypes = Object.fromEntries(
  * @param extra - Outras preferências.
  */
 async function prefsOfAna(types: Partial<NotifyTypes>, extra: Partial<NotifyPrefs> = {}): Promise<void> {
-  await notifyStateDocument(dependencies.db, ANA).set({
+  await prefsOf(ANA, types, extra);
+  // Bia liga os mesmos tipos às 21h: o assunto da lista sai entre eles, e ela não entra na rotina das 19h.
+  await prefsOf(BIA, types, { ...extra, hour: extra.hour === 21 ? 12 : 21 });
+}
+
+/**
+ * Grava as preferências de um membro.
+ *
+ * @param uid - Membro.
+ * @param types - Tipos ligados (os outros ficam desligados).
+ * @param extra - Outros campos das preferências.
+ */
+async function prefsOf(uid: string, types: Partial<NotifyTypes>, extra: Partial<NotifyPrefs> = {}): Promise<void> {
+  await notifyStateDocument(dependencies.db, uid).set({
     prefs: { ...DEFAULT_NOTIFY_PREFS, freq: 1, hour: 19, types: { ...NO_TYPES, ...types }, ...extra },
   });
 }
@@ -144,7 +157,7 @@ const feedItem = async (id: string) => (await dependencies.db.doc(`lists/${LIST}
 async function runAndRead() {
   const report = await run();
   const day = report.day;
-  const item = await feedItem(`daily-${ANA}-${day}`);
+  const item = await feedItem(`daily-${LIST}-${day}`);
   return { report, item, push: fcm.sent.at(-1) };
 }
 
@@ -164,12 +177,11 @@ describe('rotinas notify-*', () => {
     });
     await quiz.collection('answers').doc(BIA).set({ optionId: 'a', correct: true, answeredAt: clock });
 
-    const report = await run();
+    // O quiz sai às 9h para todos, mesmo para quem escolheu as 19h para o assunto do dia.
+    const report = await run(notify09CronRoute);
     const item = await feedItem('quiz-2026-10-18');
     const push = fcm.sent.at(-1);
-
-    // Só o quiz está ligado: a pergunta sai no aviso próprio e o assunto do dia fica sem conteúdo.
-    assert.deepEqual([report.quizSent, report.sent, report.noContent], [1, 0, 1]);
+    assert.deepEqual([report.quizSent, report.sent], [1, 0]);
     assert.deepEqual(
       { type: item?.type, kind: item?.kind, title: item?.title, body: item?.body, route: item?.route },
       {
@@ -191,6 +203,7 @@ describe('rotinas notify-*', () => {
 
   test('quiz e mais um assunto sorteado no mesmo dia, cada um com o próprio aviso', async () => {
     await prefsOfAna({ quiz: true, memory: true });
+    await prefsOf(BIA, { quiz: true, memory: true }, { freq: 0 });
     await putEntry('e-speed', SPEED, 'Speed', 'a1', { watchedOn: '2025-10-20', comment: 'Ônibus que não pode parar.' });
     await dependencies.db.doc(`lists/${LIST}/quizzes/2026-10-18`).set({
       day: '2026-10-18',
@@ -203,14 +216,17 @@ describe('rotinas notify-*', () => {
       createdAt: clock,
     });
 
+    // Quiz às 9h; o assunto do dia no horário escolhido (19h).
+    assert.equal((await run(notify09CronRoute)).quizSent, 1);
     const report = await run();
-    assert.deepEqual([report.quizSent, report.sent], [1, 1]);
+    assert.deepEqual([report.quizSent, report.sent], [0, 1]);
     assert.deepEqual(
       fcm.sent.map((message) => message.notification?.title),
       ['Quiz do dia', 'Há 1 ano, sobre Speed'],
     );
 
     // Rodar de novo não reenvia nenhum dos dois.
+    await run(notify09CronRoute);
     await run();
     assert.equal(fcm.sent.length, 2);
   });
@@ -520,7 +536,7 @@ describe('rotinas notify-*', () => {
 
     assert.deepEqual([report.day, report.sent], ['2026-10-18', 1]);
     assert.ok((await notifyLogDocument(dependencies.db, ANA, '2026-10-18').get()).exists);
-    assert.ok(await feedItem(`daily-${ANA}-2026-10-18`));
+    assert.ok(await feedItem(`daily-${LIST}-2026-10-18`));
   });
 
   test('só quem escolheu o horário; desligado (freq 0) fica de fora', async () => {
@@ -548,8 +564,48 @@ describe('rotinas notify-*', () => {
 
     const report = await run();
     assert.equal(report.people, 2, 'Ana (aparelho, sem preferências) e Bia');
-    assert.ok(await feedItem(`daily-${BIA}-2026-10-18`));
+    assert.ok(await feedItem(`daily-${LIST}-2026-10-18`));
     assert.ok(fcm.sent.some((message) => message.tokens.includes('token-bia')));
+  });
+
+  test('assunto do dia igual para os membros, num item só, cada um no próprio horário', async () => {
+    await prefsOfAna({ duel: true });
+    await putEntry('e-speed', SPEED, 'Speed', 'a1');
+    await putEntry('e-abyss', ABYSS, 'The Abyss', 'a2');
+    for (const [uid, token] of [
+      [ANA, 'token-ana'],
+      [BIA, 'token-bia'],
+    ] as const) {
+      await deviceTokenDocument(dependencies.db, uid, token).set({ token, platform: 'android', updatedAt: clock });
+    }
+
+    await run();
+    clock = new Date('2026-10-19T00:20:00Z');
+    await run(notify21CronRoute);
+
+    const titles = (token: string) =>
+      fcm.sent.filter((message) => message.tokens.includes(token)).map((message) => message.notification?.body);
+    assert.deepEqual(titles('token-ana'), titles('token-bia'));
+    assert.equal(titles('token-ana').length, 1);
+    const daily = (await dependencies.db.collection(`lists/${LIST}/feed`).get()).docs.filter((doc) =>
+      doc.id.startsWith('daily-'),
+    );
+    assert.deepEqual(
+      daily.map((doc) => doc.id),
+      [`daily-${LIST}-2026-10-18`],
+    );
+  });
+
+  test('quem desligou o tipo sorteado para a lista fica sem o aviso naquele dia', async () => {
+    await prefsOf(ANA, { duel: true });
+    await prefsOf(BIA, { curio: true }, { hour: 21 });
+    await putEntry('e-speed', SPEED, 'Speed', 'a1');
+    await putEntry('e-abyss', ABYSS, 'The Abyss', 'a2');
+
+    assert.equal((await run()).sent, 1);
+    clock = new Date('2026-10-19T00:20:00Z');
+    const report = await run(notify21CronRoute);
+    assert.deepEqual([report.sent, report.typeOff], [0, 1]);
   });
 
   test('sem segredo do cron: 401', async () => {

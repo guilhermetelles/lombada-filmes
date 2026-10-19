@@ -70,6 +70,20 @@ export const TOPIC_PREFERENCE: Record<DailyTopic, keyof NotifyTypes> = {
 };
 
 /** Grupo na Atividade (e canal do Android) de cada tipo diário. */
+/** Preferência que liga cada tipo de notificação diária, para saber se a pessoa quer o assunto do dia. */
+export const TYPE_PREFERENCE: Record<DailyFeedType, keyof NotifyTypes> = {
+  'daily.quiz': 'quiz',
+  'daily.curio': 'curio',
+  'daily.release': 'release',
+  'daily.streaming': 'streaming',
+  'daily.memory': 'memory',
+  'daily.retro': 'retro',
+  'daily.releaseAnniversary': 'birthday',
+  'daily.birthday': 'birthday',
+  'daily.duel': 'duel',
+  'daily.milestone': 'milestone',
+};
+
 export const DAILY_KIND: Record<DailyFeedType, FeedKind> = {
   'daily.quiz': 'quiz',
   'daily.curio': 'curiosidade',
