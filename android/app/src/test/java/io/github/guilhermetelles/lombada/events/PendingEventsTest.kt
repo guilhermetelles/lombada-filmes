@@ -1,6 +1,8 @@
 package io.github.guilhermetelles.lombada.events
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class PendingEventsTest {
@@ -50,5 +52,15 @@ class PendingEventsTest {
         val pending = (1..250).fold(emptyList<PendingEvent>()) { acc, n -> PendingEvents.add(acc, moved("e$n")) }
         assertEquals(200, pending.size)
         assertEquals("e51", pending.first().entryId)
+    }
+
+    @Test
+    fun `adição pendente só enquanto o added não saiu da fila`() {
+        val added = PendingEvent(ListEventType.Added.wire, "e1")
+        val pending = listOf(added, moved("e1"), moved("e2"))
+        assertTrue(PendingEvents.hasPendingAdd(pending, "e1"))
+        assertFalse(PendingEvents.hasPendingAdd(pending, "e2"))
+        val afterSend = PendingEvents.removeSent(pending, listOf(added))
+        assertFalse(PendingEvents.hasPendingAdd(afterSend, "e1"))
     }
 }

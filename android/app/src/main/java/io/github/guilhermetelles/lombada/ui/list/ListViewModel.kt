@@ -12,7 +12,6 @@ import io.github.guilhermetelles.lombada.data.model.MovieSnapshot
 import io.github.guilhermetelles.lombada.data.model.PersonRef
 import io.github.guilhermetelles.lombada.domain.EntryOrder
 import io.github.guilhermetelles.lombada.domain.Formatting
-import io.github.guilhermetelles.lombada.domain.FractionalIndex
 import io.github.guilhermetelles.lombada.events.ListEventType
 import io.github.guilhermetelles.lombada.events.ListEvents
 import java.time.LocalDate
@@ -270,8 +269,7 @@ class ListViewModel(
             } else {
                 // O id continua escondido: o Firestore some com a entrada logo em seguida.
                 container.entries.remove(listId, entry.id)
-                events.forget(listId, entry.id)
-                events.record(listId, ListEventType.Removed, entry.id, entry.tmdbId)
+                events.recordRemoval(listId, entry.id, entry.tmdbId)
             }
         }
     }
@@ -337,7 +335,7 @@ class ListViewModel(
      */
     fun confirmAdd(draft: AddDraft, watchedOn: LocalDate?, comment: String) {
         val ranking = state.value.ranking
-        val rankKey = FractionalIndex.keyBetween(ranking.lastOrNull()?.rankKey, null)
+        val rankKey = EntryOrder.endKey(ranking.lastOrNull()?.rankKey)
         val entryId = container.entries.create(
             listId,
             draft.tmdbId,
@@ -362,7 +360,8 @@ class ListViewModel(
                 duration = SnackbarDuration.Long
             )
             if (result == SnackbarResult.ActionPerformed) {
-                events.forget(listId, entryId)
+                // Se o "added" já foi enviado, a outra pessoa precisa saber que o filme saiu.
+                events.recordRemoval(listId, entryId, draft.tmdbId)
                 container.entries.remove(listId, entryId)
                 container.snackbar.showSnackbar("$title saiu da lista")
             }

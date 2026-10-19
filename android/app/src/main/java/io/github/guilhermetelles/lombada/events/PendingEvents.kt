@@ -61,6 +61,16 @@ object PendingEvents {
         pending.filterNot { it.entryId == entryId }
 
     /**
+     * Se a adição de uma entrada ainda está na fila, ou seja, se o backend ainda não soube dela.
+     *
+     * @param pending Fila atual.
+     * @param entryId Entrada.
+     * @return true quando o evento `added` dela ainda não foi enviado.
+     */
+    fun hasPendingAdd(pending: List<PendingEvent>, entryId: String): Boolean =
+        pending.any { it.entryId == entryId && it.type == ListEventType.Added.wire }
+
+    /**
      * Próximo lote a enviar.
      *
      * @param pending Fila atual.

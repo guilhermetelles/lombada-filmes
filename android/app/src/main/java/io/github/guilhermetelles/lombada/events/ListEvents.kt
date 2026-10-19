@@ -38,9 +38,27 @@ class ListEvents(context: Context) {
      *
      * @param listId Lista.
      * @param entryId Entrada.
+     * @return true se a adição dela ainda estava na fila (o backend não soube da entrada).
      */
-    fun forget(listId: String, entryId: String) {
-        store.update(listId) { PendingEvents.withoutEntry(it, entryId) }
+    fun forget(listId: String, entryId: String): Boolean {
+        var addPending = false
+        store.update(listId) { pending ->
+            addPending = PendingEvents.hasPendingAdd(pending, entryId)
+            PendingEvents.withoutEntry(pending, entryId)
+        }
+        return addPending
+    }
+
+    /**
+     * Retira uma entrada: esquece os eventos dela ainda não enviados e, se a adição já tinha
+     * chegado ao backend, registra a retirada para a outra pessoa saber.
+     *
+     * @param listId Lista.
+     * @param entryId Entrada.
+     * @param tmdbId Filme, que o backend precisa porque a entrada já não existe.
+     */
+    fun recordRemoval(listId: String, entryId: String, tmdbId: Int) {
+        if (!forget(listId, entryId)) record(listId, ListEventType.Removed, entryId, tmdbId)
     }
 
     companion object {
