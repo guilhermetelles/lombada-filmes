@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { beforeEach, describe, test } from 'node:test';
 import { dailyCronRoute } from '../../api/cron/daily.js';
 import { NOT_FOUND_FRESHNESS_MS } from '../../lib/bechdel/bechdel-freshness.js';
+import { deleteOldRecords } from '../../lib/maintenance/delete-old-records.js';
 import { runDailyMaintenance } from '../../lib/maintenance/run-daily-maintenance.js';
 import { FRESHNESS_MS } from '../../lib/movies/freshness.js';
 import { getFreshMovie } from '../../lib/movies/get-fresh-movie.js';
@@ -18,6 +19,7 @@ type Report = {
   movies: { refreshed: number; failed: number };
   bechdel: { updated: number; matched: number; notFound: number; failed: number };
   invitesDeleted: number;
+  deleted: { feed: number; notifyLog: number; rateLimits: number };
 };
 
 const NO_CALLS = { tmdb: 0, omdb: 0, letterboxd: 0, bechdel: 0 };
@@ -259,5 +261,49 @@ describe('GET /api/cron/daily: Teste de Bechdel', () => {
     assert.equal((await dependencies.db.doc('movies/2756').get()).get('bechdel'), undefined);
     const usage = (await dependencies.db.doc(`usage/${usageDay(clock)}`).get()).data();
     assert.deepEqual(usage?.bechdel, { calls: 1, errors: 1 });
+  });
+});
+
+describe('GET /api/cron/daily: limpeza', () => {
+  const daysAgo = (days: number) => new Date(clock.getTime() - days * 24 * 60 * 60 * 1000);
+
+  test('apaga Atividade de mais de 180 dias, notifyLog e rateLimits de mais de 45; o resto fica', async () => {
+    const { db } = dependencies;
+    const feedItem = (createdAt: Date) => ({
+      type: 'member.activity',
+      kind: 'lista',
+      createdAt,
+      title: 'Item',
+      route: { name: 'feed' },
+    });
+    await db.doc('lists/l1/feed/velho').set(feedItem(daysAgo(181)));
+    await db.doc('lists/l2/feed/velho').set(feedItem(daysAgo(400)));
+    await db.doc('lists/l1/feed/novo').set(feedItem(daysAgo(179)));
+    await db.doc('notifyLog/ana_2026-08-01').set({ type: 'daily.quiz', listId: 'l1', sentAt: daysAgo(46) });
+    await db.doc('notifyLog/ana_2026-10-01').set({ type: 'daily.quiz', listId: 'l1', sentAt: daysAgo(15) });
+    await db
+      .doc('rateLimits/ana_2026-08-01')
+      .set({ uid: 'ana', day: '2026-08-01', interpret: 3, updatedAt: daysAgo(76) });
+    await db
+      .doc('rateLimits/ana_2026-10-10')
+      .set({ uid: 'ana', day: '2026-10-10', interpret: 1, updatedAt: daysAgo(6) });
+
+    const report = await runAsVercel();
+
+    assert.deepEqual(report.deleted, { feed: 2, notifyLog: 1, rateLimits: 1 });
+    const left = async (path: string) => (await db.collection(path).get()).docs.map((doc) => doc.id);
+    assert.deepEqual(await left('lists/l1/feed'), ['novo']);
+    assert.deepEqual(await left('lists/l2/feed'), []);
+    assert.deepEqual(await left('notifyLog'), ['ana_2026-10-01']);
+    assert.deepEqual(await left('rateLimits'), ['ana_2026-10-10']);
+  });
+
+  test('respeita o limite por execução', async () => {
+    const { db } = dependencies;
+    for (let index = 0; index < 5; index++) {
+      await db.doc(`notifyLog/ana_velho-${index}`).set({ type: 'daily.quiz', listId: 'l1', sentAt: daysAgo(60) });
+    }
+    assert.deepEqual(await deleteOldRecords(db, clock, 3), { feed: 0, notifyLog: 3, rateLimits: 0 });
+    assert.deepEqual(await deleteOldRecords(db, clock, 3), { feed: 0, notifyLog: 2, rateLimits: 0 });
   });
 });
