@@ -38,6 +38,7 @@ async function askExcerpt(
         system: SYSTEM_INSTRUCTION,
         prompt: scrubbed,
         schema: ExcerptPositionsSchema,
+        usage,
       }),
     );
   } catch (error) {

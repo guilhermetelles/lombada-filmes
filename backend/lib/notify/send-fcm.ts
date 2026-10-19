@@ -6,8 +6,18 @@ import type { MessagingClient } from '../types/dependencies.js';
 import type { PushMessage, PushResult } from '../types/notify.js';
 import { deviceTokensCollection } from './notify-repository.js';
 
-/** Erros do FCM que dizem que o token não serve mais: o aparelho é esquecido. */
-const INVALID_TOKEN_CODES = new Set(['messaging/registration-token-not-registered', 'messaging/invalid-argument']);
+/**
+ * Erros do FCM que dizem que o token não serve mais: o aparelho é esquecido. `invalid-argument` fica
+ * de fora: ele vem também de mensagem mal montada (corpo longo demais, por exemplo), e apagar o token
+ * por isso deixaria o aparelho sem avisos.
+ */
+const INVALID_TOKEN_CODES = new Set([
+  'messaging/registration-token-not-registered',
+  'messaging/invalid-registration-token',
+]);
+
+/** Tamanho máximo do texto da notificação; acima disso, cortado com reticências. */
+export const PUSH_BODY_LIMIT = 180;
 
 /** Máximo de tokens num envio do FCM. */
 const MULTICAST_LIMIT = 500;
@@ -71,7 +81,7 @@ function buildMessage(push: PushMessage, tokens: string[]): MulticastMessage {
 
   return {
     tokens,
-    notification: { title: push.title, body: push.body },
+    notification: { title: push.title, body: shortenBody(push.body) },
     data,
     android: {
       notification: { channelId: push.channelId, ...(push.tag && { tag: push.tag }) },
@@ -79,4 +89,20 @@ function buildMessage(push: PushMessage, tokens: string[]): MulticastMessage {
   };
 }
 
-export { sendFcm };
+/**
+ * Corta o texto da notificação em PUSH_BODY_LIMIT caracteres, no último espaço quando houver um
+ * perto do fim, terminando com reticências. Comentários longos continuam inteiros na Atividade.
+ *
+ * @param body - Texto da notificação.
+ * @returns O texto, cortado se passar do limite.
+ */
+function shortenBody(body: string): string {
+  const characters = [...body];
+  if (characters.length <= PUSH_BODY_LIMIT) return body;
+  const head = characters.slice(0, PUSH_BODY_LIMIT - 1).join('');
+  const lastSpace = head.lastIndexOf(' ');
+  const cut = lastSpace >= PUSH_BODY_LIMIT * 0.7 ? head.slice(0, lastSpace) : head;
+  return `${cut.trimEnd().replace(/[\s.,;:!?“"]+$/u, '')}…`;
+}
+
+export { sendFcm, shortenBody };

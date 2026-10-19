@@ -3,6 +3,7 @@ import { TmdbKeywordSearchResponse, TmdbMovieExtrasResponse, TmdbMoviePage } fro
 import { fetchJson } from '../sources/shared/fetch-json.js';
 import type { Fetch } from '../types/sources.js';
 import { STREAMING_SERVICES } from './discover-vocabulary.js';
+import { normalizeStreamingServices } from './streaming-names.js';
 
 /** Endereço da API v3 do TMDb; o token vai no cabeçalho Authorization. */
 const BASE_URL = 'https://api.themoviedb.org/3';
@@ -10,7 +11,8 @@ const BASE_URL = 'https://api.themoviedb.org/3';
 /** Um filme de uma lista do TMDb, com o que a busca avançada usa para mostrar e pontuar. */
 export type DiscoverCandidate = {
   tmdbId: number;
-  title: string; // em português quando o TMDb tem tradução
+  title: string; // no idioma pedido (pt-BR por padrão) quando o TMDb tem tradução
+  titleEn?: string | undefined; // título original, quando o idioma original é inglês
   year: number | null;
   posterPath: string | null;
   genreIds: number[];
@@ -115,9 +117,11 @@ function createTmdbDiscoverClient({ token, fetch }: { token: string; fetch: Fetc
  */
 function toCandidate(movie: z.output<typeof TmdbMoviePage>['results'][number]): DiscoverCandidate {
   const year = movie.release_date && /^\d{4}/.test(movie.release_date) ? Number(movie.release_date.slice(0, 4)) : null;
+  const titleEn = movie.original_language === 'en' ? movie.original_title : null;
   return {
     tmdbId: movie.id,
     title: movie.title ?? movie.original_title ?? '',
+    ...(titleEn ? { titleEn } : {}),
     year,
     posterPath: movie.poster_path,
     genreIds: movie.genre_ids,
@@ -135,7 +139,10 @@ function toCandidate(movie: z.output<typeof TmdbMoviePage>['results'][number]): 
  */
 function knownServices(providers: readonly { provider_id: number }[]): string[] {
   const ids = new Set(providers.map((provider) => provider.provider_id));
-  return STREAMING_SERVICES.filter((service) => ids.has(service.id)).map((service) => service.name);
+  // Os nomes vêm de STREAMING_SERVICES, já únicos; a normalização garante o mesmo formato do enrich.
+  return normalizeStreamingServices(
+    STREAMING_SERVICES.filter((service) => ids.has(service.id)).map((service) => service.name),
+  );
 }
 
 export { createTmdbDiscoverClient };

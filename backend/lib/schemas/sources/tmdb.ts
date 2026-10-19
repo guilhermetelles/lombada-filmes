@@ -24,6 +24,7 @@ const Recommendation = z.object({
   id: z.number(),
   title: optionalText,
   original_title: optionalText,
+  original_language: optionalText,
   poster_path: optionalText,
   release_date: releaseYear,
 });

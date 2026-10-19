@@ -12,6 +12,7 @@ export const RecKindSchema: z.ZodType<RecKind> = z.enum(['saga', 'diretor', 'tem
 export const RecItemSchema: z.ZodType<RecItem> = z.object({
   tmdbId: z.number().int().positive(),
   title: z.string(),
+  titleEn: z.string().optional(),
   year: z.number().int().nullable(),
   posterPath: z.string().nullable(),
   runtime: z.number().nullable(),

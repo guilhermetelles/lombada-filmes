@@ -11,6 +11,7 @@ import type { List } from '../types/list.js';
 import type { QuizAnswerResult, QuizOptionId } from '../types/quiz.js';
 import { isLaunchQuizId } from './launch-event.js';
 import { answersCollection, POINTS_PER_HIT, quizDocument, quizKeyDocument } from './quiz-repository.js';
+import { pushQuizTurn } from './quiz-turn-push.js';
 
 /** O que responder: quem, em qual lista, de qual dia e qual alternativa. */
 type AnswerRequest = { uid: string; listId: string; day: string; optionId: QuizOptionId };
@@ -19,7 +20,8 @@ type AnswerRequest = { uid: string; listId: string; day: string; optionId: QuizO
  * Responde a pergunta do dia numa transação: confere que a pessoa é membro, que a pergunta e o
  * gabarito existem e que ela ainda não respondeu; grava answers/{uid}, soma 10 pontos em
  * scores/{mês}.points.{uid} se acertou e devolve as respostas de quem já tinha respondido, lidas na
- * mesma transação. Depois, grava o item `quiz.result` da Atividade sem a alternativa escolhida.
+ * mesma transação. Depois, grava o item `quiz.result` da Atividade sem a alternativa escolhida e
+ * avisa "Sua vez" a quem da lista ainda não respondeu (fora do evento de início).
  *
  * @param dependencies - Banco, Auth e relógio.
  * @param request - Quem responde, a lista, o dia e a alternativa.
@@ -37,7 +39,7 @@ async function answerQuiz(dependencies: Dependencies, request: AnswerRequest): P
   if (!launch && day !== brazilDay(now())) throw new NotTodayError('só dá para responder a pergunta de hoje');
 
   const answers = answersCollection(db, listId, day);
-  const { list, result } = await db.runTransaction(async (transaction) => {
+  const { list, prompt, result } = await db.runTransaction(async (transaction) => {
     const list = requireMember((await transaction.get(listDocument(db, listId))).data(), uid);
     const quiz = (await transaction.get(quizDocument(db, listId, day))).data();
     const key = (await transaction.get(quizKeyDocument(db, listId, day))).data();
@@ -63,11 +65,19 @@ async function answerQuiz(dependencies: Dependencies, request: AnswerRequest): P
       correct: answer.data().correct,
       optionId: answer.data().optionId,
     }));
-    return { list, result: { correct, rightOptionId: key.rightOptionId, explanation: key.explanation, others } };
+    return {
+      list,
+      prompt: quiz.prompt,
+      result: { correct, rightOptionId: key.rightOptionId, explanation: key.explanation, others },
+    };
   });
 
   // As 10 do evento de início não vão para a Atividade, para não encher a tela.
-  if (!launch) await writeResultFeed(dependencies, list, request, result.correct);
+  if (!launch) {
+    await writeResultFeed(dependencies, list, request, result.correct);
+    const answeredBefore = result.others.map((other) => other.uid);
+    await pushQuizTurn(dependencies, list, { uid, listId, day, prompt, answeredBefore });
+  }
   return result;
 }
 

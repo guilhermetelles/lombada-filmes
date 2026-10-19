@@ -90,6 +90,15 @@ describe('TMDb: getMovie', () => {
         results: [
           { id: 2, title: 'Parecido', release_date: '1990-03-02', poster_path: '/p.jpg' },
           { id: 3, original_title: 'Original', release_date: '', poster_path: null },
+          {
+            id: 4,
+            title: 'O Segredo do Abismo',
+            original_title: 'The Abyss',
+            original_language: 'en',
+            release_date: '1989-08-09',
+            poster_path: null,
+          },
+          { id: 5, title: 'Amélie', original_title: 'Le Fabuleux Destin', original_language: 'fr', poster_path: null },
         ],
       },
     };
@@ -97,10 +106,35 @@ describe('TMDb: getMovie', () => {
 
     assert.equal(movie.year, 1989);
     assert.equal(movie.extras?.release, null);
+    // titleEn só quando o idioma original é inglês: as recomendações não trazem a tradução.
     assert.deepEqual(movie.extras?.recsInfo, [
       { tmdbId: 2, title: 'Parecido', year: 1990, posterPath: '/p.jpg' },
       { tmdbId: 3, title: 'Original', year: null, posterPath: null },
+      { tmdbId: 4, title: 'O Segredo do Abismo', titleEn: 'The Abyss', year: 1989, posterPath: null },
+      { tmdbId: 5, title: 'Amélie', year: null, posterPath: null },
     ]);
+  });
+
+  test('streaming no Brasil com nomes normalizados: sem planos repetidos nem canal do serviço que já está', async () => {
+    const provider = (provider_name: string, provider_id: number) => ({ provider_name, provider_id });
+    const response = {
+      id: 1,
+      title: 'Filme',
+      'watch/providers': {
+        results: {
+          BR: {
+            flatrate: [
+              provider('Paramount Plus', 531),
+              provider('Paramount+ Amazon Channel', 582),
+              provider('HBO Max Amazon Channel', 1825),
+              provider('Netflix basic with Ads', 1796),
+            ],
+          },
+        },
+      },
+    };
+    const movie = await tmdbClient(respondWith(response)).getMovie(1);
+    assert.deepEqual(movie.extras?.providersBR, ['Paramount Plus', 'HBO Max Amazon Channel', 'Netflix']);
   });
 
   test('pede os campos extras na mesma chamada', async () => {
@@ -188,6 +222,20 @@ describe('TMDb: search', () => {
     assert.deepEqual(
       { title: abyss?.title, originalTitle: abyss?.originalTitle, year: abyss?.year },
       { title: 'O Segredo do Abismo', originalTitle: 'The Abyss', year: 1989 },
+    );
+  });
+
+  test('pt-BR por padrão; en-US quando pedido', async () => {
+    const urls: string[] = [];
+    const recording: Fetch = async (input) => {
+      urls.push(String(input));
+      return new Response(JSON.stringify({ results: [] }));
+    };
+    await tmdbClient(recording).search('abismo');
+    await tmdbClient(recording).search('abyss', 'en-US');
+    assert.deepEqual(
+      urls.map((url) => new URL(url).searchParams.get('language')),
+      ['pt-BR', 'en-US'],
     );
   });
 

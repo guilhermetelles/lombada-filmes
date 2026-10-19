@@ -67,4 +67,39 @@ describe('UsageMeter', () => {
 
     assert.deepEqual(await readToday(), { tmdb: { calls: 1 } });
   });
+
+  test('conta por modelo do Gemini em geminiModels, sem mexer nos campos das fontes', async () => {
+    await todayDocument().set({ gemini: { calls: 1 }, geminiModels: { 'gemini-3.8-flash': { calls: 2 } } });
+    const usage = new UsageMeter();
+    usage.count('gemini', 'calls');
+    usage.countGeminiModel('gemini-3.8-flash', 'calls');
+    usage.countGeminiModel('gemini-3.8-flash', 'errors');
+    usage.countGeminiModel('gemini-3.8-flash', 'quota');
+    usage.countGeminiModel('gemini-3.7-flash', 'calls');
+
+    await usage.save(db, now);
+
+    assert.deepEqual(await readToday(), {
+      gemini: { calls: 2 },
+      geminiModels: {
+        'gemini-3.8-flash': { calls: 3, errors: 1, quota: 1 },
+        'gemini-3.7-flash': { calls: 1 },
+      },
+    });
+  });
+
+  test('modelos sem cota hoje: os gravados no dia e os desta execução', async () => {
+    await todayDocument().set({
+      geminiModels: { 'gemini-3.8-flash': { calls: 5, quota: 1 }, 'gemini-3.7-flash': { calls: 2 } },
+    });
+    const usage = new UsageMeter({ db, now: () => now });
+    assert.deepEqual([...(await usage.geminiModelsOutOfQuota())], ['gemini-3.8-flash']);
+
+    usage.countGeminiModel('gemini-3.7-flash', 'quota');
+    assert.deepEqual([...(await usage.geminiModelsOutOfQuota())].sort(), ['gemini-3.7-flash', 'gemini-3.8-flash']);
+    assert.deepEqual(usage.geminiQuotaHits(), ['gemini-3.7-flash']);
+
+    // Sem o banco, só vale o que a execução viu.
+    assert.deepEqual([...(await new UsageMeter().geminiModelsOutOfQuota())], []);
+  });
 });

@@ -40,7 +40,7 @@ async function readEnrichCursor(db: Firestore): Promise<EnrichCursor | undefined
  * @param cursor - Cursor novo.
  */
 async function saveEnrichCursor(db: Firestore, cursor: EnrichCursor): Promise<void> {
-  await cursorDocument(db).set(cursor);
+  await cursorDocument(db).set(cursor, { merge: true });
 }
 
 export { readEnrichCursor, saveEnrichCursor };

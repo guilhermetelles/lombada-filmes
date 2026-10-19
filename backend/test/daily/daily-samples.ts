@@ -2,6 +2,7 @@ import type { DailyContext, DailyList } from '../../lib/daily/daily-content.js';
 import type { RankedEntry } from '../../lib/events/list-entries.js';
 import type { Dependencies } from '../../lib/types/dependencies.js';
 import type { Movie } from '../../lib/types/movie.js';
+import { UsageMeter } from '../../lib/usage/usage-meter.js';
 
 /** Montagem de listas e filmes para testar os assuntos da notificação diária sem banco. */
 
@@ -97,7 +98,7 @@ export function sampleList(
 export function offlineContext(list: DailyList, day: string, now = new Date(`${day}T22:00:00Z`)): DailyContext {
   return {
     dependencies: {} as Dependencies,
-    usage: { count() {}, track: (_source, call) => call() },
+    usage: new UsageMeter(),
     list,
     uid: 'ana',
     day,

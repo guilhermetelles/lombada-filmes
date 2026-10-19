@@ -8,8 +8,8 @@ import { DiscoverQuery } from '../lib/schemas/route-inputs.js';
 import type { Dependencies } from '../lib/types/dependencies.js';
 
 /**
- * GET /api/discover?listId=&mood=&dur=&dec=&genre=&theme=&svc=&fit=&page=: busca avançada no TMDb
- * (região BR), ordenada pela compatibilidade com a lista. Com `listId`, só membros da lista; sem
+ * GET /api/discover?listId=&mood=&dur=&dec=&genre=&theme=&svc=&fit=&page=&lang=: busca avançada no
+ * TMDb (região BR), ordenada pela compatibilidade com a lista; com `lang=en`, títulos em inglês. Com `listId`, só membros da lista; sem
  * ele, a nota de cada filme é a do TMDb.
  *
  * Responde 200 `{ results, page, totalPages }`, 400 se a query for inválida, 401 sem token válido,
@@ -22,14 +22,14 @@ export const discoverRouteWith = (
   getTmdb: (dependencies: Dependencies) => TmdbDiscoverClient = (dependencies) => dependencies.sources.tmdbDiscover,
 ) =>
   authenticatedRoute(async ({ request, uid, dependencies, usage }) => {
-    const { listId, page, ...filters } = parseInput(
+    const { listId, page, lang, ...filters } = parseInput(
       DiscoverQuery,
       Object.fromEntries(new URL(request.url).searchParams),
     );
     if (listId) requireMember((await listDocument(dependencies.db, listId).get()).data(), uid);
     const result = await discoverMovies(
       { db: dependencies.db, tmdb: getTmdb(dependencies), usage },
-      { filters, page, listId },
+      { filters, page, listId, language: lang },
     );
     return Response.json(result);
   });

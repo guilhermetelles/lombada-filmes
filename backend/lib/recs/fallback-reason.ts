@@ -1,5 +1,6 @@
 import { scoreWithModel } from '../discover/score-candidates.js';
 import type { RecsModel } from '../types/recs.js';
+import { sagaName } from './saga-name.js';
 import type { ListIndex, ScoredRec } from './score-recs.js';
 
 /** Quantas marcas em comum o motivo cita, no máximo. */
@@ -24,7 +25,7 @@ function fallbackReason(rec: ScoredRec, index: ListIndex, model: RecsModel): str
     const where = `#${film.position} na lista de vocês`;
     const sentence =
       via === 'saga'
-        ? `da saga ${label}, como ${film.movie.title}, ${where}`
+        ? `da saga ${sagaName(label)}, como ${film.movie.title}, ${where}`
         : `mesmo diretor de ${film.movie.title} (${label}), ${where}`;
     return prefix ? `${prefix}, ${sentence}` : capitalize(sentence);
   }

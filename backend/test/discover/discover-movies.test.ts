@@ -50,6 +50,27 @@ class CountingUsage implements UsageRecorder {
       throw error;
     }
   }
+
+  /** A busca não usa o Gemini: não conta nada. */
+  countGeminiModel(): void {}
+
+  /**
+   * A busca não usa o Gemini: nenhum modelo sem cota.
+   *
+   * @returns Conjunto vazio.
+   */
+  async geminiModelsOutOfQuota(): Promise<ReadonlySet<string>> {
+    return new Set();
+  }
+
+  /**
+   * A busca não usa o Gemini: nenhum 429.
+   *
+   * @returns Lista vazia.
+   */
+  geminiQuotaHits(): string[] {
+    return [];
+  }
 }
 
 describe('discoverMovies sem lista', () => {

@@ -68,6 +68,7 @@ async function keywordLabels(
           system: SYSTEM,
           prompt: JSON.stringify(batch),
           schema: KeywordLabelsReplySchema,
+          usage,
         }),
       );
       const translated = new Map(reply.labels.map((item) => [item.name, item.label.trim()]));

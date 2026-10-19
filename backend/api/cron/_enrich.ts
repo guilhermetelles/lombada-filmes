@@ -1,5 +1,7 @@
 import { runEnrich } from '../../lib/enrich/run-enrich.js';
 import { cronRoute } from '../../lib/http/cron-route.js';
+import { runJob } from '../../lib/jobs/job-health.js';
+import { describeEnrich } from '../../lib/jobs/job-outcomes.js';
 import { logger } from '../../lib/logging/logger.js';
 
 /**
@@ -9,10 +11,11 @@ import { logger } from '../../lib/logging/logger.js';
  * lista, com frescor de 30 dias. Para por volta de 240 s com o cursor em jobs/enrich; chamada de
  * novo no mesmo dia, continua de onde parou.
  *
- * Responde 200 com o relatório, ou 401 sem o `Authorization: Bearer <CRON_SECRET>` que a Vercel manda.
+ * Grava a saúde da execução em jobs/enrich. Responde 200 com o relatório, ou 401 sem o `Authorization:
+ * Bearer <CRON_SECRET>` que a Vercel manda.
  */
 export const enrichCronRoute = cronRoute(async ({ dependencies, usage }) => {
-  const report = await runEnrich(dependencies, usage);
+  const report = await runJob({ dependencies, usage }, 'enrich', () => runEnrich(dependencies, usage), describeEnrich);
   logger.info('rotina enrich concluída', { report });
   return Response.json(report);
 });

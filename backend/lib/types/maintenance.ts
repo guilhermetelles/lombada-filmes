@@ -18,9 +18,17 @@ export type BechdelCount = {
   failed: number; // não atualizados por falha do site
 };
 
+/** Documentos velhos apagados pela rotina diária. */
+export type CleanupCount = {
+  feed: number; // itens da Atividade com mais de 180 dias
+  notifyLog: number; // registros de notificação com mais de 45 dias
+  rateLimits: number; // contagens diárias de limite com mais de 45 dias
+};
+
 /** O que a rotina diária fez, devolvido pela rota e registrado no log da Vercel. */
 export type MaintenanceReport = {
   movies: RefreshCount;
   bechdel: BechdelCount;
   invitesDeleted: number;
+  deleted: CleanupCount;
 };

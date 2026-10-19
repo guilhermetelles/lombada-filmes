@@ -12,7 +12,10 @@ export const GEMINI_TIMEOUT_MS = 30_000;
  * Cria o cliente do Gemini: API de Interações do @google/genai, sempre com `store: false` (nada fica
  * guardado no Google além do pedido), resposta em JSON no formato do schema zod, validada ao voltar.
  * Os modelos vêm de GEMINI_MODELS (versões fixas, em ordem de preferência): com a cota de um
- * esgotada, o pedido vai ao próximo. Sem nova tentativa no mesmo modelo.
+ * esgotada, o pedido vai ao próximo. Sem nova tentativa no mesmo modelo. Com o medidor de consumo no
+ * pedido, cada modelo tem os pedidos, erros e 429 contados em usage/{dia}.geminiModels, e o modelo
+ * que já respondeu 429 hoje é pulado direto (se todos já responderam, tenta só o primeiro, para
+ * notar quando a cota voltar).
  *
  * @param options - Chave da API (opcional) e o fetch a usar.
  * @returns Cliente que gera JSON validado.
@@ -30,18 +33,26 @@ function createGeminiClient({ apiKey, fetch }: { apiKey: string | undefined; fet
      * @throws {SourceUnavailableError} Sem GEMINI_API_KEY (sem fazer pedido), se o pedido falhar,
      *   passar do tempo limite, não terminar ou voltar fora do formato.
      */
-    async generateJson({ model, system, prompt, schema }) {
+    async generateJson({ model, system, prompt, schema, usage }) {
       if (!apiKey) throw new SourceUnavailableError('gemini', 'GEMINI_API_KEY não configurada');
       sdk ??= new GoogleGenAI({ apiKey, httpOptions: { fetch, timeout: GEMINI_TIMEOUT_MS } });
       const client = sdk;
-      const models = typeof model === 'string' ? [model] : model;
+      const models: readonly string[] = typeof model === 'string' ? [model] : model;
+      const outOfQuota = usage ? await usage.geminiModelsOutOfQuota() : new Set<string>();
+      const available = models.filter((candidate) => !outOfQuota.has(candidate));
+      const candidates = available.length > 0 ? available : models.slice(0, 1);
 
       // Cota diária esgotada (429) ou modelo indisponível (404, 503): tenta o próximo da lista.
       let lastError: SourceUnavailableError | undefined;
-      for (const candidate of models) {
+      for (const candidate of candidates) {
+        usage?.countGeminiModel(candidate, 'calls');
         try {
           return await requestJson(client, { model: candidate, system, prompt, schema });
         } catch (error) {
+          usage?.countGeminiModel(candidate, 'errors');
+          if (error instanceof SourceUnavailableError && statusOf(error.cause) === 429) {
+            usage?.countGeminiModel(candidate, 'quota');
+          }
           if (!(error instanceof SourceUnavailableError) || !isFallbackStatus(error.cause)) throw error;
           lastError = error;
         }
@@ -108,8 +119,18 @@ async function requestJson<T>(
  * @returns true para esses status.
  */
 function isFallbackStatus(cause: unknown): boolean {
-  const status = cause instanceof Error && 'status' in cause ? cause.status : undefined;
+  const status = statusOf(cause);
   return status === 429 || status === 404 || status === 503;
+}
+
+/**
+ * Status HTTP guardado no erro do SDK, quando houve resposta.
+ *
+ * @param cause - Causa guardada no SourceUnavailableError.
+ * @returns O status, ou undefined.
+ */
+function statusOf(cause: unknown): unknown {
+  return cause instanceof Error && 'status' in cause ? cause.status : undefined;
 }
 
 /**

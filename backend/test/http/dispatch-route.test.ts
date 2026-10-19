@@ -60,6 +60,7 @@ describe('ROUTES de api/router.ts', () => {
       '/api/me/notify',
       '/api/me/notify-test',
       '/api/discover',
+      '/api/status',
       '/api/search/interpret',
       '/api/lists/abc/queue',
       '/api/lists/abc/queue/603',

@@ -8,6 +8,7 @@ export const TmdbListedMovie = z.object({
   id: z.number().int().positive(),
   title: optionalText,
   original_title: optionalText,
+  original_language: optionalText,
   poster_path: optionalText,
   release_date: optionalText,
   genre_ids: z.array(z.number()).default([]),

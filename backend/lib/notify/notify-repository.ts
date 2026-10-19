@@ -73,6 +73,28 @@ export function notifyStateDocument(db: Firestore, uid: string): DocumentReferen
 }
 
 /**
+ * Documento notifyState/{uid} sem conversão, para saber se `prefs` foi gravado (o documento tipado
+ * preenche o padrão ao ler e esconde a falta).
+ *
+ * @param db - Firestore.
+ * @param uid - Pessoa.
+ * @returns A referência sem conversão.
+ */
+export function rawNotifyStateDocument(db: Firestore, uid: string): DocumentReference {
+  return db.collection('notifyState').doc(uid);
+}
+
+/**
+ * Diz se um documento notifyState lido sem conversão está sem `prefs` (ou nem existe).
+ *
+ * @param snapshot - Documento lido com rawNotifyStateDocument.
+ * @returns true quando falta gravar as preferências.
+ */
+export function lacksNotifyPrefs(snapshot: { exists: boolean; get(field: string): unknown }): boolean {
+  return !snapshot.exists || snapshot.get('prefs') === undefined;
+}
+
+/**
  * Coleção notifyState/, para as rotinas notify-* consultarem quem escolheu o horário.
  *
  * @param db - Firestore.

@@ -42,6 +42,21 @@ describe('GET /api/search', () => {
     assert.deepEqual(await tmdbUsageToday(), { calls: 1 });
   });
 
+  test('lang=en pede ao TMDb os títulos em inglês; lang inválido: 400', async () => {
+    const urls: string[] = [];
+    const recording: typeof sources.fetch = async (input, init) => {
+      urls.push(String(input));
+      return sources.fetch(input, init);
+    };
+    dependencies = createTestDependencies(recording);
+    const ok = await searchRoute(() => dependencies)(getRequest('/api/search?q=abyss&lang=en', withBearer(idToken)));
+    assert.equal(ok.status, 200);
+    assert.equal(new URL(urls[0] ?? 'http://x').searchParams.get('language'), 'en-US');
+
+    const bad = await searchRoute(() => dependencies)(getRequest('/api/search?q=abyss&lang=es', withBearer(idToken)));
+    assert.equal(bad.status, 400);
+  });
+
   test('q vazio ou com mais de 100 caracteres: 400 sem pedir ao TMDb', async () => {
     for (const query of [' ', 'a'.repeat(101)]) {
       const response = await search(query);

@@ -2,12 +2,25 @@ import assert from 'node:assert/strict';
 import { describe, test } from 'node:test';
 import { DEFAULT_NOTIFY_PREFS } from '../../lib/notify/default-notify-prefs.js';
 import { NotifyStateSchema } from '../../lib/schemas/notify.js';
-import { DiscoverQuery, ListEventsBody, NotifyPrefsBody, QuizAnswerParams } from '../../lib/schemas/route-inputs.js';
+import {
+  DiscoverQuery,
+  ListEventsBody,
+  NotifyPrefsBody,
+  QuizAnswerParams,
+  SearchQuery,
+} from '../../lib/schemas/route-inputs.js';
 
 describe('DiscoverQuery', () => {
   test('listas separadas por vírgula, fit e página', () => {
     const parsed = DiscoverQuery.parse({ mood: 'leve, cult', dec: '1980', fit: 'true', page: '2', listId: 'abc' });
-    assert.deepEqual(parsed, { listId: 'abc', mood: ['leve', 'cult'], dec: ['1980'], fit: true, page: 2 });
+    assert.deepEqual(parsed, {
+      listId: 'abc',
+      mood: ['leve', 'cult'],
+      dec: ['1980'],
+      fit: true,
+      page: 2,
+      lang: 'pt-BR',
+    });
   });
 
   test('sem nada: página 1 e filtros ausentes', () => {
@@ -20,6 +33,20 @@ describe('DiscoverQuery', () => {
   test('valor fora da lista é recusado', () => {
     assert.equal(DiscoverQuery.safeParse({ mood: 'feliz' }).success, false);
     assert.equal(DiscoverQuery.safeParse({ page: '501' }).success, false);
+    assert.equal(DiscoverQuery.safeParse({ lang: 'es' }).success, false);
+  });
+
+  test('lang=en pede os títulos em inglês (en-US); sem lang, pt-BR', () => {
+    assert.equal(DiscoverQuery.parse({ lang: 'en' }).lang, 'en-US');
+    assert.equal(DiscoverQuery.parse({}).lang, 'pt-BR');
+  });
+});
+
+describe('SearchQuery', () => {
+  test('lang opcional: pt-BR por padrão, en-US com lang=en', () => {
+    assert.deepEqual(SearchQuery.parse({ q: 'abismo' }), { q: 'abismo', lang: 'pt-BR' });
+    assert.deepEqual(SearchQuery.parse({ q: 'abyss', lang: 'en' }), { q: 'abyss', lang: 'en-US' });
+    assert.equal(SearchQuery.safeParse({ q: 'abyss', lang: 'english' }).success, false);
   });
 });
 

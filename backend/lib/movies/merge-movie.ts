@@ -1,3 +1,4 @@
+import { normalizeStreamingServices } from '../discover/streaming-names.js';
 import { withoutUndefined } from '../firestore/without-undefined.js';
 import { brazilDay } from '../time/brazil-day.js';
 import type { FetchedSources, Movie } from '../types/movie.js';
@@ -96,7 +97,10 @@ function applyTmdbExtras(stored: Movie | undefined, extras: TmdbMovieExtras, now
 function previousProviders(stored: Movie | undefined, extras: TmdbMovieExtras, now: Date): string[] {
   const current = stored?.providersBR;
   if (!current) return extras.providersBR;
-  return brazilDay(current.fetchedAt) === brazilDay(now) ? current.previous : current.flatrate;
+  // Os nomes guardados antes da normalização são normalizados também, para não parecer que chegou serviço novo.
+  return normalizeStreamingServices(
+    brazilDay(current.fetchedAt) === brazilDay(now) ? current.previous : current.flatrate,
+  );
 }
 
 /**

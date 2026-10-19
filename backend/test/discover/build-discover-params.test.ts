@@ -32,6 +32,10 @@ describe('buildDiscoverParams', () => {
     });
   });
 
+  test('títulos em inglês: language=en-US', () => {
+    assert.equal(buildDiscoverParams({}, 1, 'en-US').params.get('language'), 'en-US');
+  });
+
   test('"comédia com casal gay": gênero e palavras-chave LGBT+ conferidas no TMDb', () => {
     assert.deepEqual(plan({ genre: ['Comédia'], theme: ['lgbt'] }).params, {
       ...BASE,

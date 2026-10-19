@@ -8,12 +8,16 @@ import type * as z from 'zod';
 import type { AwardItem } from './awards.js';
 import type { MovieRecInfo } from './movie.js';
 import type { CastMember, Director, Person, PersonDepartment } from './person.js';
+import type { UsageRecorder } from './usage.js';
 
 /** Fontes externas, também usadas como chave do consumo em usage/{dia}. */
 export type SourceName = 'tmdb' | 'omdb' | 'letterboxd' | 'bechdel' | 'wikidata' | 'wikipedia' | 'gemini';
 
 /** Fontes com prazo de 7 dias por filme: o TMDb e as notas (as outras têm prazos próprios). */
 export type WeeklySource = Extract<SourceName, 'tmdb' | 'omdb' | 'letterboxd'>;
+
+/** Idioma pedido ao TMDb para os títulos: o app usa `lang=pt` (padrão) ou `lang=en`. */
+export type TmdbLanguage = 'pt-BR' | 'en-US';
 
 /** Assinatura do fetch, injetado nos clientes (o global em produção, um falso nos testes). */
 export type Fetch = typeof globalThis.fetch;
@@ -128,7 +132,7 @@ export type BechdelPage = {
 export type TmdbClient = {
   getMovie(tmdbId: number): Promise<TmdbMovie>;
   getCollection(collectionId: number): Promise<TmdbCollection>;
-  search(query: string): Promise<TmdbSearchResult[]>;
+  search(query: string, language?: TmdbLanguage): Promise<TmdbSearchResult[]>;
   getPerson(personId: number): Promise<TmdbPerson>;
   searchPeople(query: string): Promise<TmdbPersonSearchResult[]>;
 };
@@ -181,6 +185,7 @@ export type GeminiRequest<T> = {
   system?: string | undefined;
   prompt: string;
   schema: z.ZodType<T>; // formato da resposta; vira o JSON Schema pedido ao modelo e valida o que volta
+  usage?: UsageRecorder | undefined; // conta os pedidos por modelo e diz quais ficaram sem cota hoje
 };
 
 /** Cliente do Gemini: gera JSON validado. Os comentários vão só como texto, sem nomes. */

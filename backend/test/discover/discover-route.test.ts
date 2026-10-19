@@ -90,6 +90,13 @@ async function addEntries(movies: { tmdbId: number; genres: string[] }[]): Promi
 }
 
 describe('GET /api/discover', () => {
+  test('lang=en: o /discover vai ao TMDb com language=en-US', async () => {
+    const response = await discover('lang=en');
+    assert.equal(response.status, 200);
+    const discoverUrl = tmdb.urls.find((url) => url.pathname.endsWith('/discover/movie'));
+    assert.equal(discoverUrl?.searchParams.get('language'), 'en-US');
+  });
+
   test('sem lista: página pontuada pela nota do TMDb, e o consumo do TMDb contado', async () => {
     const response = await discover('genre=Comédia&theme=lgbt');
     const page = (await response.json()) as DiscoverPage;

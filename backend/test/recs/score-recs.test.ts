@@ -96,6 +96,25 @@ describe('scoreMovie', () => {
     assert.equal(fallbackReason(rec, index, BASELINE), 'Da saga Saga X, como Segundo, #2 na lista de vocês');
   });
 
+  test('o motivo por regra cita a saga sem "Coleção" nem "Collection"', () => {
+    for (const name of [
+      'Saga X - Coleção',
+      'Saga X: Coleção',
+      'Saga X Coleção',
+      'Saga X Collection',
+      'Coleção Saga X',
+    ]) {
+      const rec = scoreMovie(
+        BASELINE,
+        index,
+        99,
+        makeMovie({ genres: ['Ação'], collection: { id: 500, name } }),
+        'model',
+      );
+      assert.equal(fallbackReason(rec, index, BASELINE), 'Da saga Saga X, como Segundo, #2 na lista de vocês', name);
+    }
+  });
+
   test('diretor da lista vira kind diretor, ligado ao filme mais alto dele', () => {
     const rec = scoreMovie(
       BASELINE,

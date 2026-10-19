@@ -61,6 +61,7 @@ async function generateSynopsisQuiz({
         system: SYSTEM_INSTRUCTION,
         prompt: original,
         schema: NamelessSynopsisSchema,
+        usage,
       }),
     );
     synopsis = reply.synopsis.trim();

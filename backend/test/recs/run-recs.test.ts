@@ -78,6 +78,8 @@ describe('runRecs', () => {
     assert.equal(saga?.reason, 'Continua a saga que vocês puseram no topo da lista');
     assert.equal(saga?.reasonFrom[0], 'e101');
     assert.equal(saga?.reasonBy, 'gemini');
+    // Título em português em `title`; o de movies/{id} (em inglês) em `titleEn`.
+    assert.equal(saga?.titleEn, (await dependencies.db.doc('movies/201').get()).get('title'));
     const director = recs.items.find((item) => item.tmdbId === 211);
     assert.equal(director?.kind, 'diretor');
     assert.equal(director?.reason, 'Mesmo diretor de Topo da Saga (Diretora Recorrente), #1 na lista de vocês');
@@ -165,35 +167,41 @@ describe('runRecs', () => {
 });
 
 describe('onListChanged', () => {
-  test('reajusta e repontua sem TMDb nem Gemini, mantém os motivos e tira o filme que entrou na lista', async () => {
+  test('tira o filme que entrou na lista sem TMDb nem Gemini; os outros ficam como estavam', async () => {
     await runRecs(dependencies, new UsageMeter());
     const before = await readRecsDoc();
     const movieCalls = tmdb.movieCalls.length;
     const listCalls = tmdb.listCalls.length;
     const geminiCalls = gemini.requests.length;
+    const entered = before.items[1]?.tmdbId ?? 0;
+    assert.ok(entered > 0);
 
-    // 204 entra no topo da lista; o último sobe para o terceiro lugar.
-    await dependencies.db
-      .doc(`lists/${LIST_ID}/entries/e204`)
-      .set({ tmdbId: 204, rankKey: 'a', comment: '', watchedOn: null });
-    await dependencies.db.doc(`lists/${LIST_ID}/entries/e106`).update({ rankKey: 'a00' });
-    await onListChanged(dependencies.db, LIST_ID);
+    await onListChanged(dependencies.db, LIST_ID, [entered]);
 
     const after = await readRecsDoc();
     assert.equal(tmdb.movieCalls.length, movieCalls);
     assert.equal(tmdb.listCalls.length, listCalls);
     assert.equal(gemini.requests.length, geminiCalls);
-    assert.ok(!after.items.some((item) => item.tmdbId === 204));
+    assert.deepEqual(
+      after.items,
+      before.items.filter((item) => item.tmdbId !== entered),
+    );
+    assert.deepEqual(after.trending, before.trending);
     assert.equal(after.computedAt.getTime(), before.computedAt.getTime());
-    for (const item of after.items) {
-      const old = before.items.find((previous) => previous.tmdbId === item.tmdbId);
-      assert.equal(item.reason, old?.reason);
-      assert.deepEqual(item.reasonFrom, old?.reasonFrom);
-    }
+  });
+
+  test('sem filme novo, não grava', async () => {
+    await runRecs(dependencies, new UsageMeter());
+    const ref = dependencies.db.doc(`lists/${LIST_ID}/recs/current`);
+    const before = (await ref.get()).updateTime;
+    assert.ok(before);
+    await onListChanged(dependencies.db, LIST_ID, []);
+    await onListChanged(dependencies.db, LIST_ID, [999_999]);
+    assert.ok((await ref.get()).updateTime?.isEqual(before));
   });
 
   test('sem recs/current não faz nada', async () => {
-    await onListChanged(dependencies.db, LIST_ID);
+    await onListChanged(dependencies.db, LIST_ID, [204]);
     assert.equal((await dependencies.db.doc(`lists/${LIST_ID}/recs/current`).get()).exists, false);
   });
 });
@@ -216,5 +224,11 @@ describe('GET /api/cron/recs', () => {
       report.lists.map(({ listId, status }) => ({ listId, status })),
       [{ listId: LIST_ID, status: 'written' }],
     );
+
+    // Sem resposta do Gemini, os motivos caem para a reserva: a saúde da rotina diz o porquê.
+    const job = (await dependencies.db.doc('jobs/recs').get()).data();
+    assert.equal(job?.status, 'partial');
+    assert.equal(job?.lastRunAt.toMillis(), clock.getTime());
+    assert.deepEqual(job?.warnings, ['motivos das sugestões pela reserva: sem resposta preparada no teste']);
   });
 });
