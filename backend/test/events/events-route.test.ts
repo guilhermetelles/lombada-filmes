@@ -210,6 +210,14 @@ describe('POST /api/lists/{listId}/events', () => {
     assert.deepEqual(state?.prefs, DEFAULT_NOTIFY_PREFS, 'as preferências ficam como estavam');
   });
 
+  test('quem nunca gravou preferências recebe e ganha o padrão em notifyState', async () => {
+    await putEntry('e-heat', 949, 'Heat', 'a4');
+    assert.deepEqual(await (await send(ana, [{ type: 'moved', entryId: 'e-heat' }])).json(), { pushed: true });
+    const raw = (await dependencies.db.doc(`notifyState/${bia.uid}`).get()).data();
+    assert.deepEqual(raw?.prefs, DEFAULT_NOTIFY_PREFS);
+    assert.equal(raw?.pushesCount, 1);
+  });
+
   test('quem desligou os avisos de atividade não recebe; a Atividade é gravada', async () => {
     await notifyStateDocument(dependencies.db, bia.uid).set({ prefs: { ...DEFAULT_NOTIFY_PREFS, activity: false } });
     await putEntry('e-heat', 949, 'Heat', 'a4');

@@ -2,7 +2,14 @@ import type { Firestore } from 'firebase-admin/firestore';
 import { listsOfMember } from '../lists/list-repository.js';
 import type { MessagingClient } from '../types/dependencies.js';
 import type { DevicePlatform } from '../types/notify.js';
-import { deviceTokenDocument, deviceTokensCollection } from './notify-repository.js';
+import { DEFAULT_NOTIFY_PREFS } from './default-notify-prefs.js';
+import {
+  deviceTokenDocument,
+  deviceTokensCollection,
+  lacksNotifyPrefs,
+  notifyStateDocument,
+  rawNotifyStateDocument,
+} from './notify-repository.js';
 import { sendFcm } from './send-fcm.js';
 
 /** Máximo de aparelhos por pessoa: ao registrar o sexto, o mais antigo é esquecido. */
@@ -11,7 +18,7 @@ export const MAX_DEVICES_PER_PERSON = 5;
 /**
  * Registra (ou renova) o token do FCM de um aparelho em devices/{uid}/tokens/{sha256}, com
  * `updatedAt` de agora. Se a pessoa passar de 5 aparelhos, apaga os de `updatedAt` mais antigo, na
- * mesma transação.
+ * mesma transação. Quem ainda não tem `prefs` em notifyState/{uid} ganha o padrão, gravado junto.
  *
  * @param db - Firestore.
  * @param uid - Dona do aparelho.
@@ -28,8 +35,12 @@ export async function registerDevice(
   await db.runTransaction(async (transaction) => {
     const others = (await transaction.get(deviceTokensCollection(db, uid))).docs.filter((doc) => doc.id !== ref.id);
     const newestFirst = others.sort((a, b) => b.data().updatedAt.getTime() - a.data().updatedAt.getTime());
+    const state = await transaction.get(rawNotifyStateDocument(db, uid));
 
     transaction.set(ref, { token, platform, updatedAt: now });
+    if (lacksNotifyPrefs(state)) {
+      transaction.set(notifyStateDocument(db, uid), { prefs: DEFAULT_NOTIFY_PREFS }, { merge: true });
+    }
     for (const stale of newestFirst.slice(MAX_DEVICES_PER_PERSON - 1)) transaction.delete(stale.ref);
   });
 }

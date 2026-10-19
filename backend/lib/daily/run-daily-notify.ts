@@ -5,8 +5,16 @@ import { createIfAbsent } from '../firestore/idempotent.js';
 import { listsOfMember } from '../lists/list-repository.js';
 import { logger } from '../logging/logger.js';
 import { DEFAULT_NOTIFY_PREFS } from '../notify/default-notify-prefs.js';
-import { notifyLogDocument, notifyStateCollection, notifyStateDocument } from '../notify/notify-repository.js';
+import {
+  lacksNotifyPrefs,
+  notifyLogDocument,
+  notifyStateCollection,
+  notifyStateDocument,
+  rawNotifyStateDocument,
+} from '../notify/notify-repository.js';
 import { sendFcm } from '../notify/send-fcm.js';
+import { answersCollection } from '../quiz/quiz-repository.js';
+import { QuizDocSchema } from '../schemas/quiz.js';
 import { brazilDay } from '../time/brazil-day.js';
 import type { Dependencies } from '../types/dependencies.js';
 import type { FeedItem } from '../types/feed.js';
@@ -31,6 +39,12 @@ const TIME_BUDGET_MS = 240_000;
 /** A pergunta do quiz sai sempre na rotina das 9h, qualquer que seja o horário escolhido. */
 export const QUIZ_HOUR: NotifyHour = 9;
 
+/** Na rotina das 21h, quem recebeu o quiz às 9h e ainda não respondeu recebe um lembrete. */
+export const QUIZ_REMINDER_HOUR: NotifyHour = 21;
+
+/** Título do lembrete do quiz das 21h. */
+export const QUIZ_REMINDER_TITLE = 'Ainda dá tempo';
+
 /** O que aconteceu com uma pessoa. */
 type PersonOutcome = 'sent' | 'alreadySent' | 'frequency' | 'noContent' | 'typeOff';
 
@@ -41,6 +55,7 @@ export type DailyNotifyReport = {
   people: number; // quem recebe algo nesta rotina (assunto no horário escolhido ou quiz às 9h)
   sent: number; // assuntos do dia enviados (sem o quiz)
   quizSent: number; // perguntas do quiz enviadas
+  quizReminded: number; // lembretes do quiz enviados (só na rotina das 21h)
   alreadySent: number; // já tinha notifyLog do dia (execução repetida)
   frequency: number; // recebeu há menos dias que a frequência escolhida
   noContent: number;
@@ -54,8 +69,8 @@ export type DailyNotifyReport = {
  * que ainda é o dia anterior em Brasília). Às 9h, todo mundo com o quiz ligado recebe a pergunta do
  * dia, se ainda não respondeu. Em cada horário, quem o escolheu recebe o assunto do dia da lista,
  * que é o mesmo para todos os membros: sorteado uma vez por lista e dia, entre os tipos que algum
- * membro ligou, e gravado num item só da Atividade. Quem desligou o tipo sorteado fica sem o aviso naquele dia. Cada aviso respeita a
- * frequência da pessoa.
+ * membro ligou, e gravado num item só da Atividade. Quem desligou o tipo sorteado fica sem o aviso
+ * naquele dia. O assunto respeita a frequência da pessoa; o quiz é diário.
  *
  * @param dependencies - Banco, fontes, FCM e relógio.
  * @param usage - Medidor de consumo da execução.
@@ -79,6 +94,7 @@ async function runDailyNotify(
     people: people.size,
     sent: 0,
     quizSent: 0,
+    quizReminded: 0,
     alreadySent: 0,
     frequency: 0,
     noContent: 0,
@@ -105,7 +121,65 @@ async function runDailyNotify(
       logger.error('notificação diária falhou', { uid, day, error });
     }
   }
+
+  if (hour === QUIZ_REMINDER_HOUR) {
+    for (const [uid, prefs] of await peopleWithNotifications(dependencies.db)) {
+      if (!prefs.types.quiz) continue;
+      if (Date.now() - startedAt > TIME_BUDGET_MS) {
+        report.unfinished++;
+        continue;
+      }
+      try {
+        if (await remindQuiz(dependencies, uid, day, now)) report.quizReminded++;
+      } catch (error) {
+        report.failed++;
+        logger.error('lembrete do quiz falhou', { uid, day, error });
+      }
+    }
+  }
   return report;
+}
+
+/**
+ * Lembrete das 21h: quem recebeu a pergunta às 9h (existe notifyLog/{uid}_{dia}-quiz) e ainda não
+ * respondeu recebe "Ainda dá tempo" com o enunciado, abrindo a pergunta do dia, no canal quiz. O
+ * registro notifyLog/{uid}_{dia}-quiz2, criado com create(), impede o reenvio.
+ *
+ * @param dependencies - Banco e FCM.
+ * @param uid - Pessoa.
+ * @param day - Dia de Brasília.
+ * @param now - Momento do envio.
+ * @returns true se o lembrete saiu agora.
+ * @throws O erro do Firestore ou do FCM, se a gravação ou o envio falhar.
+ */
+async function remindQuiz(dependencies: Dependencies, uid: string, day: string, now: Date): Promise<boolean> {
+  const { db } = dependencies;
+  const [morning, reminder] = await db.getAll(
+    notifyLogDocument(db, uid, `${day}-quiz`),
+    notifyLogDocument(db, uid, `${day}-quiz2`),
+  );
+  const listId = morning?.exists ? morning.get('listId') : undefined;
+  if (typeof listId !== 'string' || reminder?.exists) return false;
+
+  const quiz = QuizDocSchema.safeParse((await db.doc(`lists/${listId}/quizzes/${day}`).get()).data());
+  if (!quiz.success) return false;
+  if ((await answersCollection(db, listId, day).doc(uid).get()).exists) return false;
+
+  const claimed = await createIfAbsent(notifyLogDocument(db, uid, `${day}-quiz2`), {
+    type: 'daily.quiz',
+    listId,
+    sentAt: now,
+  });
+  if (!claimed) return false;
+  await sendFcm(dependencies, uid, {
+    title: QUIZ_REMINDER_TITLE,
+    body: quiz.data.prompt,
+    listId,
+    feedId: `quiz-${day}`,
+    route: { name: 'quizPlay', args: { day } },
+    channelId: 'quiz',
+  });
+  return true;
 }
 
 /**
@@ -156,15 +230,16 @@ function readPrefs(docs: readonly { id: string; data(): { prefs: NotifyPrefs } }
 }
 
 /**
- * Acrescenta quem tem aparelho registrado e nunca gravou preferências, com o padrão.
+ * Acrescenta quem tem aparelho registrado e nunca gravou preferências (sem notifyState, ou com
+ * notifyState sem `prefs`, como o que o aviso de atividade criava), com o padrão.
  *
  * @param db - Firestore.
  * @param people - Preferências por uid, completadas aqui.
  */
 async function addDefaultPeople(db: Firestore, people: Map<string, NotifyPrefs>): Promise<void> {
   const owners = (await db.collection('devices').listDocuments()).map((ref) => ref.id);
-  const states = owners.length > 0 ? await db.getAll(...owners.map((uid) => notifyStateDocument(db, uid))) : [];
-  for (const state of states) if (!state.exists) people.set(state.id, DEFAULT_NOTIFY_PREFS);
+  const states = owners.length > 0 ? await db.getAll(...owners.map((uid) => rawNotifyStateDocument(db, uid))) : [];
+  for (const state of states) if (lacksNotifyPrefs(state)) people.set(state.id, DEFAULT_NOTIFY_PREFS);
 }
 
 /** O que notifyPerson precisa. */
@@ -225,7 +300,9 @@ async function notifySlot(run: PersonRun, lists: readonly DailyList[], slot: Dai
   const { dependencies, usage, uid, prefs, day, now } = run;
   const { db } = dependencies;
   const logKey = (logDay: string) => (slot === 'quiz' ? `${logDay}-quiz` : logDay);
-  const windowDays = Array.from({ length: prefs.freq }, (_, back) => addDays(day, -back));
+  // O quiz é diário para quem o ligou; a frequência só vale para o assunto do dia.
+  const windowLength = slot === 'quiz' ? 1 : prefs.freq;
+  const windowDays = Array.from({ length: windowLength }, (_, back) => addDays(day, -back));
   const logs = await db.getAll(...windowDays.map((windowDay) => notifyLogDocument(db, uid, logKey(windowDay))));
   if (logs[0]?.exists) return 'alreadySent';
   if (logs.some((log) => log.exists)) return 'frequency';

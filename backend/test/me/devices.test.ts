@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { beforeEach, describe, test } from 'node:test';
 import { registerDeviceRoute, unregisterDeviceRoute } from '../../api/me/_devices.js';
+import { DEFAULT_NOTIFY_PREFS } from '../../lib/notify/default-notify-prefs.js';
 import { MAX_DEVICES_PER_PERSON } from '../../lib/notify/devices.js';
 import { deviceTokenId } from '../../lib/notify/notify-repository.js';
 import { createTestDependencies } from '../support/dependencies.js';
@@ -47,6 +48,16 @@ describe('POST /api/me/devices', () => {
     assert.equal(doc.get('token'), 'token-a');
     assert.equal(doc.get('platform'), 'android');
     assert.equal(doc.get('updatedAt').toMillis(), clock.getTime());
+  });
+
+  test('quem não tem preferências ganha o padrão em notifyState; quem tem fica como está', async () => {
+    await register({ token: 'token-a', platform: 'android' });
+    assert.deepEqual((await dependencies.db.doc(`notifyState/${ana.uid}`).get()).get('prefs'), DEFAULT_NOTIFY_PREFS);
+
+    const custom = { ...DEFAULT_NOTIFY_PREFS, freq: 7, hour: 9 };
+    await dependencies.db.doc(`notifyState/${ana.uid}`).set({ prefs: custom });
+    await register({ token: 'token-b', platform: 'android' });
+    assert.deepEqual((await dependencies.db.doc(`notifyState/${ana.uid}`).get()).get('prefs'), custom);
   });
 
   test('o mesmo token de novo só renova updatedAt', async () => {

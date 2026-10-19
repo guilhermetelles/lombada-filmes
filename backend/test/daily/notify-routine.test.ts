@@ -147,6 +147,24 @@ async function run(route: typeof notify19CronRoute = notify19CronRoute): Promise
   return (await response.json()) as DailyNotifyReport;
 }
 
+/**
+ * Grava a pergunta do quiz de um dia na lista.
+ *
+ * @param day - Dia AAAA-MM-DD.
+ */
+async function putQuiz(day: string): Promise<void> {
+  await dependencies.db.doc(`lists/${LIST}/quizzes/${day}`).set({
+    day,
+    type: 'ano',
+    prompt: 'Em que ano saiu Speed?',
+    options: [
+      { id: 'a', label: '1994' },
+      { id: 'b', label: '1996' },
+    ],
+    createdAt: clock,
+  });
+}
+
 const feedItem = async (id: string) => (await dependencies.db.doc(`lists/${LIST}/feed/${id}`).get()).data();
 
 /**
@@ -606,6 +624,74 @@ describe('rotinas notify-*', () => {
     clock = new Date('2026-10-19T00:20:00Z');
     const report = await run(notify21CronRoute);
     assert.deepEqual([report.sent, report.typeOff], [0, 1]);
+  });
+
+  test('quiz é diário mesmo com frequência de 3 dias', async () => {
+    await prefsOf(ANA, { quiz: true }, { freq: 3 });
+    await notifyLogDocument(dependencies.db, ANA, '2026-10-17-quiz').set({
+      type: 'daily.quiz',
+      listId: LIST,
+      sentAt: new Date('2026-10-17T12:00:00Z'),
+    });
+    await putQuiz('2026-10-18');
+    clock = new Date('2026-10-18T12:00:00Z');
+
+    const report = await run(notify09CronRoute);
+    assert.deepEqual([report.quizSent, report.frequency], [1, 0]);
+  });
+
+  test('lembrete das 21h: quem recebeu o quiz às 9h e não respondeu recebe "Ainda dá tempo", uma vez', async () => {
+    await prefsOf(ANA, { quiz: true });
+    await putQuiz('2026-10-18');
+    clock = new Date('2026-10-18T12:00:00Z');
+    assert.equal((await run(notify09CronRoute)).quizSent, 1);
+
+    clock = new Date('2026-10-19T00:05:00Z');
+    const report = await run(notify21CronRoute);
+    assert.equal(report.quizReminded, 1);
+    const push = fcm.sent.at(-1);
+    assert.deepEqual(push?.notification, { title: 'Ainda dá tempo', body: 'Em que ano saiu Speed?' });
+    assert.deepEqual(push?.android?.notification, { channelId: 'quiz' });
+    assert.equal(push?.data?.route, JSON.stringify({ name: 'quizPlay', args: { day: '2026-10-18' } }));
+    assert.equal(push?.data?.feedId, 'quiz-2026-10-18');
+    assert.ok((await notifyLogDocument(dependencies.db, ANA, '2026-10-18-quiz2').get()).exists);
+
+    const sent = fcm.sent.length;
+    assert.equal((await run(notify21CronRoute)).quizReminded, 0);
+    assert.equal(fcm.sent.length, sent);
+  });
+
+  test('lembrete das 21h: sem o aviso das 9h, ou com o quiz respondido, nada sai', async () => {
+    await prefsOf(ANA, { quiz: true });
+    await putQuiz('2026-10-18');
+    clock = new Date('2026-10-19T00:05:00Z');
+    assert.equal((await run(notify21CronRoute)).quizReminded, 0, 'não recebeu às 9h');
+
+    await notifyLogDocument(dependencies.db, ANA, '2026-10-18-quiz').set({
+      type: 'daily.quiz',
+      listId: LIST,
+      sentAt: new Date('2026-10-18T12:00:00Z'),
+    });
+    await dependencies.db
+      .doc(`lists/${LIST}/quizzes/2026-10-18/answers/${ANA}`)
+      .set({ optionId: 'a', correct: true, answeredAt: clock });
+    assert.equal((await run(notify21CronRoute)).quizReminded, 0, 'já respondeu');
+    assert.equal(fcm.sent.filter((message) => message.notification?.title === 'Ainda dá tempo').length, 0);
+  });
+
+  test('notifyState sem prefs (criado pelo aviso de atividade) conta como padrão às 19h', async () => {
+    await dependencies.db.doc(`notifyState/${BIA}`).set({ pushesDay: '2026-10-18', pushesCount: 1 });
+    await deviceTokenDocument(dependencies.db, BIA, 'token-bia').set({
+      token: 'token-bia',
+      platform: 'android',
+      updatedAt: clock,
+    });
+    await putEntry('e-speed', SPEED, 'Speed', 'a1');
+    await putEntry('e-abyss', ABYSS, 'The Abyss', 'a2');
+
+    const report = await run();
+    assert.equal(report.people, 2, 'Ana (sem notifyState) e Bia (notifyState sem prefs)');
+    assert.ok(fcm.sent.some((message) => message.tokens.includes('token-bia')));
   });
 
   test('sem segredo do cron: 401', async () => {
