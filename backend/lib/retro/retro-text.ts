@@ -44,7 +44,13 @@ async function writeRetroText(
 
   try {
     const reply = await usage.track('gemini', () =>
-      gemini.generateJson({ model: GEMINI_MODELS.text, system: SYSTEM_INSTRUCTION, prompt, schema: RetroTextSchema }),
+      gemini.generateJson({
+        model: GEMINI_MODELS.text,
+        system: SYSTEM_INSTRUCTION,
+        prompt,
+        schema: RetroTextSchema,
+        usage,
+      }),
     );
     const text = reply.text.trim();
     if (text && text.length <= MAX_TEXT_LENGTH && !text.includes(NAME_PLACEHOLDER)) return text;

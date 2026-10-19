@@ -288,6 +288,9 @@ export function countingUsage(): CountingUsage {
       usage.calls++;
       return call();
     },
+    countGeminiModel() {},
+    geminiModelsOutOfQuota: async () => new Set<string>(),
+    geminiQuotaHits: () => [],
   };
   return usage;
 }

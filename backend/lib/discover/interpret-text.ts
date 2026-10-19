@@ -2,6 +2,7 @@ import { InterpretReplySchema } from '../schemas/discover.js';
 import { GEMINI_MODELS } from '../sources/gemini/gemini-models.js';
 import type { Filters, InterpretReply } from '../types/discover.js';
 import type { GeminiClient } from '../types/sources.js';
+import type { UsageRecorder } from '../types/usage.js';
 import { genreIdByName, STREAMING_SERVICES, streamingServiceByName, TMDB_GENRES } from './discover-vocabulary.js';
 
 /** Instrução de sistema: o vocabulário fechado dos filtros e como explicar o que foi entendido. */
@@ -44,15 +45,17 @@ e diga isso na explanation.`;
  *
  * @param gemini - Cliente do Gemini.
  * @param text - Frase digitada (2 a 200 caracteres, já validada).
+ * @param usage - Medidor de consumo, para contar por modelo e pular os que estão sem cota.
  * @returns Filtros, a explicação curta e os termos para palavras-chave (ainda sem id).
  * @throws {SourceUnavailableError} Se o Gemini falhar, não tiver chave ou responder fora do formato.
  */
-async function interpretText(gemini: GeminiClient, text: string): Promise<InterpretReply> {
+async function interpretText(gemini: GeminiClient, text: string, usage?: UsageRecorder): Promise<InterpretReply> {
   const reply = await gemini.generateJson({
     model: GEMINI_MODELS.interpret,
     system: SYSTEM_INSTRUCTION,
     prompt: text,
     schema: InterpretReplySchema,
+    usage,
   });
   return {
     filters: cleanFilters(reply.filters),

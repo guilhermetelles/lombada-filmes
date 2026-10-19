@@ -19,10 +19,12 @@ export async function runRoute(
   getDependencies: GetDependencies,
   handle: (dependencies: Dependencies, usage: UsageMeter) => Promise<Response>,
 ): Promise<Response> {
-  const usage = new UsageMeter();
+  let usage = new UsageMeter();
   let dependencies: Dependencies | undefined;
   try {
     dependencies = getDependencies();
+    // Com o banco, o medidor sabe que modelos do Gemini já ficaram sem cota hoje.
+    usage = new UsageMeter({ db: dependencies.db, now: dependencies.now });
     return await handle(dependencies, usage);
   } catch (error) {
     return errorResponse(error, request);

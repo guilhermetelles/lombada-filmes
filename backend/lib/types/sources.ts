@@ -8,6 +8,7 @@ import type * as z from 'zod';
 import type { AwardItem } from './awards.js';
 import type { MovieRecInfo } from './movie.js';
 import type { CastMember, Director, Person, PersonDepartment } from './person.js';
+import type { UsageRecorder } from './usage.js';
 
 /** Fontes externas, também usadas como chave do consumo em usage/{dia}. */
 export type SourceName = 'tmdb' | 'omdb' | 'letterboxd' | 'bechdel' | 'wikidata' | 'wikipedia' | 'gemini';
@@ -181,6 +182,7 @@ export type GeminiRequest<T> = {
   system?: string | undefined;
   prompt: string;
   schema: z.ZodType<T>; // formato da resposta; vira o JSON Schema pedido ao modelo e valida o que volta
+  usage?: UsageRecorder | undefined; // conta os pedidos por modelo e diz quais ficaram sem cota hoje
 };
 
 /** Cliente do Gemini: gera JSON validado. Os comentários vão só como texto, sem nomes. */

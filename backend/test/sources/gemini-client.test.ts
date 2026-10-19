@@ -7,6 +7,7 @@ import { InterpretReplySchema } from '../../lib/schemas/discover.js';
 import { createGeminiClient } from '../../lib/sources/gemini/gemini-client.js';
 import { GEMINI_MODELS } from '../../lib/sources/gemini/gemini-models.js';
 import type { Fetch } from '../../lib/types/sources.js';
+import { UsageMeter } from '../../lib/usage/usage-meter.js';
 
 /** Resposta real da API de Interações (gemini-3.8-flash, 2026-10-18) à frase "comédia curta dos anos 90 na Netflix". */
 const recorded = readFileSync(new URL('../fixtures/gemini-interpret.json', import.meta.url), 'utf8');
@@ -135,6 +136,44 @@ describe('createGeminiClient', () => {
     await assert.rejects(
       createGeminiClient({ apiKey: 'chave-de-teste', fetch }).generateJson(interpretRequest),
       (error) => error instanceof SourceUnavailableError && /incomplete/.test(error.message),
+    );
+  });
+
+  test('com o medidor: conta por modelo, marca o 429 e o próximo pedido pula o modelo sem cota', async () => {
+    const seen: string[] = [];
+    const fetch: Fetch = async (input, init) => {
+      const request = input instanceof Request ? input : new Request(input, init);
+      const model = String(JSON.parse(await request.text()).model);
+      seen.push(model);
+      const quota = model === GEMINI_MODELS.interpret[0];
+      return new Response(quota ? '{"error":{"code":429,"message":"quota"}}' : recorded, {
+        status: quota ? 429 : 200,
+        headers: { 'content-type': 'application/json' },
+      });
+    };
+    const client = createGeminiClient({ apiKey: 'chave-de-teste', fetch });
+    const usage = new UsageMeter();
+
+    await client.generateJson({ ...interpretRequest, usage });
+    await client.generateJson({ ...interpretRequest, usage });
+
+    const [first, second] = GEMINI_MODELS.interpret;
+    assert.deepEqual(seen, [first, second, second]);
+    assert.deepEqual(usage.geminiQuotaHits(), [first]);
+  });
+
+  test('todos os modelos sem cota hoje: tenta só o primeiro', async () => {
+    const { fetch, seen } = geminiFetch('{"error":{"code":429,"message":"quota"}}', 429);
+    const usage = new UsageMeter();
+    for (const model of GEMINI_MODELS.interpret) usage.countGeminiModel(model, 'quota');
+
+    await assert.rejects(
+      createGeminiClient({ apiKey: 'chave-de-teste', fetch }).generateJson({ ...interpretRequest, usage }),
+      SourceUnavailableError,
+    );
+    assert.deepEqual(
+      seen.map((request) => request.body.model),
+      [GEMINI_MODELS.interpret[0]],
     );
   });
 });

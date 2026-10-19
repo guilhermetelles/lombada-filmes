@@ -57,6 +57,7 @@ async function generateEmojiQuiz({
         system: SYSTEM_INSTRUCTION,
         prompt: `Filme: ${movieLabel(target)}\nSinopse: ${synopsis}`,
         schema: PlotEmojiSchema,
+        usage,
       }),
     );
     emoji = reply.emoji.trim();
