@@ -7,6 +7,7 @@ import { GEMINI_MODELS } from '../sources/gemini/gemini-models.js';
 import { NAME_PLACEHOLDER, scrubNames } from '../sources/gemini/scrub-names.js';
 import type { GeminiClient } from '../types/sources.js';
 import type { UsageRecorder } from '../types/usage.js';
+import { sagaName } from './saga-name.js';
 import type { ListIndex, ScoredRec } from './score-recs.js';
 
 /** Tamanho máximo de um motivo aceito do Gemini. */
@@ -121,7 +122,7 @@ function describeRec(rec: ScoredRec, index: ListIndex, memberNames: readonly str
     ano: movie?.year ?? candidate?.year ?? null,
     generos: movie?.genres ?? (candidate ? candidateGenres(candidate) : []),
     direcao: movie?.directors.map((director) => director.name) ?? [],
-    saga: movie?.collection?.name ?? null,
+    saga: movie?.collection ? sagaName(movie.collection.name) : null,
     palavrasChave: (movie?.keywords ?? []).slice(0, MAX_KEYWORDS),
     ligacao: rec.anchor ? { tipo: rec.anchor.via, com: rec.anchor.film.movie.title, nome: rec.anchor.label } : null,
     emAlta:
