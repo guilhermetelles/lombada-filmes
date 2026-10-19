@@ -60,14 +60,15 @@ function createTmdbClient({ token, fetch }: { token: string; fetch: Fetch }): Tm
     },
 
     /**
-     * Busca filmes por texto, em pt-BR e sem conteúdo adulto.
+     * Busca filmes por texto, sem conteúdo adulto, com os títulos em pt-BR (padrão) ou en-US.
      *
      * @param query - Texto digitado.
+     * @param language - Idioma dos títulos.
      * @returns Resultados resumidos para a lista de busca.
      * @throws {SourceUnavailableError} Se o TMDb falhar ou responder fora do formato.
      */
-    async search(query) {
-      const params = new URLSearchParams({ query, language: 'pt-BR', include_adult: 'false' });
+    async search(query, language = 'pt-BR') {
+      const params = new URLSearchParams({ query, language, include_adult: 'false' });
       return toTmdbSearchResults(await getFromTmdb(`/search/movie?${params}`, TmdbSearchResponse));
     },
 

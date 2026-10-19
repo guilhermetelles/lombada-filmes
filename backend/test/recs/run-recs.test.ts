@@ -78,6 +78,8 @@ describe('runRecs', () => {
     assert.equal(saga?.reason, 'Continua a saga que vocês puseram no topo da lista');
     assert.equal(saga?.reasonFrom[0], 'e101');
     assert.equal(saga?.reasonBy, 'gemini');
+    // Título em português em `title`; o de movies/{id} (em inglês) em `titleEn`.
+    assert.equal(saga?.titleEn, (await dependencies.db.doc('movies/201').get()).get('title'));
     const director = recs.items.find((item) => item.tmdbId === 211);
     assert.equal(director?.kind, 'diretor');
     assert.equal(director?.reason, 'Mesmo diretor de Topo da Saga (Diretora Recorrente), #1 na lista de vocês');

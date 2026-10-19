@@ -26,6 +26,8 @@ describe('createTmdbDiscoverClient (gravações reais)', () => {
     assert.deepEqual(page.results[0], {
       tmdbId: 490132,
       title: 'Green Book: O Guia',
+      // Original em inglês: vira o título em inglês das sugestões "Em alta" sem documento em movies/.
+      titleEn: 'Green Book',
       year: 2018,
       posterPath: '/u9dldwRwQjTZGlIxKaAtAPLAjOv.jpg',
       genreIds: [18, 35, 36],

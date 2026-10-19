@@ -9,7 +9,8 @@ export type RecKind = 'saga' | 'diretor' | 'tema' | 'emAlta';
 /** Um filme sugerido, já com o que a tela mostra. */
 export type RecItem = {
   tmdbId: number;
-  title: string;
+  title: string; // em português (título no Brasil, quando há)
+  titleEn?: string | undefined; // em inglês: movies/{id}.title; sem documento, o original quando é inglês
   year: number | null;
   posterPath: string | null;
   runtime: number | null;

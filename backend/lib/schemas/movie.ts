@@ -25,6 +25,7 @@ export const MovieCollectionSchema: z.ZodType<MovieCollection> = z.object({ id: 
 export const MovieRecInfoSchema: z.ZodType<MovieRecInfo> = z.object({
   tmdbId: z.number().int(),
   title: z.string(),
+  titleEn: z.string().optional(),
   year: z.number().int().nullable(),
   posterPath: z.string().nullable(),
 });

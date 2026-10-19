@@ -1,6 +1,7 @@
 import * as z from 'zod';
 import { INVITE_CODE_LENGTH, normalizeInviteCode } from '../lists/invite-codes.js';
 import { LAUNCH_QUIZ_ID } from '../quiz/launch-event.js';
+import type { TmdbLanguage } from '../types/sources.js';
 import { BrazilDaySchema } from './dates.js';
 import { DecSchema, DurSchema, MoodSchema, ThemeSchema } from './discover.js';
 import { NotifyPrefsSchema } from './notify.js';
@@ -8,9 +9,19 @@ import { QuizOptionIdSchema } from './quiz.js';
 
 /** Entradas das rotas. As mensagens vão para o app na resposta 400. */
 
+/**
+ * `lang` de busca e descoberta: `pt` (padrão) pede os títulos ao TMDb em pt-BR; `en`, em en-US.
+ * Vira o código de idioma do TMDb.
+ */
+export const TitleLanguageQuery = z
+  .enum(['pt', 'en'], "lang deve ser 'pt' ou 'en'")
+  .optional()
+  .transform((lang): TmdbLanguage => (lang === 'en' ? 'en-US' : 'pt-BR'));
+
 /** GET /api/search?q= */
 export const SearchQuery = z.object({
   q: z.string().trim().min(1, 'q é obrigatório').max(100, 'q pode ter até 100 caracteres'),
+  lang: TitleLanguageQuery,
 });
 
 /** Id de lista no caminho: /api/lists/{listId}/… (mesmo formato que firestore.rules aceita). */
@@ -131,6 +142,7 @@ export const DiscoverQuery = z.object({
     .pipe(z.number().max(500, 'page deve ser um número de 1 a 500'))
     .optional()
     .transform((page) => page ?? 1),
+  lang: TitleLanguageQuery,
 });
 
 /** POST /api/search/interpret */

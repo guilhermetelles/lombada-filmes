@@ -3,6 +3,7 @@ import { SourceUnavailableError } from '../errors/app-errors.js';
 import { logger } from '../logging/logger.js';
 import type { DiscoverItem, DiscoverPage, Filters } from '../types/discover.js';
 import type { RecsModel } from '../types/recs.js';
+import type { TmdbLanguage } from '../types/sources.js';
 import type { UsageRecorder } from '../types/usage.js';
 import { buildDiscoverParams } from './build-discover-params.js';
 import { findEntryIdsByTmdbIds, readRecsModel, readTopGenres } from './discover-repository.js';
@@ -29,8 +30,8 @@ export const FIT_MIN_SCORE = 60;
 /** O que a busca usa de fora. */
 type DiscoverDependencies = { db: Firestore; tmdb: TmdbDiscoverClient; usage: UsageRecorder };
 
-/** Pedido da busca: filtros, página e, se houver, a lista (já conferido que a pessoa é membro). */
-type DiscoverRequest = { filters: Filters; page: number; listId?: string | undefined };
+/** Pedido da busca: filtros, página, idioma dos títulos e, se houver, a lista (já conferido que a pessoa é membro). */
+type DiscoverRequest = { filters: Filters; page: number; listId?: string | undefined; language?: TmdbLanguage };
 
 /** Como pontuar os filmes desta busca. */
 type Scorer = (candidate: DiscoverCandidate, extras?: CandidateExtras) => Compat;
@@ -44,15 +45,15 @@ type Scorer = (candidate: DiscoverCandidate, extras?: CandidateExtras) => Compat
  * alta ou nos detalhes não derruba a busca: o filme só fica sem a marca ou sem os detalhes.
  *
  * @param dependencies - Banco, cliente do TMDb e medidor de consumo.
- * @param request - Filtros, página e lista.
+ * @param request - Filtros, página, lista e idioma dos títulos (en-US com `lang=en`).
  * @returns A página de resultados.
  * @throws {SourceUnavailableError} Se o /discover do TMDb falhar.
  */
 async function discoverMovies(
   { db, tmdb, usage }: DiscoverDependencies,
-  { filters, page, listId }: DiscoverRequest,
+  { filters, page, listId, language = 'pt-BR' }: DiscoverRequest,
 ): Promise<DiscoverPage> {
-  const plan = buildDiscoverParams(filters, page);
+  const plan = buildDiscoverParams(filters, page, language);
   const [found, trendingIds, scorer] = await Promise.all([
     usage.track('tmdb', () => tmdb.discover(plan.params)),
     readTrendingIds(tmdb, usage),

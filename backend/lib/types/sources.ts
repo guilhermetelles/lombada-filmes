@@ -16,6 +16,9 @@ export type SourceName = 'tmdb' | 'omdb' | 'letterboxd' | 'bechdel' | 'wikidata'
 /** Fontes com prazo de 7 dias por filme: o TMDb e as notas (as outras têm prazos próprios). */
 export type WeeklySource = Extract<SourceName, 'tmdb' | 'omdb' | 'letterboxd'>;
 
+/** Idioma pedido ao TMDb para os títulos: o app usa `lang=pt` (padrão) ou `lang=en`. */
+export type TmdbLanguage = 'pt-BR' | 'en-US';
+
 /** Assinatura do fetch, injetado nos clientes (o global em produção, um falso nos testes). */
 export type Fetch = typeof globalThis.fetch;
 
@@ -129,7 +132,7 @@ export type BechdelPage = {
 export type TmdbClient = {
   getMovie(tmdbId: number): Promise<TmdbMovie>;
   getCollection(collectionId: number): Promise<TmdbCollection>;
-  search(query: string): Promise<TmdbSearchResult[]>;
+  search(query: string, language?: TmdbLanguage): Promise<TmdbSearchResult[]>;
   getPerson(personId: number): Promise<TmdbPerson>;
   searchPeople(query: string): Promise<TmdbPersonSearchResult[]>;
 };

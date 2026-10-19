@@ -147,9 +147,11 @@ export function scoreCandidate(model: RecsModel, candidate: DiscoverCandidate, s
  */
 export function toRecItem(rec: ScoredRec, reason: string, reasonBy: 'gemini' | 'rules'): RecItem {
   const { movie, candidate } = rec;
+  const titleEn = movie ? movie.title : candidate?.titleEn;
   return {
     tmdbId: rec.tmdbId,
     title: movie ? (movie.titlePt ?? movie.title) : (candidate?.title ?? ''),
+    ...(titleEn ? { titleEn } : {}),
     year: movie ? movie.year : (candidate?.year ?? null),
     posterPath: movie ? movie.posterPath : (candidate?.posterPath ?? null),
     runtime: movie?.runtime ?? null,

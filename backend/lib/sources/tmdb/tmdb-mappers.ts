@@ -118,15 +118,18 @@ export function toTmdbSearchResults(response: TmdbSearchResponse): TmdbSearchRes
 
 /**
  * Resume uma recomendação do TMDb para a fileira de parecidos. O título vem em pt-BR quando o TMDb
- * tem tradução (o pedido de detalhes é em pt-BR).
+ * tem tradução (o pedido de detalhes é em pt-BR); `titleEn` é o título original quando o idioma
+ * original é inglês (as recomendações não trazem a tradução em inglês), e fica ausente nos outros.
  *
  * @param result - Uma recomendação validada.
- * @returns Id, título, ano e pôster.
+ * @returns Id, título, título em inglês (quando houver), ano e pôster.
  */
 function toRecInfo(result: NonNullable<TmdbMovieResponse['recommendations']>['results'][number]): MovieRecInfo {
+  const titleEn = result.original_language === 'en' ? result.original_title : null;
   return {
     tmdbId: result.id,
     title: result.title ?? result.original_title ?? `TMDb ${result.id}`,
+    ...(titleEn ? { titleEn } : {}),
     year: result.release_date,
     posterPath: result.poster_path,
   };

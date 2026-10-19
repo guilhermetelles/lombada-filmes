@@ -40,7 +40,8 @@ export type MovieCollection = {
 /** Resumo de um filme recomendado pelo TMDb, para a fileira de parecidos abrir sem ler cada filme. */
 export type MovieRecInfo = {
   tmdbId: number;
-  title: string;
+  title: string; // em pt-BR quando o TMDb tem tradução
+  titleEn?: string | undefined; // título original, só quando o idioma original é inglês
   year: number | null;
   posterPath: string | null;
 };

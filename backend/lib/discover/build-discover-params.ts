@@ -1,4 +1,5 @@
 import type { Filters } from '../types/discover.js';
+import type { TmdbLanguage } from '../types/sources.js';
 import {
   DEC_RANGES,
   DUR_RANGES,
@@ -35,13 +36,14 @@ export type DiscoverPlan = {
  *
  * @param filters - Filtros da busca.
  * @param page - Página do TMDb (1 a 500).
+ * @param language - Idioma dos títulos (pt-BR, o padrão, ou en-US).
  * @returns A consulta e os grupos de gêneros a conferir nos resultados.
  */
-export function buildDiscoverParams(filters: Filters, page: number): DiscoverPlan {
+export function buildDiscoverParams(filters: Filters, page: number, language: TmdbLanguage = 'pt-BR'): DiscoverPlan {
   // Sem `region`: com ela o TMDb devolve a data de estreia no Brasil em release_date, e o ano do
   // resultado sai errado (Moana, de 2016, vinha como 2017). Os filtros de data usam a data original.
   const params = new URLSearchParams({
-    language: 'pt-BR',
+    language,
     include_adult: 'false',
     include_video: 'false',
     sort_by: 'popularity.desc',
