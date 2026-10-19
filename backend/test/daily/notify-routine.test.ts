@@ -428,6 +428,29 @@ describe('rotinas notify-*', () => {
     assert.equal(query?.searchParams.get('release_date.lte'), '2026-12-17');
   });
 
+  test('a mesma estreia não volta no dia seguinte: o texto repetido passa a vez', async () => {
+    await prefsOfAna({ release: true });
+    await putEntry('e-titanic', TITANIC, 'Titanic', 'a1');
+    await putMovie(TITANIC, 'Titanic', { directors: [CAMERON] });
+    const recorded = fakeSources().fetch;
+    fetch = async (input, init) => {
+      const url = new URL(input instanceof Request ? input.url : input);
+      if (url.pathname !== '/3/discover/movie') return recorded(input, init);
+      // A mesma estreia continua na janela dos próximos 60 dias, dia após dia.
+      const upcoming = (url.searchParams.get('release_date.gte') ?? '') >= '2026-10-18';
+      const results = upcoming
+        ? [{ id: ABYSS, title: 'O Segredo do Abismo', release_date: '2026-11-05', genre_ids: [] }]
+        : [];
+      return Response.json({ page: 1, total_pages: 1, total_results: results.length, results });
+    };
+
+    assert.equal((await run()).sent, 1);
+    clock = new Date('2026-10-19T22:00:00Z');
+    const report = await run();
+    assert.deepEqual([report.sent, report.noContent], [0, 1]);
+    assert.equal(await feedItem(`daily-${LIST}-2026-10-19`), undefined);
+  });
+
   test('estreia sem vínculo nos créditos: nada sai', async () => {
     await prefsOfAna({ release: true });
     await putEntry('e-titanic', TITANIC, 'Titanic', 'a1');

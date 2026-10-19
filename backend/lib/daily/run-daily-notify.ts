@@ -16,17 +16,19 @@ import { sendFcm } from '../notify/send-fcm.js';
 import { answersCollection } from '../quiz/quiz-repository.js';
 import { QuizDocSchema } from '../schemas/quiz.js';
 import { brazilDay } from '../time/brazil-day.js';
+import { DAY_MS } from '../time/durations.js';
 import type { Dependencies } from '../types/dependencies.js';
 import type { FeedItem } from '../types/feed.js';
 import type { NotifyHour, NotifyPrefs, NotifyTypes } from '../types/notify.js';
 import type { UsageRecorder } from '../types/usage.js';
-import { type ChosenContent, chooseDailyContent } from './choose-daily-content.js';
+import { type ChosenContent, chooseDailyContent, type RecentTopics, topicKey } from './choose-daily-content.js';
 import {
   DAILY_KIND,
   type DailyContent,
   type DailyContext,
   type DailyFeedType,
   type DailyList,
+  type DailyTopic,
   TYPE_PREFERENCE,
 } from './daily-content.js';
 import { addDays } from './day-math.js';
@@ -403,7 +405,8 @@ async function listTopic(base: Omit<DailyContext, 'list'>, list: DailyList): Pro
   const stored = toDailyContent((await ref.get()).data());
   if (stored) return stored;
 
-  const chosen = await chooseDailyContent(base, [list], await membersTypes(db, list), ['quiz'], list.listId);
+  const recent = await recentTopics(db, list.listId, base.now);
+  const chosen = await chooseDailyContent(base, [list], await membersTypes(db, list), ['quiz'], list.listId, recent);
   if (!chosen) return null;
   const { content } = chosen;
   const { created } = await writeFeedItem(
@@ -422,6 +425,33 @@ async function listTopic(base: Omit<DailyContext, 'list'>, list: DailyList): Pro
   );
   // Outra rotina gravou antes: vale o que ficou gravado, para todos verem o mesmo.
   return created ? content : (toDailyContent((await ref.get()).data()) ?? content);
+}
+
+/** Quantos dias para trás um assunto do dia não pode repetir o mesmo texto. */
+export const NO_REPEAT_DAYS = 14;
+
+/**
+ * O que a lista recebeu como assunto do dia nos últimos 14 dias: os títulos, que não podem repetir, e
+ * o tipo do mais recente (de até 2 dias atrás), que vai para o fim do rodízio. Lê os itens diários
+ * da Atividade (o da lista e, de antes de 2026-10-19, os de cada pessoa).
+ *
+ * @param db - Firestore.
+ * @param listId - Lista.
+ * @param now - Momento da rotina.
+ * @returns Títulos recentes e o assunto de ontem.
+ */
+async function recentTopics(db: Firestore, listId: string, now: Date): Promise<RecentTopics> {
+  const since = new Date(now.getTime() - NO_REPEAT_DAYS * DAY_MS);
+  const snapshot = await feedCollection(db, listId).where('createdAt', '>=', since).get();
+  const daily = snapshot.docs
+    .filter((doc) => doc.id.startsWith('daily-'))
+    .map((doc) => doc.data())
+    .filter((item) => item.type in DAILY_KIND && item.type !== 'daily.quiz')
+    .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  const [latest] = daily;
+  const lastTopic =
+    latest && now.getTime() - latest.createdAt.getTime() <= 2 * DAY_MS ? (latest.type.slice(6) as DailyTopic) : null;
+  return { titles: new Set(daily.map((item) => topicKey(item))), lastTopic };
 }
 
 /**

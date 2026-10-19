@@ -254,6 +254,14 @@ describe('ordem dos assuntos', () => {
     assert.ok(new Set(topics).size > 1);
   });
 
+  test('o assunto de ontem não entra no sorteio e vai para o fim do rodízio', () => {
+    for (const day of ['2026-10-18', '2026-10-19', '2026-10-20', '2026-10-21']) {
+      const order = topicOrder(DEFAULT_NOTIFY_PREFS.types, 'lista', day, ['quiz'], ['release']);
+      assert.notEqual(order[2], 'release', day);
+      assert.equal(order.at(-1), 'release', day);
+    }
+  });
+
   test('só os ligados; aniversário desligado tira os dois aniversários', () => {
     const types = { ...DEFAULT_NOTIFY_PREFS.types, birthday: false, retro: false, streaming: false, release: false };
     const order = topicOrder(types, 'ana', '2026-10-18');

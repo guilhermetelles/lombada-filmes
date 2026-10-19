@@ -62,6 +62,7 @@ const COMPOSERS: Record<DailyTopic, DailyComposer> = {
  * @param seedKey - Semente do sorteio junto com o dia (a lista, para o assunto ser o mesmo para todos).
  * @param day - Dia de Brasília, AAAA-MM-DD.
  * @param excluded - Assuntos que ficam de fora, como o quiz, que tem aviso próprio.
+ * @param demoted - Assuntos que vão para o fim e não entram no sorteio (o de ontem).
  * @returns Os assuntos, sem repetição.
  */
 function topicOrder(
@@ -69,11 +70,27 @@ function topicOrder(
   seedKey: string,
   day: string,
   excluded: readonly DailyTopic[] = [],
+  demoted: readonly DailyTopic[] = [],
 ): DailyTopic[] {
   const enabled = (topic: DailyTopic) => types[TOPIC_PREFERENCE[topic]] && !excluded.includes(topic);
-  const rotation = FALLBACK_TOPICS.filter(enabled);
-  const topicOfDay = pickSeeded(rotation, `${day}:${seedKey}:assunto`);
+  // O assunto de ontem não é sorteado de novo e vai para o fim do rodízio, para os dias variarem.
+  const fresh = FALLBACK_TOPICS.filter((topic) => enabled(topic) && !demoted.includes(topic));
+  const rotation = [...fresh, ...FALLBACK_TOPICS.filter((topic) => enabled(topic) && demoted.includes(topic))];
+  const topicOfDay = pickSeeded(fresh.length > 0 ? fresh : rotation, `${day}:${seedKey}:assunto`);
   return [...new Set([...PRIORITY_TOPICS.filter(enabled), ...(topicOfDay ? [topicOfDay] : []), ...rotation])];
+}
+
+/** O que já saiu nos últimos dias: textos (título e corpo) que não podem repetir e o assunto do dia anterior. */
+export type RecentTopics = { titles: ReadonlySet<string>; lastTopic: DailyTopic | null };
+
+/**
+ * Chave de repetição de um assunto: título e corpo juntos (há títulos fixos, como "Você sabia?").
+ *
+ * @param content - Título e corpo do assunto.
+ * @returns A chave.
+ */
+export function topicKey(content: { title: string; body?: string | undefined }): string {
+  return `${content.title}\n${content.body ?? ''}`;
 }
 
 /** Conteúdo escolhido e a lista de onde ele saiu. */
@@ -88,6 +105,7 @@ export type ChosenContent = { content: DailyContent; list: DailyList };
  * @param types - Assuntos que a pessoa ligou.
  * @param excluded - Assuntos que ficam de fora.
  * @param seedKey - Semente do sorteio do assunto (a lista, para todos os membros receberem o mesmo).
+ * @param recent - O que já saiu nos últimos dias: títulos que não podem repetir e o assunto de ontem.
  * @returns O conteúdo e a lista, ou null se nenhum assunto tiver o que dizer.
  */
 async function chooseDailyContent(
@@ -96,13 +114,15 @@ async function chooseDailyContent(
   types: NotifyTypes,
   excluded: readonly DailyTopic[] = [],
   seedKey: string = base.uid,
+  recent: RecentTopics = { titles: new Set(), lastTopic: null },
 ): Promise<ChosenContent | null> {
-  const order = topicOrder(types, seedKey, base.day, excluded);
+  const order = topicOrder(types, seedKey, base.day, excluded, recent.lastTopic ? [recent.lastTopic] : []);
   for (const list of lists) {
     for (const topic of order) {
       try {
         const content = await COMPOSERS[topic]({ ...base, list });
-        if (content) return { content, list };
+        // O mesmo texto de dias anteriores (como a mesma estreia, que vale por semanas) passa a vez.
+        if (content && !recent.titles.has(topicKey(content))) return { content, list };
       } catch (error) {
         logger.warn('assunto da notificação diária falhou', { topic, listId: list.listId, error });
       }
