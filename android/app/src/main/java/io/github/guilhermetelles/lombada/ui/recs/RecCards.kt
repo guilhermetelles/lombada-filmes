@@ -226,9 +226,10 @@ private fun Origins(origins: List<RecOrigin>, onOpen: (RecOrigin) -> Unit) {
                 modifier =
                     Modifier
                         .fillMaxWidth()
-                        .heightIn(min = 48.dp)
+                        // Linhas mais juntas: 40dp por filme, ainda fácil de tocar.
+                        .heightIn(min = 40.dp)
                         .clickable(role = Role.Button, onClickLabel = "Abrir ${origin.title}") { onOpen(origin) }
-                        .padding(vertical = 13.dp)
+                        .padding(vertical = 9.dp)
             )
         }
     }

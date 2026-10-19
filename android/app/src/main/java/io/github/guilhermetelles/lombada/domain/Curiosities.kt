@@ -65,7 +65,7 @@ data class Curiosities(val tagline: String?, val rows: List<CurioRow>, val provi
             return Curiosities(
                 tagline = movie.tagline?.trim()?.trim('"', '“', '”')?.takeIf { it.isNotEmpty() },
                 rows = rows,
-                providers = movie.providersBR?.flatrate.orEmpty()
+                providers = StreamingServices.unify(movie.providersBR?.flatrate.orEmpty())
             )
         }
 

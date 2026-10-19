@@ -46,6 +46,6 @@ object QueueLines {
     fun where(providers: List<String>?): String? = when {
         providers == null -> null
         providers.isEmpty() -> "Em nenhum streaming por assinatura agora"
-        else -> "Onde assistir: ${PortugueseText.join(providers.take(4))}"
+        else -> "Onde assistir: ${PortugueseText.join(StreamingServices.unify(providers).take(4))}"
     }
 }

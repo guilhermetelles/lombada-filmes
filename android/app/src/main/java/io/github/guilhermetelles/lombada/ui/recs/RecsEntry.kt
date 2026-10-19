@@ -287,12 +287,12 @@ private fun TasteSection(profile: TasteProfile, onOpenDirector: (TasteTrait) -> 
                         modifier =
                             Modifier
                                 .fillMaxWidth()
-                                .heightIn(min = 48.dp)
+                                .heightIn(min = 40.dp)
                                 .clickable(
                                     role = Role.Button,
                                     onClickLabel = "Abrir ${trait.label}",
                                     onClick = { onOpenDirector(trait) }
-                                ).padding(vertical = 14.dp)
+                                ).padding(vertical = 9.dp)
                     )
                 }
             }
