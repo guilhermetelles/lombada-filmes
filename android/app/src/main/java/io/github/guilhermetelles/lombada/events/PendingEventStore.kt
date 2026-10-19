@@ -3,6 +3,10 @@ package io.github.guilhermetelles.lombada.events
 import android.content.Context
 import android.content.SharedPreferences
 import androidx.core.content.edit
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.Json
 
@@ -39,6 +43,23 @@ class PendingEventStore(context: Context) {
             }
             next
         }
+
+    /**
+     * Acompanha quantos eventos de uma lista esperam envio.
+     *
+     * @param listId Lista.
+     * @return Fluxo com o tamanho da fila; começa com o atual.
+     */
+    fun observeCount(listId: String): Flow<Int> = callbackFlow {
+        // O SharedPreferences guarda o ouvinte por referência fraca: este fica vivo dentro do fluxo.
+        val listener =
+            SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
+                if (key == null || key == listId) trySend(read(listId).size)
+            }
+        trySend(read(listId).size)
+        prefs.registerOnSharedPreferenceChangeListener(listener)
+        awaitClose { prefs.unregisterOnSharedPreferenceChangeListener(listener) }
+    }.distinctUntilChanged()
 
     private fun readUnlocked(listId: String): List<PendingEvent> {
         val text = prefs.getString(listId, null) ?: return emptyList()

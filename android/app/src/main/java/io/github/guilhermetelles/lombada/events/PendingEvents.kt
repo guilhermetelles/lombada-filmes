@@ -71,6 +71,24 @@ object PendingEvents {
         pending.any { it.entryId == entryId && it.type == ListEventType.Added.wire }
 
     /**
+     * Quantas mudanças mostrar como esperando conexão.
+     *
+     * @param pending Eventos na fila.
+     * @param online Se o aparelho tem internet.
+     * @return O tamanho da fila sem internet; 0 com internet (o envio já vai acontecer).
+     */
+    fun waiting(pending: Int, online: Boolean): Int = if (online) 0 else pending
+
+    /**
+     * Texto do aviso de mudanças esperando conexão.
+     *
+     * @param count Quantas.
+     * @return "1 mudança esperando conexão" ou "N mudanças esperando conexão".
+     */
+    fun waitingLabel(count: Int): String =
+        if (count == 1) "1 mudança esperando conexão" else "$count mudanças esperando conexão"
+
+    /**
      * Próximo lote a enviar.
      *
      * @param pending Fila atual.

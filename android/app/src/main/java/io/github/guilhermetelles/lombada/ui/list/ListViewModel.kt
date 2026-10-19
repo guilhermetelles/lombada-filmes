@@ -121,6 +121,10 @@ class ListViewModel(
             }
         }
 
+    /** Mudanças esperando conexão (eventos na fila com o aparelho sem internet). */
+    val waitingChanges: StateFlow<Int> =
+        events.observeWaiting(listId).stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0)
+
     /** Estado da tela. */
     val state: StateFlow<ListUiState> =
         combine(

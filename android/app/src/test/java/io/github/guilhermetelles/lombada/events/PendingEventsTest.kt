@@ -63,4 +63,12 @@ class PendingEventsTest {
         val afterSend = PendingEvents.removeSent(pending, listOf(added))
         assertFalse(PendingEvents.hasPendingAdd(afterSend, "e1"))
     }
+
+    @Test
+    fun `mudanças esperando conexão só sem internet`() {
+        assertEquals(3, PendingEvents.waiting(3, online = false))
+        assertEquals(0, PendingEvents.waiting(3, online = true))
+        assertEquals("1 mudança esperando conexão", PendingEvents.waitingLabel(1))
+        assertEquals("4 mudanças esperando conexão", PendingEvents.waitingLabel(4))
+    }
 }
