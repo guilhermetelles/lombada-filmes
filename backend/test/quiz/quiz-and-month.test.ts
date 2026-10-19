@@ -104,7 +104,10 @@ describe('GET /api/cron/quiz-and-month: pergunta do dia', () => {
     const report = await runRoutine();
 
     assert.deepEqual(report.quizzes, { created: 1, existing: 0, withoutData: 0 });
-    assert.equal(report.month, null);
+    assert.deepEqual(
+      report.months.map((month) => month.month),
+      ['2026-09', '2026-08'],
+    );
     const quiz = await read(`lists/${LIST_ID}/quizzes/2026-10-18`);
     assert.equal(quiz?.day, '2026-10-18');
     assert.ok(!['emoji', 'sinopse'].includes(quiz?.type), 'sem Gemini, esses tipos ficam de fora');
@@ -131,6 +134,7 @@ describe('GET /api/cron/quiz-and-month: pergunta do dia', () => {
     await runRoutine();
     const first = await read(`lists/${LIST_ID}/quizzes/2026-10-18`);
     const firstKey = await read(`lists/${LIST_ID}/quizKeys/2026-10-18`);
+    const feedSize = (await db().collection(`lists/${LIST_ID}/feed`).get()).size;
 
     clock = new Date(ORDINARY_DAY.getTime() + 60 * 60 * 1000);
     gemini = retroOnlyGemini('Outro texto.');
@@ -139,7 +143,7 @@ describe('GET /api/cron/quiz-and-month: pergunta do dia', () => {
     assert.deepEqual(report.quizzes, { created: 0, existing: 1, withoutData: 0 });
     assert.deepEqual(await read(`lists/${LIST_ID}/quizzes/2026-10-18`), first);
     assert.deepEqual(await read(`lists/${LIST_ID}/quizKeys/2026-10-18`), firstKey);
-    assert.equal((await db().collection(`lists/${LIST_ID}/feed`).get()).size, 1);
+    assert.equal((await db().collection(`lists/${LIST_ID}/feed`).get()).size, feedSize);
   });
 
   test('lista com menos de 4 filmes não tem pergunta; lista sem membros nem conta', async () => {
@@ -178,6 +182,45 @@ describe('GET /api/cron/quiz-and-month: pergunta do dia', () => {
   });
 });
 
+describe('GET /api/cron/quiz-and-month: meses anteriores em qualquer dia', () => {
+  test('dia 1 falhou: no dia 5 fecha setembro, avisa o vencedor e gera a retrospectiva', async () => {
+    clock = new Date('2026-10-05T08:30:00Z');
+    await db()
+      .doc(`lists/${LIST_ID}/scores/2026-09`)
+      .set({ points: { [ANA.uid]: 30, [BIA.uid]: 20 } });
+    await registerDevice(ANA.uid);
+
+    const report = await runRoutine();
+
+    assert.deepEqual(report.months[0], { month: '2026-09', closed: 1, winnerItems: 1, pushed: 1, retros: 1 });
+    assert.deepEqual((await read(`lists/${LIST_ID}/scores/2026-09`))?.winnerUids, [ANA.uid]);
+    assert.ok(await read(`lists/${LIST_ID}/retros/2026-09`));
+    assert.ok(await read(`lists/${LIST_ID}/feed/quiz-winner-2026-09`));
+
+    // No dia seguinte, nada se repete.
+    clock = new Date('2026-10-06T08:30:00Z');
+    const next = await runRoutine();
+    assert.deepEqual(next.months[0], { month: '2026-09', closed: 0, winnerItems: 0, pushed: 0, retros: 0 });
+    assert.equal(fcm.sent.length, 1);
+  });
+
+  test('confere só os 2 meses anteriores: o de 3 meses atrás fica como está', async () => {
+    clock = new Date('2026-12-10T08:30:00Z');
+    await db()
+      .doc(`lists/${LIST_ID}/scores/2026-09`)
+      .set({ points: { [ANA.uid]: 30 } });
+
+    const report = await runRoutine();
+
+    assert.deepEqual(
+      report.months.map((month) => month.month),
+      ['2026-11', '2026-10'],
+    );
+    assert.equal((await read(`lists/${LIST_ID}/scores/2026-09`))?.winnerUids, undefined);
+    assert.equal(await read(`lists/${LIST_ID}/retros/2026-09`), undefined);
+  });
+});
+
 describe('GET /api/cron/quiz-and-month: virada do mês', () => {
   beforeEach(() => {
     clock = FIRST_OF_OCTOBER;
@@ -192,7 +235,11 @@ describe('GET /api/cron/quiz-and-month: virada do mês', () => {
 
     const report = await runRoutine();
 
-    assert.deepEqual(report.month, { month: '2026-09', closed: 1, winnerItems: 1, pushed: 2, retros: 1 });
+    assert.deepEqual(report.months, [
+      { month: '2026-09', closed: 1, winnerItems: 1, pushed: 2, retros: 1 },
+      // Agosto é de antes da lista (sem placar), mas teve filme visto: ganha retrospectiva.
+      { month: '2026-08', closed: 0, winnerItems: 0, pushed: 0, retros: 1 },
+    ]);
     assert.deepEqual(await read(`lists/${LIST_ID}/scores/2026-09`), {
       points: { [ANA.uid]: 30, [BIA.uid]: 20 },
       winnerUids: [ANA.uid],
@@ -243,7 +290,10 @@ describe('GET /api/cron/quiz-and-month: virada do mês', () => {
     gemini = retroOnlyGemini('Outro texto.');
     const report = await runRoutine();
 
-    assert.deepEqual(report.month, { month: '2026-09', closed: 0, winnerItems: 0, pushed: 0, retros: 0 });
+    assert.deepEqual(report.months, [
+      { month: '2026-09', closed: 0, winnerItems: 0, pushed: 0, retros: 0 },
+      { month: '2026-08', closed: 0, winnerItems: 0, pushed: 0, retros: 0 },
+    ]);
     assert.deepEqual((await read(`lists/${LIST_ID}/scores/2026-09`))?.winnerUids, [ANA.uid]);
     assert.deepEqual(await read(`lists/${LIST_ID}/retros/2026-09`), retro);
     assert.equal((await db().collection(`lists/${LIST_ID}/feed`).get()).size, feedSize);
@@ -274,7 +324,7 @@ describe('GET /api/cron/quiz-and-month: virada do mês', () => {
     assert.deepEqual((await read(`lists/${LIST_ID}/scores/2026-09`))?.winnerUids, []);
     assert.equal(await read(`lists/${LIST_ID}/feed/quiz-winner-2026-09`), undefined);
     assert.equal(fcm.sent.length, 0);
-    assert.equal(report.month?.closed, 1);
+    assert.equal(report.months[0]?.closed, 1);
   });
 
   test('ninguém respondeu no mês: sem vencedor', async () => {
@@ -290,7 +340,7 @@ describe('GET /api/cron/quiz-and-month: virada do mês', () => {
 
     const report = await runRoutine();
 
-    assert.equal(report.month?.closed, 0);
+    assert.equal(report.months[0]?.closed, 0);
     assert.deepEqual((await read(`lists/${LIST_ID}/scores/2026-09`))?.winnerUids, [BIA.uid]);
   });
 
@@ -323,8 +373,8 @@ describe('GET /api/cron/quiz-and-month: virada do mês', () => {
   test('mês sem filme visto: sem retrospectiva nem item', async () => {
     clock = new Date('2026-08-01T08:30:00Z');
     const report = await runRoutine();
-    assert.equal(report.month?.month, '2026-07');
-    assert.equal(report.month?.retros, 0);
+    assert.equal(report.months[0]?.month, '2026-07');
+    assert.equal(report.months[0]?.retros, 0);
     assert.equal(await read(`lists/${LIST_ID}/retros/2026-07`), undefined);
     assert.equal(await read(`lists/${LIST_ID}/feed/retro-2026-07`), undefined);
   });
