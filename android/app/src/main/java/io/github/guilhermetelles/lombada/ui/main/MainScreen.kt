@@ -288,11 +288,31 @@ fun MainScreen(list: MovieList, uid: String, onSwitchList: () -> Unit, onSignOut
 private fun NavHostController.openPush(target: PushTarget) {
     PushRouter.consume(target)
     val route = target.route?.toRoute() ?: return
-    if (TABS.any { it.route == route }) {
-        navigateTo(route)
-    } else {
+    when {
+        TABS.any { it.route == route } -> openTabAtTop(route)
+
+        // A pergunta abre por cima da aba Quiz, para o voltar cair nela.
+        route is QuizPlayRoute -> {
+            openTabAtTop(QuizRoute)
+            navigate(route) { launchSingleTop = true }
+        }
+
         // O mesmo aviso tocado duas vezes não empilha a mesma tela.
-        navigate(route) { launchSingleTop = true }
+        else -> navigate(route) { launchSingleTop = true }
+    }
+}
+
+/**
+ * Abre uma aba no topo, sem restaurar a tela em que ela tinha ficado (como uma pergunta antiga do quiz).
+ *
+ * @param route Rota da aba.
+ */
+private fun NavHostController.openTabAtTop(route: Any) {
+    // Descarta o estado guardado da aba; não faz nada se ela é a aba aberta agora.
+    clearBackStack(route)
+    navigate(route) {
+        popUpTo(graph.findStartDestination().id) { saveState = true }
+        launchSingleTop = true
     }
 }
 
