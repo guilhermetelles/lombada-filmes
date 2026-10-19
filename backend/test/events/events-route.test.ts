@@ -268,6 +268,54 @@ describe('POST /api/lists/{listId}/events', () => {
     assert.equal((await dependencies.db.doc(`lists/${listId}/queue/603`).get()).exists, true);
   });
 
+  test("'added' tira o filme das sugestões guardadas, sem mexer nas outras", async () => {
+    const rec = (tmdbId: number, title: string) => ({
+      tmdbId,
+      title,
+      year: 1989,
+      posterPath: null,
+      runtime: null,
+      genres: [],
+      providers: [],
+      score: 70,
+      reason: 'Motivo guardado.',
+      reasonFrom: [],
+      reasonBy: 'rules',
+      source: 'model',
+      kind: 'tema',
+    });
+    await dependencies.db.doc(`lists/${listId}/recs/current`).set({
+      computedAt: clock,
+      modelVersion: 'teste',
+      model: { bias: 0, weights: {} },
+      items: [rec(2756, 'The Abyss'), rec(603, 'Matrix')],
+      trending: [rec(2756, 'The Abyss')],
+    });
+    await putEntry('e-abyss', 2756, 'The Abyss', 'a2');
+
+    await send(ana, [{ type: 'added', entryId: 'e-abyss' }]);
+
+    const recs = (await dependencies.db.doc(`lists/${listId}/recs/current`).get()).data();
+    assert.deepEqual(
+      recs?.items.map((item: { tmdbId: number }) => item.tmdbId),
+      [603],
+    );
+    assert.deepEqual(recs?.trending, []);
+  });
+
+  test('posições pelo banco sem ler a lista inteira: entrada no fim de uma lista maior', async () => {
+    for (let index = 0; index < 8; index++) {
+      await putEntry(`e-velha-${index}`, 10_000 + index, `Velho ${index}`, `b${index}`, {
+        at: new Date(clock.getTime() - 3 * 24 * 60 * MINUTE),
+      });
+    }
+    await putEntry('e-novo', 20_000, 'Novo', 'c0');
+
+    await send(ana, [{ type: 'added', entryId: 'e-novo' }]);
+
+    assert.equal((await feedItems())[0]?.body, 'Entrou em #13 de 13.');
+  });
+
   test('acima de 300 lotes no dia: sem Atividade nem aviso, mas a fila ainda é limpa', async () => {
     await dependencies.db
       .doc(`rateLimits/${ana.uid}_2026-10-18`)
