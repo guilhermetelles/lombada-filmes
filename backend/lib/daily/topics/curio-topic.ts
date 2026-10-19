@@ -44,7 +44,8 @@ async function composeCurio({ list, day }: DailyContext): Promise<DailyContent |
 function factsOf(tmdbId: number, movie: Movie): Fact[] {
   const facts: Fact[] = [];
   const { budget, revenue, titlePt } = movie;
-  if (budget && revenue && budget > 0 && revenue > 0) {
+  // Filme lançado direto em streaming quase não tem bilheteria: o fato daria uma ideia errada de fracasso.
+  if (budget && revenue && budget > 0 && revenue > 0 && movie.streamingFirst !== true) {
     const verb = revenue >= budget ? 'faturou' : 'só faturou';
     facts.push({
       tmdbId,

@@ -69,6 +69,7 @@ export function toTmdbExtras(response: TmdbMovieResponse): TmdbMovieExtras {
     budget: response.budget || null,
     revenue: response.revenue || null,
     certBR,
+    streamingFirst: isStreamingFirst(response),
     collection: response.belongs_to_collection
       ? { id: response.belongs_to_collection.id, name: response.belongs_to_collection.name }
       : null,
@@ -211,4 +212,30 @@ function uniqueBy<T, Key>(items: T[], keyOf: (item: T) => Key): T[] {
     seen.add(key);
     return true;
   });
+}
+
+/** Tipos de lançamento do TMDb em release_dates: 3 = cinema, 4 = digital. */
+const THEATRICAL = 3;
+const DIGITAL = 4;
+
+/** A partir de quantos países com lançamento digital o filme conta como lançado em streaming. */
+const STREAMING_COUNTRIES = 20;
+
+/** Até quantos países com estreia em cinema o filme ainda conta como lançado em streaming. */
+const MAX_THEATRICAL_COUNTRIES = 2;
+
+/**
+ * Diz se o filme foi lançado direto em streaming: lançamento digital em 20 países ou mais e estreia
+ * em cinema em no máximo 2 (como Wake Up Dead Man: 0 e 232; Glass Onion: 1 e 232; um filme de
+ * cinema tem estreia em dezenas de países).
+ *
+ * @param response - Resposta validada de /movie/{id}.
+ * @returns true ou false; null quando o TMDb não mandou release_dates.
+ */
+function isStreamingFirst(response: TmdbMovieResponse): boolean | null {
+  const countries = response.release_dates?.results;
+  if (!countries) return null;
+  const withType = (type: number) =>
+    countries.filter((country) => country.release_dates.some((release) => release.type === type)).length;
+  return withType(DIGITAL) >= STREAMING_COUNTRIES && withType(THEATRICAL) <= MAX_THEATRICAL_COUNTRIES;
 }

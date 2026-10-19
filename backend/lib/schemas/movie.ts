@@ -63,6 +63,7 @@ export const MovieSchema: z.ZodType<Movie> = z.object({
   revenue: z.number().nullable().optional(),
   boxOfficeUS: z.number().nullable().optional(),
   certBR: z.string().nullable().optional(),
+  streamingFirst: z.boolean().nullable().optional(),
   collection: MovieCollectionSchema.nullable().optional(),
   keywords: z.array(z.string()).max(25).optional(),
   recs: z.array(z.number().int()).max(10).optional(),

@@ -72,6 +72,7 @@ async function seedFreshMovie(overrides: Partial<Movie> = {}): Promise<Movie> {
     keywords: [],
     providersBR: { flatrate: [], previous: [], fetchedAt: clock },
     extraFetchedAt: clock,
+    streamingFirst: false,
     awards: { items: [], summary: null, fetchedAt: clock },
     ...overrides,
   };

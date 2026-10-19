@@ -84,6 +84,13 @@ describe('curiosidade', () => {
     assert.equal(content?.body, 'The Abyss custou US$ 2 bilhões e só faturou US$ 850 mil no mundo.');
   });
 
+  test('filme lançado direto em streaming: sem o fato de orçamento e bilheteria', async () => {
+    const content = await composeCurio(
+      offlineContext(abyssList({ budget: 210_000_000, revenue: 4_000_000, streamingFirst: true }), '2026-10-18'),
+    );
+    assert.ok(!content?.body?.includes('faturou'));
+  });
+
   test('título no Brasil diferente do original', async () => {
     const content = await composeCurio(offlineContext(abyssList({ titlePt: 'O Segredo do Abismo' }), '2026-10-18'));
     assert.equal(content?.body, 'No Brasil, The Abyss se chamou O Segredo do Abismo.');

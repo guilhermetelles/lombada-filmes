@@ -46,7 +46,7 @@ const CastCredit = z.object({
 });
 
 /** Data de estreia num país, em release_dates; a classificação vem vazia quando o país não tem. */
-const ReleaseDate = z.object({ certification: optionalText });
+const ReleaseDate = z.object({ certification: optionalText, type: z.number().int().optional() });
 
 /** Serviços de um país em watch/providers; só a assinatura (flatrate) interessa. */
 const CountryProviders = z.object({

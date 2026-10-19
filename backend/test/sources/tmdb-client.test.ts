@@ -32,6 +32,7 @@ describe('TMDb: getMovie', () => {
     assert.equal(extras?.budget, 43_000_000);
     assert.equal(extras?.revenue, 90_000_098);
     assert.equal(extras?.certBR, 'L');
+    assert.equal(extras?.streamingFirst, false);
     assert.equal(extras?.collection, null);
     assert.equal(extras?.keywords.length, 20);
     assert.ok(extras?.keywords.includes('submarine'));
@@ -40,6 +41,27 @@ describe('TMDb: getMovie', () => {
     assert.deepEqual(extras?.providersBR, ['Disney Plus']);
     assert.equal(extras?.votes, 3631);
     assert.ok((extras?.vote ?? 0) > 7 && (extras?.popularity ?? 0) > 0);
+  });
+
+  test('lançado direto em streaming: digital em 20+ países e cinema em até 2; sem release_dates, null', async () => {
+    const countries = (type: number, count: number, offset = 0) =>
+      Array.from({ length: count }, (_, index) => ({
+        iso_3166_1: `P${index + offset}`,
+        release_dates: [{ certification: '', type }],
+      }));
+    const streaming = {
+      id: 1,
+      title: 'Filme',
+      release_dates: { results: [...countries(4, 232), ...countries(3, 1, 500)] },
+    };
+    const theatrical = {
+      id: 2,
+      title: 'Filme',
+      release_dates: { results: [...countries(3, 11), ...countries(4, 2, 500)] },
+    };
+    assert.equal((await tmdbClient(respondWith(streaming)).getMovie(1)).extras?.streamingFirst, true);
+    assert.equal((await tmdbClient(respondWith(theatrical)).getMovie(2)).extras?.streamingFirst, false);
+    assert.equal((await tmdbClient(respondWith({ id: 3, title: 'Filme' })).getMovie(3)).extras?.streamingFirst, null);
   });
 
   test('campos extras: 0 vira null, palavras-chave cortadas em 25, saga e sem votos', async () => {

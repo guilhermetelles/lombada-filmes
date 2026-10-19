@@ -74,6 +74,7 @@ export type Movie = {
   revenue?: number | null | undefined; // bilheteria mundial, US$
   boxOfficeUS?: number | null | undefined; // OMDb BoxOffice, US$
   certBR?: string | null | undefined; // classificação indicativa no Brasil
+  streamingFirst?: boolean | null | undefined; // lançado direto em streaming, pelos tipos de lançamento do TMDb
   collection?: MovieCollection | null | undefined;
   keywords?: string[] | undefined; // até 25, em inglês (nomes do TMDb)
   recs?: number[] | undefined; // até 10 ids do TMDb (recomendações do TMDb)

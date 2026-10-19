@@ -90,6 +90,8 @@ const EXTRA_FRESHNESS_MS = 30 * DAY_MS;
  * @returns true se `extraFetchedAt` faltar ou tiver vencido.
  */
 function isExtraStale(movie: Movie, now: Date): boolean {
+  // Filme buscado antes de `streamingFirst` existir (2026-10-19) também conta como vencido.
+  if (movie.streamingFirst === undefined) return true;
   return !movie.extraFetchedAt || now.getTime() - movie.extraFetchedAt.getTime() >= EXTRA_FRESHNESS_MS;
 }
 

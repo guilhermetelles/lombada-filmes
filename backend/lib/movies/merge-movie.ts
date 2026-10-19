@@ -74,6 +74,7 @@ function applyTmdbExtras(stored: Movie | undefined, extras: TmdbMovieExtras, now
     budget: extras.budget,
     revenue: extras.revenue,
     certBR: extras.certBR,
+    streamingFirst: extras.streamingFirst,
     collection: extras.collection,
     keywords: extras.keywords,
     recs: extras.recs,

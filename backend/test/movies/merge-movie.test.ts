@@ -61,6 +61,7 @@ describe('mergeMovie: campos extras', () => {
     budget: 43_000_000,
     revenue: 90_000_098,
     certBR: 'L',
+    streamingFirst: false,
     collection: null,
     keywords: ['submarine'],
     recs: [14372],

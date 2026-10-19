@@ -46,6 +46,7 @@ export type TmdbMovieExtras = {
   budget: number | null; // US$; null quando o TMDb não sabe (0)
   revenue: number | null; // bilheteria mundial, US$; null quando o TMDb não sabe (0)
   certBR: string | null; // classificação indicativa no Brasil
+  streamingFirst: boolean | null; // lançado direto em streaming (digital em 20+ países, cinema em até 2); null sem release_dates
   collection: { id: number; name: string } | null;
   keywords: string[]; // até 25, em inglês
   recs: number[]; // até 10 ids do TMDb
