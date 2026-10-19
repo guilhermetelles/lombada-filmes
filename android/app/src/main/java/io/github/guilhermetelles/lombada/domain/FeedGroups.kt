@@ -43,15 +43,19 @@ object FeedGroups {
     private val dayMonth = DateTimeFormatter.ofPattern("dd/MM")
 
     /**
-     * Filtra e agrupa os itens por dia: Hoje, Ontem, Esta semana (até 6 dias) e Antes.
+     * Filtra por tipo e período e agrupa os itens por dia: Hoje, Ontem, Esta semana (até 6 dias) e Antes.
      *
      * @param items Itens, do mais novo para o mais antigo.
-     * @param filter Filtro escolhido.
+     * @param filter Tipo escolhido.
      * @param today Dia de hoje em Brasília.
+     * @param since Corte do período ([FeedPeriods.since]); null não corta.
      * @return Os grupos que têm itens, na ordem.
      */
-    fun group(items: List<FeedItem>, filter: FeedFilter, today: LocalDate): List<FeedGroup> {
-        val shown = items.filter { filter.kind == null || it.kind == filter.kind }
+    fun group(items: List<FeedItem>, filter: FeedFilter, today: LocalDate, since: Instant? = null): List<FeedGroup> {
+        val shown =
+            items.filter {
+                (filter.kind == null || it.kind == filter.kind) && FeedPeriods.includes(it.createdAt, since)
+            }
         return shown
             .groupBy { groupLabel(it.createdAt, today) }
             .entries

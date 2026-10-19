@@ -37,11 +37,13 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
@@ -56,6 +58,8 @@ import io.github.guilhermetelles.lombada.data.model.MovieList
 import io.github.guilhermetelles.lombada.domain.BrazilDay
 import io.github.guilhermetelles.lombada.domain.FeedFilter
 import io.github.guilhermetelles.lombada.domain.FeedGroups
+import io.github.guilhermetelles.lombada.domain.FeedPeriod
+import io.github.guilhermetelles.lombada.domain.FeedPeriods
 import io.github.guilhermetelles.lombada.ui.appContainer
 import io.github.guilhermetelles.lombada.ui.main.NotifySettingsRoute
 import io.github.guilhermetelles.lombada.ui.main.ScreenContext
@@ -71,11 +75,15 @@ import java.time.Instant
 @Composable
 fun FeedEntry(context: ScreenContext) {
     val container = appContainer()
+    val appContext = LocalContext.current.applicationContext
     val list = context.list
-    val viewModel = viewModel(key = "feed-${list.id}") { FeedViewModel(container, list.id, context.uid) }
+    val viewModel =
+        viewModel(key = "feed-${list.id}") {
+            FeedViewModel(container, FeedPeriodStore(appContext), list.id, context.uid)
+        }
     val state by viewModel.state.collectAsStateWithLifecycle()
     val today = BrazilDay.today()
-    val groups = FeedGroups.group(state.items, state.filter, today)
+    val groups = FeedGroups.group(state.items, state.filter, today, state.since)
 
     Column(
         modifier =
@@ -90,20 +98,24 @@ fun FeedEntry(context: ScreenContext) {
             }
         }
         LazyColumn(modifier = Modifier.fillMaxSize().navigationBarsPadding()) {
-            item(key = "filters") { Filters(state.filter, viewModel::setFilter) }
+            item(key = "periods") {
+                FilterRow(FeedPeriod.entries.map { it.label to it }, state.period, viewModel::setPeriod)
+            }
+            item(key = "filters") {
+                FilterRow(FeedFilter.entries.map { it.label to it }, state.filter, viewModel::setFilter)
+            }
             when {
                 state.loading -> item(key = "loading") { LoadingBlock() }
 
                 groups.isEmpty() ->
                     item(key = "empty") {
-                        if (state.filter == FeedFilter.All) {
-                            EmptyState(
-                                "Nada por aqui ainda",
-                                "O que vocês fizerem na lista, o quiz, as curiosidades e os lembretes do dia aparecem aqui."
-                            )
-                        } else {
-                            EmptyState("Nada desse tipo ainda", "Quando chegar um aviso desse tipo, ele aparece aqui.")
-                        }
+                        val message = FeedPeriods.emptyMessage(state.period, state.filter)
+                        EmptyState(
+                            message.title,
+                            message.body,
+                            actionLabel = if (message.offerAll) "Ver tudo" else null,
+                            onAction = { viewModel.setPeriod(FeedPeriod.All) }
+                        )
                     }
 
                 else ->
@@ -131,6 +143,15 @@ fun FeedEntry(context: ScreenContext) {
                         }
                     }
             }
+            if (!state.loading && state.hasMore) {
+                item(key = "more") {
+                    Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxWidth().padding(top = 8.dp)) {
+                        TextButton(onClick = viewModel::loadMore) {
+                            Text("Carregar mais", color = LombadaColors.Sticker)
+                        }
+                    }
+                }
+            }
             item(key = "bottom") { Box(Modifier.padding(bottom = 24.dp)) }
         }
     }
@@ -140,18 +161,18 @@ private fun isUnread(createdAt: Instant?, seenBefore: Instant?): Boolean =
     seenBefore != null && (createdAt == null || createdAt.isAfter(seenBefore))
 
 @Composable
-private fun Filters(selected: FeedFilter, onSelect: (FeedFilter) -> Unit) {
+private fun <T> FilterRow(options: List<Pair<String, T>>, selected: T, onSelect: (T) -> Unit) {
     LazyRow(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         contentPadding = PaddingValues(horizontal = 20.dp),
         modifier = Modifier.padding(top = 4.dp)
     ) {
-        items(FeedFilter.entries) { filter ->
-            val on = filter == selected
+        items(options) { (label, value) ->
+            val on = value == selected
             FilterChip(
                 selected = on,
-                onClick = { onSelect(filter) },
-                label = { Text(filter.label) },
+                onClick = { onSelect(value) },
+                label = { Text(label) },
                 leadingIcon =
                     if (on) {
                         { Icon(Icons.Filled.Check, contentDescription = null, modifier = Modifier.size(18.dp)) }

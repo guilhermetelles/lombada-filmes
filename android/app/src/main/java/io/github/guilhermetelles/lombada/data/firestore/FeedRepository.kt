@@ -25,13 +25,17 @@ class FeedRepository(private val db: FirebaseFirestore) {
      * Acompanha os itens mais recentes.
      *
      * @param listId Lista.
+     * @param since Só os itens criados depois deste instante; null não corta.
      * @param limit Quantos itens, no máximo.
      * @return Fluxo com os itens, do mais novo para o mais antigo.
      */
-    fun observe(listId: String, limit: Long = 100): Flow<List<FeedItem>> = feed(listId)
-        .orderBy("createdAt", Query.Direction.DESCENDING)
-        .limit(limit)
-        .snapshots()
+    fun observe(listId: String, since: Instant? = null, limit: Long = 100): Flow<List<FeedItem>> {
+        val ordered = feed(listId).orderBy("createdAt", Query.Direction.DESCENDING)
+        val query = if (since == null) ordered else ordered.whereGreaterThan("createdAt", Timestamp(Date.from(since)))
+        return query.limit(limit).observeItems()
+    }
+
+    private fun Query.observeItems(): Flow<List<FeedItem>> = snapshots()
         .map { snapshot -> snapshot.documents.mapNotNull { it.toFeedItem() } }
         .endOnPermissionDenied()
 

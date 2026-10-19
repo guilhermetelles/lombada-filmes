@@ -29,6 +29,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -162,9 +163,17 @@ fun SectionCard(
  * @param title Frase curta em destaque.
  * @param body Explicação.
  * @param modifier Modificador do Compose.
+ * @param actionLabel Texto do botão abaixo da explicação; null não mostra botão.
+ * @param onAction Ação do botão.
  */
 @Composable
-fun EmptyState(title: String, body: String, modifier: Modifier = Modifier) {
+fun EmptyState(
+    title: String,
+    body: String,
+    modifier: Modifier = Modifier,
+    actionLabel: String? = null,
+    onAction: (() -> Unit)? = null
+) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier =
@@ -181,6 +190,11 @@ fun EmptyState(title: String, body: String, modifier: Modifier = Modifier) {
             textAlign = TextAlign.Center,
             modifier = Modifier.padding(top = 6.dp)
         )
+        if (actionLabel != null && onAction != null) {
+            TextButton(onClick = onAction, modifier = Modifier.padding(top = 8.dp)) {
+                Text(actionLabel, color = LombadaColors.Sticker)
+            }
+        }
     }
 }
 
