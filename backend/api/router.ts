@@ -2,6 +2,7 @@ import { getProductionDependencies } from '../lib/dependencies.js';
 import { dispatchRoute } from '../lib/http/dispatch-route.js';
 import type { HttpMethod, RouteHandler, RouterEntry } from '../lib/types/http.js';
 import { discoverRoute } from './_discover.js';
+import { statusRoute } from './_status.js';
 import { enrichCronRoute } from './cron/_enrich.js';
 import { notify09CronRoute } from './cron/_notify-09.js';
 import { notify12CronRoute } from './cron/_notify-12.js';
@@ -32,6 +33,7 @@ export const ROUTES: RouterEntry[] = [
   { name: 'me-notify', path: /^\/api\/me\/notify$/, methods: { GET: getNotifyPrefsRoute, PUT: putNotifyPrefsRoute } },
   { name: 'me-notify-test', path: /^\/api\/me\/notify-test$/, methods: { POST: notifyTestRoute } },
   { name: 'discover', path: /^\/api\/discover$/, methods: { GET: discoverRoute } },
+  { name: 'status', path: /^\/api\/status$/, methods: { GET: statusRoute } },
   { name: 'search-interpret', path: /^\/api\/search\/interpret$/, methods: { POST: interpretRoute } },
   { name: 'queue-add', path: /^\/api\/lists\/[^/]+\/queue$/, methods: { POST: addToQueueRoute } },
   { name: 'queue-remove', path: /^\/api\/lists\/[^/]+\/queue\/[^/]+$/, methods: { DELETE: removeFromQueueRoute } },

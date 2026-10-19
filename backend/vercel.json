@@ -7,6 +7,7 @@
     { "source": "/api/me/notify", "destination": "/api/router?route=me-notify" },
     { "source": "/api/me/notify-test", "destination": "/api/router?route=me-notify-test" },
     { "source": "/api/discover", "destination": "/api/router?route=discover" },
+    { "source": "/api/status", "destination": "/api/router?route=status" },
     { "source": "/api/search/interpret", "destination": "/api/router?route=search-interpret" },
     { "source": "/api/lists/:listId/queue", "destination": "/api/router?route=queue-add&listId=:listId" },
     {
