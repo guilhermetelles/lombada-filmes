@@ -145,7 +145,15 @@ private fun swap(
     bottom: Entry,
     topPosition: Int?
 ) {
-    val keys = DuelPair.swapKeys(ranking, top.id, bottom.id) ?: return
+    // Chaves iguais (duas adições ao mesmo tempo) não deixam pôr uma entre as outras: avisa em vez de fechar o app.
+    val keys =
+        runCatching { DuelPair.swapKeys(ranking, top.id, bottom.id) }.getOrElse {
+            message(
+                container,
+                "Não deu para trocar agora: as posições estão empatadas. Arraste um dos filmes na lista."
+            )
+            return
+        } ?: return
     val old = ranking.filter { it.id in keys }.associate { it.id to it.rankKey }
     keys.forEach { (id, key) ->
         container.entries.move(context.list.id, id, key, context.uid)
