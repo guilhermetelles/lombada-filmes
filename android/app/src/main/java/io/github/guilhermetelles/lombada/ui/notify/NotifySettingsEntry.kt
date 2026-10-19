@@ -167,7 +167,12 @@ private fun PermissionCard(permission: NotificationPermissionState) {
 @Composable
 private fun PrefsSections(prefs: NotifyPrefs, otherName: String, onChange: ((NotifyPrefs) -> NotifyPrefs) -> Unit) {
     val dailyOn = prefs.freq != 0
-    SectionCard(title = "Notificação do dia", subtitle = "Uma por vez, com o que tiver de melhor no dia.") {
+    SectionCard(
+        title = "Notificação do dia",
+        subtitle =
+            "A pergunta do quiz chega às 9h, e às 21h vem um lembrete se você ainda não respondeu. " +
+                "O horário abaixo vale para o assunto do dia, que é o mesmo para os membros da lista."
+    ) {
         ChoiceChips(FREQUENCIES, prefs.freq, { value -> onChange { it.copy(freq = value) } })
         Text(
             "Horário",
@@ -189,12 +194,12 @@ private fun PrefsSections(prefs: NotifyPrefs, otherName: String, onChange: ((Not
     SectionCard(title = "A lista de vocês") {
         SwitchRow(
             "Avisar quando $otherName mexer na lista",
-            "Novos filmes, comentários e mudanças de ordem",
+            "Filmes novos e retirados, comentários, mudanças de ordem e o Quero ver",
             prefs.activity
         ) { on -> onChange { it.copy(activity = on) } }
         SwitchRow(
             "Agrupar em um aviso",
-            "Junta as mudanças seguidas num aviso só, em vez de um por mudança",
+            "O aviso novo substitui o anterior na barra de notificações",
             prefs.activityGrouped,
             enabled = prefs.activity
         ) { on -> onChange { it.copy(activityGrouped = on) } }
