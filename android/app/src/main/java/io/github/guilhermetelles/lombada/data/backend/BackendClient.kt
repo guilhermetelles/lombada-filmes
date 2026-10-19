@@ -1,5 +1,6 @@
 package io.github.guilhermetelles.lombada.data.backend
 
+import io.github.guilhermetelles.lombada.data.model.AppStatus
 import io.github.guilhermetelles.lombada.data.model.Filters
 import io.github.guilhermetelles.lombada.data.model.NotifyPrefs
 import java.io.IOException
@@ -21,10 +22,12 @@ class BackendClient(private val api: BackendApi) {
      * Busca filmes.
      *
      * @param query Termo digitado.
+     * @param lang `en` para títulos em inglês; null para o padrão (português).
      * @return Resultados do TMDb.
      * @throws BackendException Em qualquer falha.
      */
-    suspend fun searchMovies(query: String): List<MovieSearchResult> = call { api.searchMovies(query).results }
+    suspend fun searchMovies(query: String, lang: String? = null): List<MovieSearchResult> =
+        call { api.searchMovies(query, lang).results }
 
     /**
      * Busca atores e diretores.
@@ -165,24 +168,31 @@ class BackendClient(private val api: BackendApi) {
      * @param filters Filtros; listas vazias não vão no pedido.
      * @param keywords Parâmetro `kw` (ids de palavras-chave do TMDb separados por vírgula), ou null.
      * @param page Página, a partir de 1.
+     * @param lang `en` para títulos em inglês; null para o padrão (português).
      * @return Os filmes e a paginação.
      * @throws BackendException Em qualquer falha.
      */
-    suspend fun discover(listId: String, filters: Filters, keywords: String? = null, page: Int = 1): DiscoverResponse =
-        call {
-            api.discover(
-                listId = listId,
-                mood = filters.mood.joinedOrNull(),
-                dur = filters.dur.joinedOrNull(),
-                dec = filters.dec.joinedOrNull(),
-                genre = filters.genre.joinedOrNull(),
-                theme = filters.theme.joinedOrNull(),
-                svc = filters.svc.joinedOrNull(),
-                fit = filters.fit.takeIf { it },
-                kw = keywords,
-                page = page
-            )
-        }
+    suspend fun discover(
+        listId: String,
+        filters: Filters,
+        keywords: String? = null,
+        page: Int = 1,
+        lang: String? = null
+    ): DiscoverResponse = call {
+        api.discover(
+            listId = listId,
+            mood = filters.mood.joinedOrNull(),
+            dur = filters.dur.joinedOrNull(),
+            dec = filters.dec.joinedOrNull(),
+            genre = filters.genre.joinedOrNull(),
+            theme = filters.theme.joinedOrNull(),
+            svc = filters.svc.joinedOrNull(),
+            fit = filters.fit.takeIf { it },
+            kw = keywords,
+            page = page,
+            lang = lang
+        )
+    }
 
     /**
      * Interpreta um texto livre como filtros da busca avançada.
@@ -237,6 +247,15 @@ class BackendClient(private val api: BackendApi) {
      */
     suspend fun answerQuiz(listId: String, day: String, optionId: String): QuizAnswerResponse =
         call { api.answerQuiz(listId, day, QuizAnswerRequest(optionId)) }
+
+    /**
+     * Situação do backend: última execução de cada rotina, consumo dos últimos 7 dias e a ordem dos
+     * modelos do Gemini.
+     *
+     * @return O status.
+     * @throws BackendException Em qualquer falha.
+     */
+    suspend fun status(): AppStatus = call { api.status() }
 
     private fun List<String>.joinedOrNull(): String? = takeIf { it.isNotEmpty() }?.joinToString(",")
 

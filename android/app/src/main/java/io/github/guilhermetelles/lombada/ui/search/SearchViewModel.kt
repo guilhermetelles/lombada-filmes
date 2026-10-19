@@ -64,7 +64,7 @@ private data class Remote(val people: RemoteResults<PersonSearchResult>, val mov
 class SearchViewModel(private val container: AppContainer, listId: String) : ViewModel() {
     private val query = MutableStateFlow("")
 
-    private val ranking = container.entries.observeRanking(listId)
+    private val ranking = container.rankings.observe(listId)
 
     private val cast =
         ranking
@@ -88,7 +88,15 @@ class SearchViewModel(private val container: AppContainer, listId: String) : Vie
                     emit(
                         coroutineScope {
                             val people = async { fetch { container.backend.searchPeople(term) } }
-                            val movies = async { fetch { container.backend.searchMovies(term) } }
+                            val movies =
+                                async {
+                                    fetch {
+                                        container.backend.searchMovies(
+                                            term,
+                                            container.titleLanguage.language.value.apiParam
+                                        )
+                                    }
+                                }
                             Remote(people.await(), movies.await())
                         }
                     )

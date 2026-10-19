@@ -10,6 +10,7 @@ import io.github.guilhermetelles.lombada.data.backend.BackendException
 import io.github.guilhermetelles.lombada.data.model.Movie
 import io.github.guilhermetelles.lombada.data.model.QueueItem
 import io.github.guilhermetelles.lombada.domain.Formatting
+import io.github.guilhermetelles.lombada.domain.MovieTitles
 import io.github.guilhermetelles.lombada.domain.QueueLines
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -33,8 +34,9 @@ import kotlinx.coroutines.launch
  *
  * @property item Item da fila.
  * @property movie Filme, ou null enquanto não chega.
+ * @property title Título no idioma escolhido, ou null enquanto o filme não chega.
  */
-data class QueueRow(val item: QueueItem, val movie: Movie?)
+data class QueueRow(val item: QueueItem, val movie: Movie?, val title: String? = null)
 
 /**
  * Estado da aba "Quero ver".
@@ -77,11 +79,21 @@ class QueueViewModel(private val container: AppContainer, private val listId: St
             .flatMapLatest { items ->
                 if (items == null) return@flatMapLatest flowOf(QueueUiState())
                 val ids = items.map { it.tmdbId }.toSet()
-                container.movies
-                    .observeMany(ids)
-                    .onStart { emit(emptyMap()) }
-                    .catch { emit(emptyMap()) }
-                    .map { movies -> QueueUiState(false, items.map { QueueRow(it, movies[it.tmdbId]) }) }
+                combine(
+                    container.movies
+                        .observeMany(ids)
+                        .onStart { emit(emptyMap()) }
+                        .catch { emit(emptyMap()) },
+                    container.titleLanguage.language
+                ) { movies, language ->
+                    QueueUiState(
+                        false,
+                        items.map { item ->
+                            val movie = movies[item.tmdbId]
+                            QueueRow(item, movie, movie?.let { MovieTitles.of(it, language) })
+                        }
+                    )
+                }
             }.distinctUntilChanged()
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), QueueUiState())
 
@@ -92,7 +104,7 @@ class QueueViewModel(private val container: AppContainer, private val listId: St
      */
     fun remove(row: QueueRow) {
         val tmdbId = row.item.tmdbId
-        val title = Formatting.shortTitle(row.movie?.title ?: "O filme")
+        val title = Formatting.shortTitle(row.title ?: "O filme")
         pendingRemovals.update { it + tmdbId }
         // No escopo do app: tira da fila mesmo se a pessoa sair da aba.
         container.appScope.launch {

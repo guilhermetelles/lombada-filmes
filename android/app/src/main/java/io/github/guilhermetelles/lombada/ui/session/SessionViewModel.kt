@@ -1,6 +1,7 @@
 package io.github.guilhermetelles.lombada.ui.session
 
 import android.content.Context
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import io.github.guilhermetelles.lombada.AppContainer
@@ -44,11 +45,13 @@ class SessionViewModel(private val container: AppContainer) : ViewModel() {
     // Enquanto a tela "Lista criada" está aberta, a lista nova não abre sozinha.
     private val holdingNewList = MutableStateFlow(false)
 
+    // Cada "Tentar de novo" na tela de erro refaz a leitura do perfil e das listas.
+    private val attempt = MutableStateFlow(0)
+
     /** Estado da sessão. */
     @OptIn(ExperimentalCoroutinesApi::class)
     val state: StateFlow<SessionState> =
-        container.authRepository
-            .observeUser()
+        combine(container.authRepository.observeUser(), attempt) { user, _ -> user }
             .flatMapLatest { user ->
                 if (user == null) {
                     flowOf(SessionState.SignedOut)
@@ -63,10 +66,11 @@ class SessionViewModel(private val container: AppContainer) : ViewModel() {
                             holdingNewList
                         ) { profile, lists, holding -> decide(user.uid, profile, lists, holding) }
                     }.onStart { emit(SessionState.Loading) }
-                        .catch {
+                        .catch { error ->
+                            Log.w(TAG, "Sessão não carregada", error)
                             emit(
                                 SessionState.Failed(
-                                    "Não deu para carregar suas listas. Confira a internet e abra o app de novo."
+                                    "Não deu para carregar suas listas. Confira a internet e tente de novo."
                                 )
                             )
                         }
@@ -84,6 +88,11 @@ class SessionViewModel(private val container: AppContainer) : ViewModel() {
             viewModelScope.launch { runCatching { container.users.visit(uid, active.id) } }
         }
         return SessionState.Ready(uid, profile, active, ordered)
+    }
+
+    /** Tenta de novo carregar o perfil e as listas, depois de uma falha. */
+    fun retry() {
+        attempt.value += 1
     }
 
     /**
@@ -139,6 +148,8 @@ class SessionViewModel(private val container: AppContainer) : ViewModel() {
     }
 
     companion object {
+        private const val TAG = "Session"
+
         // Quanto sair da conta espera o backend tirar o token.
         private const val UNREGISTER_TIMEOUT_MS = 5_000L
 

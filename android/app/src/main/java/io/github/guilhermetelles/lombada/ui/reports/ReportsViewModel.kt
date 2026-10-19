@@ -58,7 +58,7 @@ data class ReportsUiState(
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class ReportsViewModel(container: AppContainer, listId: String) : ViewModel() {
-    private val ranking = container.entries.observeRanking(listId)
+    private val ranking = container.rankings.observe(listId)
     private val movies =
         ranking
             .map { entries -> entries.map { it.tmdbId }.toSet() }

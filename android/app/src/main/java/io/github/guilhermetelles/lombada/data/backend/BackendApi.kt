@@ -1,5 +1,6 @@
 package io.github.guilhermetelles.lombada.data.backend
 
+import io.github.guilhermetelles.lombada.data.model.AppStatus
 import io.github.guilhermetelles.lombada.data.model.NotifyPrefs
 import retrofit2.Response
 import retrofit2.http.Body
@@ -15,7 +16,7 @@ import retrofit2.http.Query
 interface BackendApi {
     /** Busca de filmes para adicionar. */
     @GET("api/search")
-    suspend fun searchMovies(@Query("q") query: String): MovieSearchResponse
+    suspend fun searchMovies(@Query("q") query: String, @Query("lang") lang: String?): MovieSearchResponse
 
     /** Grupo "Pessoas" da busca. */
     @GET("api/search/people")
@@ -85,7 +86,8 @@ interface BackendApi {
         @Query("svc") svc: String?,
         @Query("fit") fit: Boolean?,
         @Query("kw") kw: String?,
-        @Query("page") page: Int?
+        @Query("page") page: Int?,
+        @Query("lang") lang: String?
     ): DiscoverResponse
 
     /** Interpreta um texto livre como filtros. */
@@ -103,6 +105,10 @@ interface BackendApi {
     /** Manda um lote de eventos da lista (atividade e push para o outro membro). */
     @POST("api/lists/{listId}/events")
     suspend fun sendEvents(@Path("listId") listId: String, @Body body: ListEventsRequest): ListEventsResponse
+
+    /** Rotinas do backend e consumo dos últimos 7 dias. */
+    @GET("api/status")
+    suspend fun status(): AppStatus
 
     /** Responde ao quiz do dia. */
     @POST("api/lists/{listId}/quiz/{day}/answer")

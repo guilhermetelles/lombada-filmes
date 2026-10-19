@@ -13,6 +13,7 @@ import io.github.guilhermetelles.lombada.data.backend.IdTokenInterceptor
 import io.github.guilhermetelles.lombada.data.firestore.DismissedRepository
 import io.github.guilhermetelles.lombada.data.firestore.EntryRepository
 import io.github.guilhermetelles.lombada.data.firestore.FeedRepository
+import io.github.guilhermetelles.lombada.data.firestore.ListRankings
 import io.github.guilhermetelles.lombada.data.firestore.ListRepository
 import io.github.guilhermetelles.lombada.data.firestore.MovieRepository
 import io.github.guilhermetelles.lombada.data.firestore.PersonRepository
@@ -23,6 +24,7 @@ import io.github.guilhermetelles.lombada.data.firestore.RetroRepository
 import io.github.guilhermetelles.lombada.data.firestore.ScoresRepository
 import io.github.guilhermetelles.lombada.data.firestore.UsageRepository
 import io.github.guilhermetelles.lombada.data.firestore.UserRepository
+import io.github.guilhermetelles.lombada.data.prefs.TitleLanguageStore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -76,6 +78,12 @@ class AppContainer(context: Context) {
 
     /** Entradas das listas. */
     val entries = EntryRepository(db, onWriteError)
+
+    /** Idioma dos títulos dos filmes, guardado no aparelho. */
+    val titleLanguage = TitleLanguageStore(context)
+
+    /** Ranking de cada lista com os títulos no idioma escolhido, compartilhado pelas telas. */
+    val rankings = ListRankings(entries, movies, titleLanguage.language, appScope)
 
     /** Fila "Quero ver" (só leitura; gravar passa pelo backend). */
     val queue = QueueRepository(db)

@@ -3,7 +3,9 @@ package io.github.guilhermetelles.lombada.domain
 import io.github.guilhermetelles.lombada.data.model.Entry
 import io.github.guilhermetelles.lombada.data.model.MovieSnapshot
 import java.time.LocalDate
+import kotlin.random.Random
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -47,5 +49,18 @@ class EntryOrderTest {
         // "d" foi para o topo.
         val toTop = listOf(ranking[3]) + ranking.take(3)
         assertTrue(EntryOrder.rankKeyAt(toTop, 0) < ranking[0].rankKey)
+    }
+
+    @Test
+    fun `chave do fim vem depois da última e desempata adições simultâneas`() {
+        val last = keys.last()
+        val a = EntryOrder.endKey(last, Random(1))
+        val b = EntryOrder.endKey(last, Random(2))
+        assertTrue(last < a && last < b)
+        assertNotEquals(a, b)
+        // A chave nova continua válida para gerar as seguintes.
+        assertTrue(FractionalIndex.keyBetween(a, null) > a)
+        assertTrue(FractionalIndex.keyBetween(last, a) < a)
+        assertTrue(EntryOrder.endKey(null, Random(3)).isNotEmpty())
     }
 }

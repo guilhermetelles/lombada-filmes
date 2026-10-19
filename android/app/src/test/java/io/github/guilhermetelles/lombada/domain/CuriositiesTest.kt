@@ -53,11 +53,8 @@ class CuriositiesTest {
     }
 
     @Test
-    fun `título no Brasil só quando é diferente do original`() {
-        assertTrue(Curiosities.of(movie(titlePt = "the abyss")).isEmpty)
-        val rows = Curiosities.of(movie(titlePt = "O Segredo do Abismo")).rows
-        assertEquals("No Brasil", rows.single().label)
-        assertEquals("O Segredo do Abismo", rows.single().plain)
+    fun `título no Brasil não vira curiosidade, porque já está no topo da página`() {
+        assertTrue(Curiosities.of(movie(titlePt = "O Segredo do Abismo")).isEmpty)
     }
 
     @Test

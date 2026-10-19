@@ -61,6 +61,34 @@ object PendingEvents {
         pending.filterNot { it.entryId == entryId }
 
     /**
+     * Se a adição de uma entrada ainda está na fila, ou seja, se o backend ainda não soube dela.
+     *
+     * @param pending Fila atual.
+     * @param entryId Entrada.
+     * @return true quando o evento `added` dela ainda não foi enviado.
+     */
+    fun hasPendingAdd(pending: List<PendingEvent>, entryId: String): Boolean =
+        pending.any { it.entryId == entryId && it.type == ListEventType.Added.wire }
+
+    /**
+     * Quantas mudanças mostrar como esperando conexão.
+     *
+     * @param pending Eventos na fila.
+     * @param online Se o aparelho tem internet.
+     * @return O tamanho da fila sem internet; 0 com internet (o envio já vai acontecer).
+     */
+    fun waiting(pending: Int, online: Boolean): Int = if (online) 0 else pending
+
+    /**
+     * Texto do aviso de mudanças esperando conexão.
+     *
+     * @param count Quantas.
+     * @return "1 mudança esperando conexão" ou "N mudanças esperando conexão".
+     */
+    fun waitingLabel(count: Int): String =
+        if (count == 1) "1 mudança esperando conexão" else "$count mudanças esperando conexão"
+
+    /**
      * Próximo lote a enviar.
      *
      * @param pending Fila atual.

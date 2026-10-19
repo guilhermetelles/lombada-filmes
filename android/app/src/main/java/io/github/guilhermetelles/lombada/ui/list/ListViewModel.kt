@@ -12,7 +12,7 @@ import io.github.guilhermetelles.lombada.data.model.MovieSnapshot
 import io.github.guilhermetelles.lombada.data.model.PersonRef
 import io.github.guilhermetelles.lombada.domain.EntryOrder
 import io.github.guilhermetelles.lombada.domain.Formatting
-import io.github.guilhermetelles.lombada.domain.FractionalIndex
+import io.github.guilhermetelles.lombada.domain.MovieTitles
 import io.github.guilhermetelles.lombada.events.ListEventType
 import io.github.guilhermetelles.lombada.events.ListEvents
 import java.time.LocalDate
@@ -111,7 +111,7 @@ class ListViewModel(
     private val loaded = MutableStateFlow(false)
 
     private val ranking =
-        combine(container.entries.observeRanking(listId), pendingRemovals) { entries, removed ->
+        combine(container.rankings.observe(listId), pendingRemovals) { entries, removed ->
             entries.filterNot { it.id in removed }
         }.onEach {
             loaded.value = true
@@ -120,6 +120,10 @@ class ListViewModel(
                 dragOrder.value = null
             }
         }
+
+    /** Mudanças esperando conexão (eventos na fila com o aparelho sem internet). */
+    val waitingChanges: StateFlow<Int> =
+        events.observeWaiting(listId).stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0)
 
     /** Estado da tela. */
     val state: StateFlow<ListUiState> =
@@ -270,8 +274,7 @@ class ListViewModel(
             } else {
                 // O id continua escondido: o Firestore some com a entrada logo em seguida.
                 container.entries.remove(listId, entry.id)
-                events.forget(listId, entry.id)
-                events.record(listId, ListEventType.Removed, entry.id, entry.tmdbId)
+                events.recordRemoval(listId, entry.id, entry.tmdbId)
             }
         }
     }
@@ -299,9 +302,12 @@ class ListViewModel(
         viewModelScope.launch {
             try {
                 val movie = container.backend.refreshMovie(tmdbId)
+                // Na tela, o título no idioma escolhido; o inglês fica em titleAlt e é o que vai gravado.
+                val shown = MovieTitles.pick(movie.title, movie.titlePt, container.titleLanguage.language.value)
                 val snapshot =
                     MovieSnapshot(
-                        title = movie.title,
+                        title = shown,
+                        titleAlt = movie.title.takeIf { it != shown },
                         year = movie.year,
                         posterPath = movie.posterPath,
                         imdb = movie.ratings.imdb?.value,
@@ -337,7 +343,7 @@ class ListViewModel(
      */
     fun confirmAdd(draft: AddDraft, watchedOn: LocalDate?, comment: String) {
         val ranking = state.value.ranking
-        val rankKey = FractionalIndex.keyBetween(ranking.lastOrNull()?.rankKey, null)
+        val rankKey = EntryOrder.endKey(ranking.lastOrNull()?.rankKey)
         val entryId = container.entries.create(
             listId,
             draft.tmdbId,
@@ -362,7 +368,8 @@ class ListViewModel(
                 duration = SnackbarDuration.Long
             )
             if (result == SnackbarResult.ActionPerformed) {
-                events.forget(listId, entryId)
+                // Se o "added" já foi enviado, a outra pessoa precisa saber que o filme saiu.
+                events.recordRemoval(listId, entryId, draft.tmdbId)
                 container.entries.remove(listId, entryId)
                 container.snackbar.showSnackbar("$title saiu da lista")
             }

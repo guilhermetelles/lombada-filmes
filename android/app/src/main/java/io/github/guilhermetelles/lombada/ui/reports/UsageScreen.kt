@@ -42,10 +42,19 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import io.github.guilhermetelles.lombada.data.model.SourceUsage
 import io.github.guilhermetelles.lombada.data.model.UsageDay
+import io.github.guilhermetelles.lombada.domain.BrazilDay
 import io.github.guilhermetelles.lombada.domain.Formatting
+import io.github.guilhermetelles.lombada.domain.StatusLines
 import io.github.guilhermetelles.lombada.ui.appContainer
+import io.github.guilhermetelles.lombada.ui.components.LombadaButton
+import io.github.guilhermetelles.lombada.ui.components.LombadaButtonStyle
+import io.github.guilhermetelles.lombada.ui.status.GEMINI_LIMIT_TEXT
+import io.github.guilhermetelles.lombada.ui.status.GeminiModels
+import io.github.guilhermetelles.lombada.ui.status.StatusState
+import io.github.guilhermetelles.lombada.ui.status.StatusViewModel
 import io.github.guilhermetelles.lombada.ui.theme.LombadaColors
 import java.time.LocalDate
 import java.time.ZoneId
@@ -85,21 +94,27 @@ private val SOURCES =
             "gemini",
             "Gemini",
             "Motivos das sugestões, textos do quiz, retrospectiva do mês e busca em texto livre. " +
-                "Plano gratuito, com limite diário: aqui aparece só o uso."
+                "Os modelos e o limite estão no bloco abaixo."
         )
     )
 
+// Dias nas colunas de pedidos, o mesmo período que o repositório lê.
+private const val USAGE_DAYS = 30
+
 /**
- * Consumo das APIs, lendo `usage/`: um card por fonte com o dia de hoje, o medidor da cota da OMDb
- * e as colunas de pedidos por dia.
+ * Consumo das APIs, lendo `usage/`: um card por fonte com o dia de hoje, o medidor da cota da OMDb,
+ * os modelos do Gemini (de `GET /api/status`) e as colunas de pedidos por dia.
  *
  * @param onBack Volta para os relatórios.
+ * @param onOpenStatus Abre "Status do app".
  */
 @Composable
-fun UsageScreen(onBack: () -> Unit) {
+fun UsageScreen(onBack: () -> Unit, onOpenStatus: () -> Unit = {}) {
     val container = appContainer()
     var failed by remember { mutableStateOf(false) }
-    val flow = remember { container.usage.observeRecent().catch { failed = true } }
+    val flow = remember { container.usage.observeRecent(USAGE_DAYS.toLong()).catch { failed = true } }
+    val statusViewModel = viewModel(key = "status") { StatusViewModel(container) }
+    val status by statusViewModel.state.collectAsStateWithLifecycle()
     val days by flow.collectAsStateWithLifecycle(initialValue = null)
     val today = LocalDate.now(ZoneId.of("America/Sao_Paulo"))
 
@@ -131,6 +146,12 @@ fun UsageScreen(onBack: () -> Unit) {
             color = LombadaColors.Paper3,
             modifier = Modifier.padding(start = 20.dp, end = 20.dp, bottom = 6.dp)
         )
+        LombadaButton(
+            "Status do app",
+            onClick = onOpenStatus,
+            style = LombadaButtonStyle.Tonal,
+            modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 4.dp, bottom = 4.dp)
+        )
         if (failed) {
             Text(
                 "Não deu para ler o consumo agora.",
@@ -150,14 +171,59 @@ fun UsageScreen(onBack: () -> Unit) {
         }
         val todayUsage = list.firstOrNull { it.day == today }
         SOURCES.forEach { (key, name, use) ->
-            SourceCard(
-                name,
-                use,
-                todayUsage?.sources?.get(key) ?: SourceUsage(0, 0, 0, null)
-            )
+            SourceCard(name, use, StatusLines.sourceUsage(todayUsage, key))
+            if (key == "gemini") GeminiCard(status)
         }
-        DailyColumns(list)
+        DailyColumns(StatusLines.fillDays(list, today, USAGE_DAYS))
         Box(Modifier.height(24.dp))
+    }
+}
+
+// Modelos do Gemini: o texto fixo do limite vale sempre; ordem e consumo por modelo só com /api/status.
+@Composable
+private fun GeminiCard(status: StatusState) {
+    Column(
+        modifier =
+            Modifier
+                .padding(start = 16.dp, end = 16.dp, top = 12.dp)
+                .fillMaxWidth()
+                .background(LombadaColors.Shelf, MaterialTheme.shapes.large)
+                .padding(horizontal = 16.dp, vertical = 14.dp)
+    ) {
+        Text(
+            "Modelos do Gemini",
+            style = MaterialTheme.typography.titleMedium,
+            modifier = Modifier.semantics { heading() }
+        )
+        Text(
+            GEMINI_LIMIT_TEXT,
+            style = MaterialTheme.typography.bodySmall.copy(fontSize = 13.sp),
+            color = LombadaColors.Paper2,
+            modifier = Modifier.padding(top = 2.dp, bottom = 8.dp)
+        )
+        when (status) {
+            is StatusState.Loaded -> {
+                val lines =
+                    remember(status) {
+                        StatusLines.geminiToday(status.status.gemini, status.status.usage, BrazilDay.today())
+                    }
+                GeminiModels(status.status.gemini, lines)
+            }
+
+            StatusState.Loading ->
+                Text(
+                    "Buscando a ordem dos modelos…",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = LombadaColors.Paper3
+                )
+
+            is StatusState.Failed ->
+                Text(
+                    "A ordem dos modelos e o consumo de cada um não vieram agora.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = LombadaColors.Paper3
+                )
+        }
     }
 }
 

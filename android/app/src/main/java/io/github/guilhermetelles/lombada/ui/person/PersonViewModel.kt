@@ -53,7 +53,7 @@ class PersonViewModel(
     knownPhoto: String?
 ) : ViewModel() {
     private val refresh = MutableStateFlow(RefreshStatus.Refreshing)
-    private val ranking = container.entries.observeRanking(listId)
+    private val ranking = container.rankings.observe(listId)
     private val movies =
         ranking
             .map { entries -> entries.map { it.tmdbId }.toSet() }

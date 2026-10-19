@@ -1,8 +1,11 @@
 package io.github.guilhermetelles.lombada.ui.list
 
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -10,12 +13,14 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
@@ -42,12 +47,16 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.guilhermetelles.lombada.data.model.Entry
 import io.github.guilhermetelles.lombada.data.model.MovieList
+import io.github.guilhermetelles.lombada.events.PendingEvents
 import io.github.guilhermetelles.lombada.ui.main.MovieRoute
 import io.github.guilhermetelles.lombada.ui.main.PersonRoute
 import io.github.guilhermetelles.lombada.ui.search.SearchBar
@@ -77,6 +86,7 @@ private const val LIST_HEADER_ITEMS = 5
  * @param onOpenMovie Abre o detalhe de um filme.
  * @param onOpenPerson Abre a tela de uma pessoa achada na busca.
  * @param onAbout Abre "Sobre".
+ * @param onOptions Abre "Opções".
  * @param onSignOut Sair da conta.
  * @param onOpenAdvancedSearch Abre a busca avançada pelo atalho da busca.
  * @param topBarActions Ações da barra do app antes do menu ⋮: o sino da Atividade e os membros.
@@ -91,6 +101,7 @@ fun ListScreen(
     onOpenPerson: (PersonRoute) -> Unit,
     onAbout: () -> Unit,
     onSignOut: () -> Unit,
+    onOptions: () -> Unit = {},
     onOpenAdvancedSearch: () -> Unit = {},
     topBarActions: @Composable () -> Unit = {}
 ) {
@@ -98,6 +109,7 @@ fun ListScreen(
         onOpenMovie(MovieRoute(entry.tmdbId, entry.movie.title, entry.movie.year, entry.movie.posterPath))
     }
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val waiting by viewModel.waitingChanges.collectAsStateWithLifecycle()
     val search by searchViewModel.state.collectAsStateWithLifecycle()
     val lazyState = rememberLazyListState()
     val scope = rememberCoroutineScope()
@@ -131,9 +143,10 @@ fun ListScreen(
             item(key = "topbar") {
                 LombadaTopBar {
                     topBarActions()
-                    AccountMenu(onAbout, onSignOut)
+                    AccountMenu(onOptions, onAbout, onSignOut)
                 }
             }
+            if (waiting > 0) item(key = "waiting") { WaitingStrip(waiting) }
             item(key = "title") { ListTitle(list.name, list.description, onSwitchList) }
             stickyHeader(key = "search") {
                 SearchBar(
@@ -300,13 +313,17 @@ private fun rememberScrollButtons(lazyState: LazyListState) = with(LocalDensity.
 }
 
 @Composable
-private fun AccountMenu(onAbout: () -> Unit, onSignOut: () -> Unit) {
+private fun AccountMenu(onOptions: () -> Unit, onAbout: () -> Unit, onSignOut: () -> Unit) {
     var open by remember { mutableStateOf(false) }
     Box {
         IconButton(onClick = { open = true }) {
             Icon(Icons.Filled.MoreVert, contentDescription = "Mais opções", tint = LombadaColors.Paper2)
         }
         DropdownMenu(expanded = open, onDismissRequest = { open = false }, containerColor = LombadaColors.ShelfHigh) {
+            DropdownMenuItem(text = { Text("Opções") }, onClick = {
+                open = false
+                onOptions()
+            })
             DropdownMenuItem(text = { Text("Sobre") }, onClick = {
                 open = false
                 onAbout()
@@ -316,6 +333,34 @@ private fun AccountMenu(onAbout: () -> Unit, onSignOut: () -> Unit) {
                 onSignOut()
             })
         }
+    }
+}
+
+// Faixa discreta: o que foi feito sem internet está salvo e sai sozinho quando a conexão voltar.
+@Composable
+private fun WaitingStrip(count: Int) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        modifier =
+            Modifier
+                .padding(horizontal = 16.dp, vertical = 4.dp)
+                .fillMaxWidth()
+                .background(LombadaColors.Shelf, MaterialTheme.shapes.medium)
+                .padding(horizontal = 12.dp, vertical = 8.dp)
+                .semantics(mergeDescendants = true) { liveRegion = LiveRegionMode.Polite }
+    ) {
+        Icon(
+            Icons.Filled.CloudOff,
+            contentDescription = null,
+            tint = LombadaColors.Paper3,
+            modifier = Modifier.size(18.dp)
+        )
+        Text(
+            PendingEvents.waitingLabel(count),
+            style = MaterialTheme.typography.bodySmall,
+            color = LombadaColors.Paper2
+        )
     }
 }
 

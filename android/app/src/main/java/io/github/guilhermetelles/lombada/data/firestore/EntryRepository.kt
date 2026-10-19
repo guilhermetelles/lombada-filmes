@@ -105,7 +105,8 @@ class EntryRepository(private val db: FirebaseFirestore, private val onError: (E
                     "updatedAt" to FieldValue.serverTimestamp(),
                     "movie" to
                         mapOf(
-                            "title" to movie.title,
+                            // Sempre o título em inglês, como o backend grava, nunca o trocado para a tela.
+                            "title" to (movie.titleAlt ?: movie.title),
                             "year" to movie.year,
                             "posterPath" to movie.posterPath,
                             "imdb" to movie.imdb,

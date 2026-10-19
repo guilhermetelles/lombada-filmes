@@ -10,6 +10,7 @@ import io.github.guilhermetelles.lombada.data.model.Movie
 import io.github.guilhermetelles.lombada.data.model.RecsDoc
 import io.github.guilhermetelles.lombada.domain.FilmInfo
 import io.github.guilhermetelles.lombada.domain.Formatting
+import io.github.guilhermetelles.lombada.domain.MovieTitles
 import kotlin.math.roundToInt
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -102,20 +103,31 @@ class MovieDetailViewModel(private val container: AppContainer, private val tmdb
                     container.movies.observeMany(ids).onStart {
                         emit(emptyMap())
                     }.catch { emit(emptyMap()) },
-                    recs
+                    recs,
+                    container.titleLanguage.language
                 ) {
                         movies,
-                        doc
+                        doc,
+                        language
                     ->
                     val suggested =
                         doc
                             ?.let { it.items + it.trending }
                             .orEmpty()
                             .filter { it.tmdbId in ids }
-                            .associate { it.tmdbId to FilmInfo(it.tmdbId, it.title, it.year, it.posterPath, it.score) }
+                            .associate {
+                                it.tmdbId to
+                                    FilmInfo(it.tmdbId, MovieTitles.of(it, language), it.year, it.posterPath, it.score)
+                            }
                     val stored =
                         movies.mapValues { (id, film) ->
-                            FilmInfo(id, film.title, film.year, film.posterPath, suggested[id]?.score)
+                            FilmInfo(
+                                id,
+                                MovieTitles.of(film, language),
+                                film.year,
+                                film.posterPath,
+                                suggested[id]?.score
+                            )
                         }
                     suggested + stored
                 }

@@ -37,6 +37,8 @@ class UsageRepository(private val db: FirebaseFirestore) {
                     val sources =
                         document.data.orEmpty().mapNotNull { (name, value) ->
                             val fields = value as? Map<*, *> ?: return@mapNotNull null
+                            // Só mapas de contadores são fontes; outros campos do dia ficam de fora.
+                            if (COUNTERS.none { fields[it] is Number }) return@mapNotNull null
                             name to
                                 SourceUsage(
                                     calls = (fields["calls"] as? Number)?.toInt() ?: 0,
@@ -48,4 +50,8 @@ class UsageRepository(private val db: FirebaseFirestore) {
                     UsageDay(day, sources)
                 }.sortedBy { it.day }
         }.endOnPermissionDenied()
+
+    private companion object {
+        val COUNTERS = listOf("calls", "errors", "cacheHits")
+    }
 }

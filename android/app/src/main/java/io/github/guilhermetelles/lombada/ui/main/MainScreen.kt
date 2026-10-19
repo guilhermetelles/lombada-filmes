@@ -61,6 +61,7 @@ import io.github.guilhermetelles.lombada.ui.list.ListViewModel
 import io.github.guilhermetelles.lombada.ui.listinfo.ListInfoEntry
 import io.github.guilhermetelles.lombada.ui.memory.MemoryEntry
 import io.github.guilhermetelles.lombada.ui.notify.NotifySettingsEntry
+import io.github.guilhermetelles.lombada.ui.options.OptionsScreen
 import io.github.guilhermetelles.lombada.ui.person.PersonScreen
 import io.github.guilhermetelles.lombada.ui.queue.QueueEntry
 import io.github.guilhermetelles.lombada.ui.quiz.QuizEntry
@@ -72,6 +73,7 @@ import io.github.guilhermetelles.lombada.ui.reports.UsageScreen
 import io.github.guilhermetelles.lombada.ui.retro.RetroEntry
 import io.github.guilhermetelles.lombada.ui.roulette.RouletteEntry
 import io.github.guilhermetelles.lombada.ui.search.SearchViewModel
+import io.github.guilhermetelles.lombada.ui.status.StatusScreen
 import io.github.guilhermetelles.lombada.ui.theme.LombadaColors
 import io.github.guilhermetelles.lombada.ui.theme.LombadaMotion
 import kotlin.reflect.KClass
@@ -155,6 +157,7 @@ fun MainScreen(list: MovieList, uid: String, onSwitchList: () -> Unit, onSignOut
                     onOpenMovie = { navController.navigate(it) },
                     onOpenPerson = { navController.navigate(it) },
                     onAbout = { navController.navigate(AboutRoute) },
+                    onOptions = { navController.navigate(OptionsRoute) },
                     onSignOut = signOut,
                     onOpenAdvancedSearch = { navController.navigate(AdvancedSearchRoute) },
                     topBarActions = {
@@ -204,7 +207,14 @@ fun MainScreen(list: MovieList, uid: String, onSwitchList: () -> Unit, onSignOut
                     navController.popBackStack()
                 }, onOpenMovie = { navController.navigate(it) })
             }
-            composable<UsageRoute> { UsageScreen(onBack = { navController.popBackStack() }) }
+            composable<UsageRoute> {
+                UsageScreen(
+                    onBack = { navController.popBackStack() },
+                    onOpenStatus = { navController.navigate(StatusRoute) }
+                )
+            }
+            composable<StatusRoute> { StatusScreen(onBack = { navController.popBackStack() }) }
+            composable<OptionsRoute> { OptionsScreen(onBack = { navController.popBackStack() }) }
             composable<AboutRoute> { AboutScreen(onBack = { navController.popBackStack() }, onSignOut = signOut) }
         }
         if (showTabs) {
@@ -278,11 +288,31 @@ fun MainScreen(list: MovieList, uid: String, onSwitchList: () -> Unit, onSignOut
 private fun NavHostController.openPush(target: PushTarget) {
     PushRouter.consume(target)
     val route = target.route?.toRoute() ?: return
-    if (TABS.any { it.route == route }) {
-        navigateTo(route)
-    } else {
+    when {
+        TABS.any { it.route == route } -> openTabAtTop(route)
+
+        // A pergunta abre por cima da aba Quiz, para o voltar cair nela.
+        route is QuizPlayRoute -> {
+            openTabAtTop(QuizRoute)
+            navigate(route) { launchSingleTop = true }
+        }
+
         // O mesmo aviso tocado duas vezes não empilha a mesma tela.
-        navigate(route) { launchSingleTop = true }
+        else -> navigate(route) { launchSingleTop = true }
+    }
+}
+
+/**
+ * Abre uma aba no topo, sem restaurar a tela em que ela tinha ficado (como uma pergunta antiga do quiz).
+ *
+ * @param route Rota da aba.
+ */
+private fun NavHostController.openTabAtTop(route: Any) {
+    // Descarta o estado guardado da aba; não faz nada se ela é a aba aberta agora.
+    clearBackStack(route)
+    navigate(route) {
+        popUpTo(graph.findStartDestination().id) { saveState = true }
+        launchSingleTop = true
     }
 }
 

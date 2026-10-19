@@ -2,6 +2,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Para o aviso de mudanças esperando conexão na lista. -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <!-- Pedida só na tela de configurações de notificação, nunca ao abrir o app. -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 

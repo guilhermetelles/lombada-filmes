@@ -9,6 +9,9 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.workDataOf
 import java.util.concurrent.TimeUnit
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 
 /**
  * Eventos da lista (adicionar, mover, comentar, retirar) para a Atividade e o push do outro membro:
@@ -38,10 +41,38 @@ class ListEvents(context: Context) {
      *
      * @param listId Lista.
      * @param entryId Entrada.
+     * @return true se a adição dela ainda estava na fila (o backend não soube da entrada).
      */
-    fun forget(listId: String, entryId: String) {
-        store.update(listId) { PendingEvents.withoutEntry(it, entryId) }
+    fun forget(listId: String, entryId: String): Boolean {
+        var addPending = false
+        store.update(listId) { pending ->
+            addPending = PendingEvents.hasPendingAdd(pending, entryId)
+            PendingEvents.withoutEntry(pending, entryId)
+        }
+        return addPending
     }
+
+    /**
+     * Retira uma entrada: esquece os eventos dela ainda não enviados e, se a adição já tinha
+     * chegado ao backend, registra a retirada para a outra pessoa saber.
+     *
+     * @param listId Lista.
+     * @param entryId Entrada.
+     * @param tmdbId Filme, que o backend precisa porque a entrada já não existe.
+     */
+    fun recordRemoval(listId: String, entryId: String, tmdbId: Int) {
+        if (!forget(listId, entryId)) record(listId, ListEventType.Removed, entryId, tmdbId)
+    }
+
+    /**
+     * Quantas mudanças da lista esperam conexão: os eventos na fila enquanto o aparelho está sem
+     * internet; 0 com internet.
+     *
+     * @param listId Lista.
+     * @return Fluxo com a contagem.
+     */
+    fun observeWaiting(listId: String): Flow<Int> =
+        combine(store.observeCount(listId), observeOnline(appContext), PendingEvents::waiting).distinctUntilChanged()
 
     companion object {
         /**

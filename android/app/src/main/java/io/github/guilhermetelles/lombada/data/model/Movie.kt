@@ -64,7 +64,7 @@ data class Bechdel(
  * Filme em `movies/{tmdbId}`, escrito só pelo backend.
  *
  * @property tmdbId Id no TMDb.
- * @property title Título em inglês.
+ * @property title Título em inglês (ou o original).
  * @property year Ano.
  * @property directors Diretores, com foto quando já atualizados.
  * @property cast Os 12 primeiros do elenco.
@@ -155,5 +155,12 @@ data class Movie(
  * @property title Título (em português quando o TMDb tem).
  * @property year Ano.
  * @property posterPath Capa.
+ * @property titleEn Título em inglês; null nos documentos antigos.
  */
-data class MovieRecInfo(val tmdbId: Int, val title: String, val year: Int?, val posterPath: String?)
+data class MovieRecInfo(
+    val tmdbId: Int,
+    val title: String,
+    val year: Int?,
+    val posterPath: String?,
+    val titleEn: String? = null
+)
