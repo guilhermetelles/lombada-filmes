@@ -3,7 +3,6 @@ package io.github.guilhermetelles.lombada.data.firestore
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FieldPath
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.snapshots
 import io.github.guilhermetelles.lombada.data.model.Retro
 import kotlinx.coroutines.flow.Flow
@@ -34,11 +33,11 @@ class RetroRepository(private val db: FirebaseFirestore) {
      * @param limit Quantos meses, no máximo.
      * @return Fluxo com as retrospectivas, do mês mais recente para o mais antigo.
      */
-    fun observeRecent(listId: String, limit: Long = 24): Flow<List<Retro>> = retros(listId)
-        .orderBy(FieldPath.documentId(), Query.Direction.DESCENDING)
-        .limit(limit)
+    fun observeRecent(listId: String, limit: Int = 24): Flow<List<Retro>> = retros(listId)
+        // Crescente pelo id, sem índice (a decrescente pede um índice que não existe); inverte aqui.
+        .orderBy(FieldPath.documentId())
         .snapshots()
-        .map { snapshot -> snapshot.documents.mapNotNull { it.toRetro() } }
+        .map { snapshot -> snapshot.documents.mapNotNull { it.toRetro() }.asReversed().take(limit) }
         .endOnPermissionDenied()
 
     private fun DocumentSnapshot.toRetro(): Retro? {

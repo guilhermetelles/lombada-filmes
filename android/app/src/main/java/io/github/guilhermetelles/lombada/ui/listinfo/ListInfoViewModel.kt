@@ -1,5 +1,6 @@
 package io.github.guilhermetelles.lombada.ui.listinfo
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import io.github.guilhermetelles.lombada.AppContainer
@@ -34,7 +35,9 @@ data class GeneratedInvite(val code: String, val expiresAt: Instant?)
 data class InviteState(val generating: Boolean = false, val invite: GeneratedInvite? = null)
 
 // Placares guardados que a tela olha: dez anos de meses, documentos pequenos.
-private const val SCORE_MONTHS = 120L
+private const val SCORE_MONTHS = 120
+
+private const val TAG = "ListInfo"
 
 /**
  * Detalhes da lista: placares de todos os meses e o código de convite.
@@ -48,7 +51,11 @@ class ListInfoViewModel(private val container: AppContainer, private val listId:
         container.scores
             .observeRecent(listId, SCORE_MONTHS)
             .map<List<Scores>, List<Scores>?> { it }
-            .catch { emit(emptyList()) }
+            .catch { error ->
+                // Sem placar a tela mostra zero; o motivo fica no log para não sumir em silêncio.
+                Log.w(TAG, "Placares não carregados", error)
+                emit(emptyList())
+            }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
     private val _invite = MutableStateFlow(InviteState())
