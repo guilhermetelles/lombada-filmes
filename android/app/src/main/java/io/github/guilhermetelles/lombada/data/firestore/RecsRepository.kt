@@ -69,7 +69,8 @@ class RecsRepository(private val db: FirebaseFirestore) {
                 reasonFrom = item.strings("reasonFrom"),
                 source = item.string("source").orEmpty(),
                 kind = item.string("kind").orEmpty(),
-                reasonBy = item.string("reasonBy")
+                reasonBy = item.string("reasonBy"),
+                titleEn = item.string("titleEn")
             )
         }
 }

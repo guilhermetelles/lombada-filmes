@@ -85,7 +85,8 @@ data class MovieResponse(
     val posterPath: String? = null,
     val directors: List<PersonRefDto> = emptyList(),
     val ratings: MovieRatingsDto = MovieRatingsDto(),
-    val compat: CompatDto? = null
+    val compat: CompatDto? = null,
+    val titlePt: String? = null
 )
 
 /** Resposta de `GET /api/me`: quantas listas tiveram nome e foto sincronizados. */

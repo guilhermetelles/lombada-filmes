@@ -77,6 +77,7 @@ private const val LIST_HEADER_ITEMS = 5
  * @param onOpenMovie Abre o detalhe de um filme.
  * @param onOpenPerson Abre a tela de uma pessoa achada na busca.
  * @param onAbout Abre "Sobre".
+ * @param onOptions Abre "Opções".
  * @param onSignOut Sair da conta.
  * @param onOpenAdvancedSearch Abre a busca avançada pelo atalho da busca.
  * @param topBarActions Ações da barra do app antes do menu ⋮: o sino da Atividade e os membros.
@@ -91,6 +92,7 @@ fun ListScreen(
     onOpenPerson: (PersonRoute) -> Unit,
     onAbout: () -> Unit,
     onSignOut: () -> Unit,
+    onOptions: () -> Unit = {},
     onOpenAdvancedSearch: () -> Unit = {},
     topBarActions: @Composable () -> Unit = {}
 ) {
@@ -131,7 +133,7 @@ fun ListScreen(
             item(key = "topbar") {
                 LombadaTopBar {
                     topBarActions()
-                    AccountMenu(onAbout, onSignOut)
+                    AccountMenu(onOptions, onAbout, onSignOut)
                 }
             }
             item(key = "title") { ListTitle(list.name, list.description, onSwitchList) }
@@ -300,13 +302,17 @@ private fun rememberScrollButtons(lazyState: LazyListState) = with(LocalDensity.
 }
 
 @Composable
-private fun AccountMenu(onAbout: () -> Unit, onSignOut: () -> Unit) {
+private fun AccountMenu(onOptions: () -> Unit, onAbout: () -> Unit, onSignOut: () -> Unit) {
     var open by remember { mutableStateOf(false) }
     Box {
         IconButton(onClick = { open = true }) {
             Icon(Icons.Filled.MoreVert, contentDescription = "Mais opções", tint = LombadaColors.Paper2)
         }
         DropdownMenu(expanded = open, onDismissRequest = { open = false }, containerColor = LombadaColors.ShelfHigh) {
+            DropdownMenuItem(text = { Text("Opções") }, onClick = {
+                open = false
+                onOptions()
+            })
             DropdownMenuItem(text = { Text("Sobre") }, onClick = {
                 open = false
                 onAbout()

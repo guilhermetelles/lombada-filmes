@@ -6,7 +6,7 @@ import java.time.Instant
  * Uma sugestão em `recs/current`.
  *
  * @property tmdbId Filme.
- * @property title Título.
+ * @property title Título em português.
  * @property year Ano.
  * @property posterPath Capa.
  * @property runtime Duração em minutos.
@@ -18,6 +18,7 @@ import java.time.Instant
  * @property reasonBy Quem escreveu o motivo: `gemini` ou `rules`; null nos documentos antigos.
  * @property source `model`, `trending` ou `nowPlaying`.
  * @property kind `saga`, `diretor`, `tema` ou `emAlta`.
+ * @property titleEn Título em inglês; null nos documentos antigos.
  */
 data class RecItem(
     val tmdbId: Int,
@@ -32,7 +33,8 @@ data class RecItem(
     val reasonFrom: List<String>,
     val source: String,
     val kind: String,
-    val reasonBy: String? = null
+    val reasonBy: String? = null,
+    val titleEn: String? = null
 )
 
 /**

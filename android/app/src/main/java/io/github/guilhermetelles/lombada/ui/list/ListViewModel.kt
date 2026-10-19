@@ -12,6 +12,7 @@ import io.github.guilhermetelles.lombada.data.model.MovieSnapshot
 import io.github.guilhermetelles.lombada.data.model.PersonRef
 import io.github.guilhermetelles.lombada.domain.EntryOrder
 import io.github.guilhermetelles.lombada.domain.Formatting
+import io.github.guilhermetelles.lombada.domain.MovieTitles
 import io.github.guilhermetelles.lombada.events.ListEventType
 import io.github.guilhermetelles.lombada.events.ListEvents
 import java.time.LocalDate
@@ -110,7 +111,7 @@ class ListViewModel(
     private val loaded = MutableStateFlow(false)
 
     private val ranking =
-        combine(container.entries.observeRanking(listId), pendingRemovals) { entries, removed ->
+        combine(container.rankings.observe(listId), pendingRemovals) { entries, removed ->
             entries.filterNot { it.id in removed }
         }.onEach {
             loaded.value = true
@@ -297,9 +298,12 @@ class ListViewModel(
         viewModelScope.launch {
             try {
                 val movie = container.backend.refreshMovie(tmdbId)
+                // Na tela, o título no idioma escolhido; o inglês fica em titleAlt e é o que vai gravado.
+                val shown = MovieTitles.pick(movie.title, movie.titlePt, container.titleLanguage.language.value)
                 val snapshot =
                     MovieSnapshot(
-                        title = movie.title,
+                        title = shown,
+                        titleAlt = movie.title.takeIf { it != shown },
                         year = movie.year,
                         posterPath = movie.posterPath,
                         imdb = movie.ratings.imdb?.value,

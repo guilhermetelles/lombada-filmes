@@ -194,7 +194,7 @@ class AdvancedSearchViewModel(private val container: AppContainer, private val l
         searchJob =
             viewModelScope.launch {
                 try {
-                    val response = container.backend.discover(listId, filters, keywords, next)
+                    val response = container.backend.discover(listId, filters, keywords, next, lang())
                     mutableState.update {
                         it.copy(
                             results = DiscoverResults.append(it.results, response.results),
@@ -218,7 +218,7 @@ class AdvancedSearchViewModel(private val container: AppContainer, private val l
                 val filters = mutableState.value.filters
                 val keywords = DiscoverKeywords.param(mutableState.value.keywords)
                 try {
-                    val response = container.backend.discover(listId, filters, keywords, 1)
+                    val response = container.backend.discover(listId, filters, keywords, 1, lang())
                     mutableState.update {
                         it.copy(
                             results = DiscoverResults.append(emptyList(), response.results),
@@ -253,6 +253,9 @@ class AdvancedSearchViewModel(private val container: AppContainer, private val l
 
         else -> "O Gemini não respondeu agora. Use os filtros abaixo."
     }
+
+    // Títulos dos resultados no idioma escolhido em "Opções".
+    private fun lang(): String? = container.titleLanguage.language.value.apiParam
 
     private fun searchFailure(error: BackendException): String = if (error.code == BackendErrorCode.NETWORK) {
         "Sem internet: a busca avançada precisa de conexão."

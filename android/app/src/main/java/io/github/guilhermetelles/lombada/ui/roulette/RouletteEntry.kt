@@ -237,13 +237,16 @@ private fun Stage(film: RouletteFilm, final: Boolean) {
             Modifier.width(if (final) 150.dp else 132.dp),
             initialsSize = 30.sp
         )
-        Text(
-            film.title,
-            style = MaterialTheme.typography.titleMedium,
-            color = if (final) LombadaColors.Paper else LombadaColors.Paper3,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 10.dp)
-        )
+        // No resultado, o título já vem logo abaixo, com o ano: aqui só enquanto sorteia.
+        if (!final) {
+            Text(
+                film.title,
+                style = MaterialTheme.typography.titleMedium,
+                color = LombadaColors.Paper3,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 10.dp)
+            )
+        }
     }
 }
 

@@ -13,12 +13,14 @@ data class PersonRef(val id: Int, val name: String)
 /**
  * Cópia resumida de `movies/{tmdbId}` guardada na entrada, para a lista abrir lendo só as entradas.
  *
- * @property title Título em inglês.
+ * @property title Título a mostrar: no Firestore, em inglês; o app troca pelo do idioma escolhido ao ler
+ *   (`MovieTitles.localize`).
  * @property year Ano de lançamento.
  * @property posterPath Caminho da capa no TMDb.
  * @property imdb Nota do IMDb, de 0 a 10.
  * @property letterboxd Nota do Letterboxd, de 0 a 5.
  * @property directors Até 8 diretores.
+ * @property titleAlt Título em inglês quando [title] foi trocado pelo português (só no app, nunca gravado).
  */
 data class MovieSnapshot(
     val title: String,
@@ -26,7 +28,8 @@ data class MovieSnapshot(
     val posterPath: String?,
     val imdb: Double?,
     val letterboxd: Double?,
-    val directors: List<PersonRef>
+    val directors: List<PersonRef>,
+    val titleAlt: String? = null
 )
 
 /**

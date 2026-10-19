@@ -56,6 +56,7 @@ import io.github.guilhermetelles.lombada.domain.Curiosities
 import io.github.guilhermetelles.lombada.domain.FilmInfo
 import io.github.guilhermetelles.lombada.domain.Formatting
 import io.github.guilhermetelles.lombada.domain.MoviePage
+import io.github.guilhermetelles.lombada.domain.MovieTitles
 import io.github.guilhermetelles.lombada.domain.SimilarFilms
 import io.github.guilhermetelles.lombada.domain.Standing
 import io.github.guilhermetelles.lombada.ui.appContainer
@@ -67,6 +68,7 @@ import io.github.guilhermetelles.lombada.ui.main.PersonRoute
 import io.github.guilhermetelles.lombada.ui.main.ScreenContext
 import io.github.guilhermetelles.lombada.ui.theme.LombadaColors
 import io.github.guilhermetelles.lombada.ui.theme.RankSticker
+import io.github.guilhermetelles.lombada.ui.titleLanguage
 import java.time.ZoneId
 
 /**
@@ -92,17 +94,22 @@ fun MovieDetailScreen(route: MovieRoute, context: ScreenContext) {
     val page = MoviePage.of(route.tmdbId, ranking, listLoaded = !listState.loading)
     val entry = (page as? MoviePage.InList)?.entry
     val standing = entry?.let { Standing.of(ranking, it.id) }
-    val title = movie?.title ?: entry?.movie?.title ?: route.title
+    val language = titleLanguage()
+    // Título principal no idioma escolhido; o outro vai embaixo, menor, quando é diferente.
+    val title = movie?.let { MovieTitles.of(it, language) } ?: entry?.movie?.title ?: route.title
+    val otherTitle = movie?.let { MovieTitles.other(it.title, it.titlePt, language) }
+    // Busca no IMDb e afins pelo título em inglês, que é o que esses sites conhecem.
+    val englishTitle = movie?.title ?: entry?.movie?.titleAlt ?: entry?.movie?.title ?: route.title
     val year = movie?.year ?: entry?.movie?.year ?: route.year
     val poster = movie?.posterPath ?: entry?.movie?.posterPath ?: route.posterPath
     val refreshing = state.refresh == RefreshStatus.Refreshing
     val onOpenPerson: (PersonRoute) -> Unit = { context.navigate(it) }
     val similar =
-        remember(movie?.recs, movie?.recsInfo, ranking, state.similarInfo) {
+        remember(movie?.recs, movie?.recsInfo, ranking, state.similarInfo, language) {
             // recsInfo do próprio filme cobre os parecidos que ainda não estão em movies/ nem nas sugestões.
             val fromRecs =
                 movie?.recsInfo.orEmpty().associate {
-                    it.tmdbId to FilmInfo(it.tmdbId, it.title, it.year, it.posterPath)
+                    it.tmdbId to FilmInfo(it.tmdbId, MovieTitles.of(it, language), it.year, it.posterPath)
                 }
             SimilarFilms.of(route.tmdbId, movie?.recs.orEmpty(), ranking, fromRecs + state.similarInfo)
         }
@@ -140,12 +147,12 @@ fun MovieDetailScreen(route: MovieRoute, context: ScreenContext) {
                     Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Voltar")
                 }
             }
-            Hero(route.tmdbId, title, year, poster, movie, entry, standing?.position, onOpenPerson)
+            Hero(route.tmdbId, title, otherTitle, year, poster, movie, entry, standing?.position, onOpenPerson)
             RefreshNotice(state.refresh, movie, onRetry = viewModel::retry)
             // Enquanto a lista não chega, ainda não se sabe se o filme é dela.
             standing?.let { StandingCard(it) }
             if (page == MoviePage.Outside) CompatBlock(state.compat, refreshing)
-            Scores(route.tmdbId, title, year, movie, entry, onOpen = uri::openUri)
+            Scores(route.tmdbId, englishTitle, year, movie, entry, onOpen = uri::openUri)
             Synopsis(movie, loading = movie == null && refreshing)
             movie?.bechdel?.takeIf { it.isRated }?.let { BechdelSection(it, onOpen = uri::openUri) }
             curiosities?.let { CuriositiesSection(it) }
@@ -182,6 +189,7 @@ fun MovieDetailScreen(route: MovieRoute, context: ScreenContext) {
 private fun Hero(
     tmdbId: Int,
     title: String,
+    otherTitle: String?,
     year: Int?,
     poster: String?,
     movie: Movie?,
@@ -203,6 +211,14 @@ private fun Hero(
                     heading()
                 }
             )
+            otherTitle?.let {
+                Text(
+                    it,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = LombadaColors.Paper3,
+                    modifier = Modifier.padding(top = 4.dp)
+                )
+            }
             val facts =
                 buildAnnotatedString {
                     year?.let {

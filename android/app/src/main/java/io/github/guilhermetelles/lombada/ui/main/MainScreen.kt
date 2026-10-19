@@ -61,6 +61,7 @@ import io.github.guilhermetelles.lombada.ui.list.ListViewModel
 import io.github.guilhermetelles.lombada.ui.listinfo.ListInfoEntry
 import io.github.guilhermetelles.lombada.ui.memory.MemoryEntry
 import io.github.guilhermetelles.lombada.ui.notify.NotifySettingsEntry
+import io.github.guilhermetelles.lombada.ui.options.OptionsScreen
 import io.github.guilhermetelles.lombada.ui.person.PersonScreen
 import io.github.guilhermetelles.lombada.ui.queue.QueueEntry
 import io.github.guilhermetelles.lombada.ui.quiz.QuizEntry
@@ -155,6 +156,7 @@ fun MainScreen(list: MovieList, uid: String, onSwitchList: () -> Unit, onSignOut
                     onOpenMovie = { navController.navigate(it) },
                     onOpenPerson = { navController.navigate(it) },
                     onAbout = { navController.navigate(AboutRoute) },
+                    onOptions = { navController.navigate(OptionsRoute) },
                     onSignOut = signOut,
                     onOpenAdvancedSearch = { navController.navigate(AdvancedSearchRoute) },
                     topBarActions = {
@@ -205,6 +207,7 @@ fun MainScreen(list: MovieList, uid: String, onSwitchList: () -> Unit, onSignOut
                 }, onOpenMovie = { navController.navigate(it) })
             }
             composable<UsageRoute> { UsageScreen(onBack = { navController.popBackStack() }) }
+            composable<OptionsRoute> { OptionsScreen(onBack = { navController.popBackStack() }) }
             composable<AboutRoute> { AboutScreen(onBack = { navController.popBackStack() }, onSignOut = signOut) }
         }
         if (showTabs) {

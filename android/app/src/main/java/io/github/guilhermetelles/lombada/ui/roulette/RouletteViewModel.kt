@@ -7,12 +7,14 @@ import io.github.guilhermetelles.lombada.data.model.Movie
 import io.github.guilhermetelles.lombada.data.model.QueueItem
 import io.github.guilhermetelles.lombada.data.model.RecItem
 import io.github.guilhermetelles.lombada.data.model.RecsDoc
+import io.github.guilhermetelles.lombada.domain.MovieTitles
 import io.github.guilhermetelles.lombada.domain.QueueLines
 import io.github.guilhermetelles.lombada.domain.Roulette
 import io.github.guilhermetelles.lombada.domain.RouletteFilm
 import io.github.guilhermetelles.lombada.domain.RouletteFilter
 import io.github.guilhermetelles.lombada.domain.RoulettePool
 import io.github.guilhermetelles.lombada.domain.RouletteSource
+import io.github.guilhermetelles.lombada.domain.TitleLanguage
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -86,17 +88,20 @@ class RouletteViewModel(private val container: AppContainer, listId: String, inL
             },
             recs,
             inList,
-            container.dismissed.observe(listId).onStart { emit(emptySet()) }.catch { emit(emptySet()) }
-        ) { (items, movies), doc, entries, dismissed ->
+            container.dismissed.observe(listId).onStart { emit(emptySet()) }.catch { emit(emptySet()) },
+            container.titleLanguage.language
+        ) { (items, movies), doc, entries, dismissed, language ->
             val recById = doc?.let { it.items + it.trending }.orEmpty().associateBy { it.tmdbId }
-            val queue = items.mapNotNull { item -> movies[item.tmdbId]?.toFilm(recById[item.tmdbId], item.addedBy) }
+            val queue = items.mapNotNull { item ->
+                movies[item.tmdbId]?.toFilm(recById[item.tmdbId], item.addedBy, language)
+            }
             val suggestions =
                 doc
                     ?.let { it.items + it.trending }
                     .orEmpty()
                     .filter { it.tmdbId !in entries && it.tmdbId !in dismissed }
                     .sortedByDescending { it.score }
-                    .map { it.toFilm() }
+                    .map { it.toFilm(language) }
             RouletteData(queue, suggestions)
         }.onEach { latest = it }
             .onStart<RouletteData?> { emit(null) }
@@ -147,9 +152,9 @@ class RouletteViewModel(private val container: AppContainer, listId: String, inL
         roll.update { previous -> Roll(Roulette.pick(pool.films, previous.pick?.tmdbId), previous.id + 1) }
     }
 
-    private fun Movie.toFilm(rec: RecItem?, addedBy: String) = RouletteFilm(
+    private fun Movie.toFilm(rec: RecItem?, addedBy: String, language: TitleLanguage) = RouletteFilm(
         tmdbId = tmdbId,
-        title = title,
+        title = MovieTitles.of(this, language),
         year = year,
         posterPath = posterPath,
         runtime = runtime,
@@ -162,9 +167,9 @@ class RouletteViewModel(private val container: AppContainer, listId: String, inL
         addedBy = addedBy
     )
 
-    private fun RecItem.toFilm() = RouletteFilm(
+    private fun RecItem.toFilm(language: TitleLanguage) = RouletteFilm(
         tmdbId = tmdbId,
-        title = title,
+        title = MovieTitles.of(this, language),
         year = year,
         posterPath = posterPath,
         runtime = runtime,

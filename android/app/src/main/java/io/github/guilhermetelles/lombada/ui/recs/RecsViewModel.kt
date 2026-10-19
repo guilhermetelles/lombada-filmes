@@ -11,6 +11,7 @@ import io.github.guilhermetelles.lombada.data.model.Entry
 import io.github.guilhermetelles.lombada.data.model.RecItem
 import io.github.guilhermetelles.lombada.data.model.RecsDoc
 import io.github.guilhermetelles.lombada.domain.Formatting
+import io.github.guilhermetelles.lombada.domain.MovieTitles
 import io.github.guilhermetelles.lombada.domain.RecKindFilter
 import io.github.guilhermetelles.lombada.domain.RecOrigin
 import io.github.guilhermetelles.lombada.domain.RecsLines
@@ -128,9 +129,11 @@ class RecsViewModel(
             }
 
     private val recs: Flow<RecsLoad> =
-        container.recs
-            .observe(listId)
-            .map { RecsLoad(it, loaded = true) }
+        combine(container.recs.observe(listId), container.titleLanguage.language) { doc, language ->
+            // Título no idioma escolhido (title em português, titleEn em inglês) em todos os cards.
+            fun List<RecItem>.localized() = map { it.copy(title = MovieTitles.of(it, language)) }
+            doc?.copy(items = doc.items.localized(), trending = doc.trending.localized())
+        }.map { RecsLoad(it, loaded = true) }
             .onStart { emit(RecsLoad(null, loaded = false)) }
             .catch { emit(RecsLoad(null, loaded = true)) }
 

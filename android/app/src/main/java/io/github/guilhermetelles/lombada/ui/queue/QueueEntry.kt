@@ -156,7 +156,7 @@ fun QueueEntry(context: ScreenContext) {
                             context.navigate(
                                 MovieRoute(
                                     row.item.tmdbId,
-                                    row.movie?.title.orEmpty(),
+                                    row.title.orEmpty(),
                                     row.movie?.year,
                                     row.movie?.posterPath
                                 )
@@ -207,7 +207,7 @@ private fun QueueItemRow(
     onRemove: () -> Unit
 ) {
     val movie = row.movie
-    val title = movie?.title ?: "Carregando…"
+    val title = row.title ?: "Carregando…"
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier.padding(start = 20.dp, end = 8.dp, top = 6.dp, bottom = 6.dp)

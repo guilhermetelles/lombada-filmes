@@ -22,6 +22,10 @@ object AboutRoute
 @Serializable
 object UsageRoute
 
+/** Opções guardadas no aparelho, como o idioma dos títulos. */
+@Serializable
+object OptionsRoute
+
 /** Fila "Quero ver", a segunda aba. */
 @Serializable
 object QueueRoute

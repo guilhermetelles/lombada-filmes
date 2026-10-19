@@ -15,7 +15,7 @@ import retrofit2.http.Query
 interface BackendApi {
     /** Busca de filmes para adicionar. */
     @GET("api/search")
-    suspend fun searchMovies(@Query("q") query: String): MovieSearchResponse
+    suspend fun searchMovies(@Query("q") query: String, @Query("lang") lang: String?): MovieSearchResponse
 
     /** Grupo "Pessoas" da busca. */
     @GET("api/search/people")
@@ -85,7 +85,8 @@ interface BackendApi {
         @Query("svc") svc: String?,
         @Query("fit") fit: Boolean?,
         @Query("kw") kw: String?,
-        @Query("page") page: Int?
+        @Query("page") page: Int?,
+        @Query("lang") lang: String?
     ): DiscoverResponse
 
     /** Interpreta um texto livre como filtros. */

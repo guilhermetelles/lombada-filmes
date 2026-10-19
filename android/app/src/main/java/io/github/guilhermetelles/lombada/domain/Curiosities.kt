@@ -42,10 +42,7 @@ data class Curiosities(val tagline: String?, val rows: List<CurioRow>, val provi
          */
         fun of(movie: Movie): Curiosities {
             val rows = mutableListOf<CurioRow>()
-            movie.titlePt
-                ?.trim()
-                ?.takeIf { it.isNotEmpty() && !it.equals(movie.title.trim(), ignoreCase = true) }
-                ?.let { rows += CurioRow("No Brasil", listOf(CurioPart(it, strong = true))) }
+            // O título no outro idioma já aparece embaixo do principal, no topo da página.
             money(movie.budget, movie.revenue)?.let { rows += it }
             movie.boxOfficeUS?.takeIf { it > 0 }?.let { us ->
                 val share = movie.revenue?.takeIf {

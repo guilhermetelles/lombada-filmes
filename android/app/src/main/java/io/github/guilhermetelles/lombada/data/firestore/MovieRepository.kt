@@ -114,7 +114,8 @@ class MovieRepository(private val db: FirebaseFirestore) {
                         tmdbId = item.int("tmdbId") ?: return@mapNotNull null,
                         title = item.string("title") ?: return@mapNotNull null,
                         year = item.int("year"),
-                        posterPath = item.string("posterPath")
+                        posterPath = item.string("posterPath"),
+                        titleEn = item.string("titleEn")
                     )
                 },
             providersBR =

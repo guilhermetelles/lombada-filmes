@@ -38,7 +38,9 @@ object ListSearch {
         return ranking.mapNotNull { entry ->
             val movie = entry.movie
             when {
-                normalize("${movie.title} ${movie.year ?: ""}").contains(term) -> ListMatch(entry, null)
+                // Pelos dois títulos: o mostrado e o em inglês, quando a tela está em português.
+                normalize("${movie.title} ${movie.titleAlt.orEmpty()} ${movie.year ?: ""}").contains(term) ->
+                    ListMatch(entry, null)
 
                 else -> {
                     val director = movie.directors.firstOrNull { normalize(it.name).contains(term) }
