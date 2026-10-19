@@ -22,6 +22,10 @@ object AboutRoute
 @Serializable
 object UsageRoute
 
+/** Status do app: rotinas do servidor e consumo, aberto pela tela de consumo. */
+@Serializable
+object StatusRoute
+
 /** Opções guardadas no aparelho, como o idioma dos títulos. */
 @Serializable
 object OptionsRoute

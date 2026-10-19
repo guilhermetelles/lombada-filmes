@@ -73,6 +73,7 @@ import io.github.guilhermetelles.lombada.ui.reports.UsageScreen
 import io.github.guilhermetelles.lombada.ui.retro.RetroEntry
 import io.github.guilhermetelles.lombada.ui.roulette.RouletteEntry
 import io.github.guilhermetelles.lombada.ui.search.SearchViewModel
+import io.github.guilhermetelles.lombada.ui.status.StatusScreen
 import io.github.guilhermetelles.lombada.ui.theme.LombadaColors
 import io.github.guilhermetelles.lombada.ui.theme.LombadaMotion
 import kotlin.reflect.KClass
@@ -206,7 +207,13 @@ fun MainScreen(list: MovieList, uid: String, onSwitchList: () -> Unit, onSignOut
                     navController.popBackStack()
                 }, onOpenMovie = { navController.navigate(it) })
             }
-            composable<UsageRoute> { UsageScreen(onBack = { navController.popBackStack() }) }
+            composable<UsageRoute> {
+                UsageScreen(
+                    onBack = { navController.popBackStack() },
+                    onOpenStatus = { navController.navigate(StatusRoute) }
+                )
+            }
+            composable<StatusRoute> { StatusScreen(onBack = { navController.popBackStack() }) }
             composable<OptionsRoute> { OptionsScreen(onBack = { navController.popBackStack() }) }
             composable<AboutRoute> { AboutScreen(onBack = { navController.popBackStack() }, onSignOut = signOut) }
         }

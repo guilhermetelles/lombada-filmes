@@ -1,5 +1,6 @@
 package io.github.guilhermetelles.lombada.data.backend
 
+import io.github.guilhermetelles.lombada.data.model.AppStatus
 import io.github.guilhermetelles.lombada.data.model.Filters
 import io.github.guilhermetelles.lombada.data.model.NotifyPrefs
 import java.io.IOException
@@ -246,6 +247,15 @@ class BackendClient(private val api: BackendApi) {
      */
     suspend fun answerQuiz(listId: String, day: String, optionId: String): QuizAnswerResponse =
         call { api.answerQuiz(listId, day, QuizAnswerRequest(optionId)) }
+
+    /**
+     * Situação do backend: última execução de cada rotina, consumo dos últimos 7 dias e a ordem dos
+     * modelos do Gemini.
+     *
+     * @return O status.
+     * @throws BackendException Em qualquer falha.
+     */
+    suspend fun status(): AppStatus = call { api.status() }
 
     private fun List<String>.joinedOrNull(): String? = takeIf { it.isNotEmpty() }?.joinToString(",")
 
