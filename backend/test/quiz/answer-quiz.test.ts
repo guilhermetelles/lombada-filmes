@@ -1,9 +1,12 @@
 import assert from 'node:assert/strict';
 import { beforeEach, describe, test } from 'node:test';
 import { answerQuizRoute } from '../../api/lists/[listId]/quiz/_answer.js';
+import { DEFAULT_NOTIFY_PREFS } from '../../lib/notify/default-notify-prefs.js';
+import { deviceTokenDocument, notifyStateDocument } from '../../lib/notify/notify-repository.js';
 import type { QuizAnswerResult } from '../../lib/types/quiz.js';
 import { createTestDependencies } from '../support/dependencies.js';
 import { resetEmulators, signUp } from '../support/emulators.js';
+import { createFakeMessaging, type FakeMessaging } from '../support/fake-messaging.js';
 import { fakeSources } from '../support/fake-sources.js';
 import { jsonRequest, readErrorCode } from '../support/requests.js';
 import { seedSampleList } from './quiz-samples.js';
@@ -15,6 +18,7 @@ const TODAY = '2026-10-18';
 const EXPLANATION = 'The Abyss é de 1989. Direção de James Cameron.';
 
 let clock: Date;
+let fcm: FakeMessaging;
 let dependencies: ReturnType<typeof createTestDependencies>;
 let ana: Person;
 let bia: Person;
@@ -69,7 +73,8 @@ async function read(path: string) {
 beforeEach(async () => {
   await resetEmulators();
   clock = new Date('2026-10-18T15:00:00Z');
-  dependencies = createTestDependencies(fakeSources().fetch, () => clock);
+  fcm = createFakeMessaging();
+  dependencies = createTestDependencies(fakeSources().fetch, () => clock, { messaging: fcm.messaging });
   [ana, bia, outsider] = await Promise.all([
     signUp('ana@exemplo.com'),
     signUp('bia@exemplo.com'),
@@ -220,5 +225,55 @@ describe('POST /api/lists/{listId}/quiz/{dia}/answer', () => {
       jsonRequest(`/api/lists/${LIST_ID}/quiz/${TODAY}/answer`, { optionId: 'b' }),
     );
     assert.equal(response.status, 401);
+  });
+});
+
+describe('aviso "Sua vez" ao responder o quiz do dia', () => {
+  const TURN_TITLE = 'Ana respondeu o quiz de hoje. Sua vez!';
+
+  beforeEach(async () => {
+    for (const person of [ana, bia]) {
+      await deviceTokenDocument(dependencies.db, person.uid, `token-${person.uid}`).set({
+        token: `token-${person.uid}`,
+        platform: 'android',
+        updatedAt: clock,
+      });
+    }
+  });
+
+  const sentTo = (person: Person) => fcm.sent.filter((message) => message.tokens.includes(`token-${person.uid}`));
+
+  test('quem ainda não respondeu recebe, sem dizer se a pessoa acertou; uma vez por dia', async () => {
+    await answer(ana, 'a');
+
+    const [push] = sentTo(bia);
+    assert.deepEqual(push?.notification, { title: TURN_TITLE, body: 'Em que ano The Abyss foi lançado?' });
+    assert.deepEqual(push?.android?.notification, { channelId: 'quiz' });
+    assert.equal(push?.data?.route, JSON.stringify({ name: 'quizPlay', args: { day: TODAY } }));
+    assert.equal(sentTo(ana).length, 0, 'quem respondeu não recebe');
+    assert.ok(await read(`notifyLog/${bia.uid}_${TODAY}-quizturn`));
+
+    // Bia responde: Ana já tinha respondido e não recebe nada.
+    await answer(bia, 'b');
+    assert.equal(sentTo(ana).length, 0);
+    assert.equal(sentTo(bia).length, 1);
+  });
+
+  test('quem desligou o quiz nas notificações não recebe', async () => {
+    await notifyStateDocument(dependencies.db, bia.uid).set({
+      prefs: { ...DEFAULT_NOTIFY_PREFS, types: { ...DEFAULT_NOTIFY_PREFS.types, quiz: false } },
+    });
+    await answer(ana, 'b');
+    assert.equal(sentTo(bia).length, 0);
+  });
+
+  test('o evento de início não avisa', async () => {
+    const seeded = await read(`lists/${LIST_ID}/quizzes/${TODAY}`);
+    await dependencies.db.doc(`lists/${LIST_ID}/quizzes/inicio-01`).set({ ...seeded, event: 'inicio', eventIndex: 1 });
+    await dependencies.db
+      .doc(`lists/${LIST_ID}/quizKeys/inicio-01`)
+      .set({ rightOptionId: 'b', explanation: EXPLANATION });
+    await answer(ana, 'b', 'inicio-01');
+    assert.equal(fcm.sent.length, 0);
   });
 });
