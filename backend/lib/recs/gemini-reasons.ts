@@ -18,6 +18,12 @@ const MIN_REASON_LENGTH = 12;
 /** Trecho máximo de cada comentário enviado (o começo do comentário, verbatim). */
 const MAX_COMMENT_LENGTH = 500;
 
+/** Motivos escritos pelo Gemini e, se ele falhou, o porquê (resumido). */
+export type GeminiReasons = { reasons: Map<number, string>; failure: string | null };
+
+/** Tamanho máximo do motivo da falha guardado para a saúde da rotina. */
+const MAX_FAILURE_LENGTH = 120;
+
 /** Palavras-chave do candidato enviadas, no máximo. */
 const MAX_KEYWORDS = 8;
 
@@ -43,7 +49,8 @@ const SYSTEM = [
  * @param recs - Sugestões a explicar.
  * @param index - Índice da lista (títulos, posições e comentários).
  * @param memberNames - Nomes dos membros, tirados dos comentários antes do envio.
- * @returns O motivo aceito de cada filme, por tmdbId (vazio se o Gemini falhar ou faltar chave).
+ * @returns O motivo aceito de cada filme, por tmdbId (vazio se o Gemini falhar ou faltar chave), e
+ *   a falha do Gemini resumida, ou null.
  */
 async function writeGeminiReasons(
   gemini: GeminiClient,
@@ -51,9 +58,9 @@ async function writeGeminiReasons(
   recs: readonly ScoredRec[],
   index: ListIndex,
   memberNames: readonly string[],
-): Promise<Map<number, string>> {
+): Promise<GeminiReasons> {
   const accepted = new Map<number, string>();
-  if (recs.length === 0) return accepted;
+  if (recs.length === 0) return { reasons: accepted, failure: null };
 
   const wanted = new Set(recs.map((rec) => rec.tmdbId));
   const prompt = JSON.stringify({ sugestoes: recs.map((rec) => describeRec(rec, index, memberNames)) });
@@ -65,7 +72,7 @@ async function writeGeminiReasons(
   } catch (error) {
     if (!(error instanceof SourceUnavailableError)) throw error;
     logger.warn('Gemini indisponível; motivos pelas variáveis', { error: error.message });
-    return accepted;
+    return { reasons: accepted, failure: summarizeFailure(error.message) };
   }
 
   for (const { tmdbId, reason } of reply.reasons) {
@@ -74,7 +81,21 @@ async function writeGeminiReasons(
     if (text.length < MIN_REASON_LENGTH || text.length > MAX_REASON_LENGTH || text.includes(NAME_PLACEHOLDER)) continue;
     accepted.set(tmdbId, text);
   }
-  return accepted;
+  return { reasons: accepted, failure: null };
+}
+
+/**
+ * Resume a mensagem de erro do Gemini para a saúde da rotina: sem o prefixo da fonte e cortada.
+ *
+ * @param message - Mensagem do SourceUnavailableError ("gemini: modelo: motivo").
+ * @returns O motivo, com até 120 caracteres.
+ */
+function summarizeFailure(message: string): string {
+  const text = message
+    .replace(/^gemini:\s*/, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+  return text.length > MAX_FAILURE_LENGTH ? `${text.slice(0, MAX_FAILURE_LENGTH - 1)}…` : text;
 }
 
 /**

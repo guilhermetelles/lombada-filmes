@@ -222,5 +222,11 @@ describe('GET /api/cron/recs', () => {
       report.lists.map(({ listId, status }) => ({ listId, status })),
       [{ listId: LIST_ID, status: 'written' }],
     );
+
+    // Sem resposta do Gemini, os motivos caem para a reserva: a saúde da rotina diz o porquê.
+    const job = (await dependencies.db.doc('jobs/recs').get()).data();
+    assert.equal(job?.status, 'partial');
+    assert.equal(job?.lastRunAt.toMillis(), clock.getTime());
+    assert.deepEqual(job?.warnings, ['motivos das sugestões pela reserva: sem resposta preparada no teste']);
   });
 });

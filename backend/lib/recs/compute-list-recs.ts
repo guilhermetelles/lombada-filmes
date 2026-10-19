@@ -39,6 +39,7 @@ export type ListRecsReport = {
   alpha: number | null; // peso do modelo aprendido na mistura com a nota do TMDb
   holdoutAccuracy: number | null;
   geminiReasons: number; // motivos escritos pelo Gemini (o resto é a reserva)
+  reasonsFallback: string | null; // por que os motivos caíram para a reserva (falha do Gemini), ou null
 };
 
 /**
@@ -66,6 +67,7 @@ async function computeListRecs(run: RecsRun, listId: string, list: List): Promis
     alpha: null,
     holdoutAccuracy: null,
     geminiReasons: 0,
+    reasonsFallback: null,
   };
   if (films.length === 0) return report;
 
@@ -98,7 +100,7 @@ async function computeListRecs(run: RecsRun, listId: string, list: List): Promis
 
   const trending = await scoreTrending(run, fitted, index, excluded, new Set(items.map((item) => item.tmdbId)));
 
-  const reasons = await writeGeminiReasons(
+  const { reasons, failure } = await writeGeminiReasons(
     sources.gemini,
     run.usage,
     [...items, ...trending],
@@ -129,6 +131,7 @@ async function computeListRecs(run: RecsRun, listId: string, list: List): Promis
     alpha: fitted.alpha,
     holdoutAccuracy: fitted.holdoutAccuracy,
     geminiReasons: [...items, ...trending].filter((rec) => reasons.has(rec.tmdbId)).length,
+    reasonsFallback: failure,
   };
 }
 

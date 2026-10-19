@@ -35,7 +35,11 @@ describe('writeGeminiReasons', () => {
         { tmdbId: 51, reason: 'Curto' },
       ],
     });
-    const reasons = await writeGeminiReasons(gemini.client, new UsageMeter(), recs, index, ['Joana', 'Pedro Silva']);
+    const { reasons, failure } = await writeGeminiReasons(gemini.client, new UsageMeter(), recs, index, [
+      'Joana',
+      'Pedro Silva',
+    ]);
+    assert.equal(failure, null);
 
     assert.equal(gemini.requests.length, 1);
     assert.equal(gemini.requests[0]?.model, GEMINI_MODELS.text);
@@ -54,14 +58,15 @@ describe('writeGeminiReasons', () => {
         { tmdbId: 777, reason: 'Filme que ninguém pediu para explicar' },
       ],
     });
-    const reasons = await writeGeminiReasons(gemini.client, new UsageMeter(), recs, index, []);
+    const { reasons } = await writeGeminiReasons(gemini.client, new UsageMeter(), recs, index, []);
     assert.equal(reasons.size, 0);
   });
 
-  test('Gemini fora do ar (ou sem chave): nenhum motivo, sem lançar', async () => {
+  test('Gemini fora do ar (ou sem chave): nenhum motivo, sem lançar, com o porquê resumido', async () => {
     const gemini = createFakeGemini();
-    const reasons = await writeGeminiReasons(gemini.client, new UsageMeter(), recs, index, []);
+    const { reasons, failure } = await writeGeminiReasons(gemini.client, new UsageMeter(), recs, index, []);
     assert.equal(reasons.size, 0);
+    assert.equal(failure, 'sem resposta preparada no teste');
     assert.equal(gemini.requests.length, 1);
   });
 });
