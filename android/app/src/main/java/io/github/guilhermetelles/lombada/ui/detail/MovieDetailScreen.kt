@@ -147,12 +147,15 @@ fun MovieDetailScreen(route: MovieRoute, context: ScreenContext) {
                     Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Voltar")
                 }
             }
-            Hero(route.tmdbId, title, otherTitle, year, poster, movie, entry, standing?.position, onOpenPerson)
+            BackdropHeader(movie?.backdropPath) {
+                Hero(route.tmdbId, title, otherTitle, year, poster, movie, entry, standing?.position, onOpenPerson)
+            }
             RefreshNotice(state.refresh, movie, onRetry = viewModel::retry)
             // Enquanto a lista não chega, ainda não se sabe se o filme é dela.
             standing?.let { StandingCard(it) }
             if (page == MoviePage.Outside) CompatBlock(state.compat, refreshing)
             Scores(route.tmdbId, englishTitle, year, movie, entry, onOpen = uri::openUri)
+            movie?.trailer?.let { TrailerSection(it, onOpen = uri::openUri) }
             Synopsis(movie, loading = movie == null && refreshing)
             movie?.bechdel?.takeIf { it.isRated }?.let { BechdelSection(it, onOpen = uri::openUri) }
             curiosities?.let { CuriositiesSection(it) }

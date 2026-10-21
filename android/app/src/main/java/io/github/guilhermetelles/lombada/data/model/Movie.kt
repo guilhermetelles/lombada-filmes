@@ -1,6 +1,7 @@
 package io.github.guilhermetelles.lombada.data.model
 
 import java.time.Instant
+import java.time.LocalDate
 
 /**
  * Diretor em `movies/{tmdbId}.directors`.
@@ -94,6 +95,8 @@ data class Bechdel(
  * @property recs Até 10 ids de filmes recomendados pelo TMDb.
  * @property recsInfo Título, ano e capa dos mesmos filmes de [recs], para a fileira de parecidos.
  * @property providersBR Streaming por assinatura no Brasil.
+ * @property backdropPath Imagem horizontal (16:9) do TMDb.
+ * @property trailer Trailer no YouTube; null quando o TMDb não tem ou o filme ainda não foi atualizado.
  * @property awards Prêmios e indicações.
  * @property popularity Popularidade no TMDb.
  * @property vote Nota média no TMDb, de 0 a 10.
@@ -131,6 +134,8 @@ data class Movie(
     val recs: List<Int> = emptyList(),
     val recsInfo: List<MovieRecInfo> = emptyList(),
     val providersBR: ProvidersBR? = null,
+    val backdropPath: String? = null,
+    val trailer: MovieTrailer? = null,
     val awards: Awards? = null,
     val popularity: Double? = null,
     val vote: Double? = null,
@@ -147,6 +152,17 @@ data class Movie(
         directors = directors.take(8).map { PersonRef(it.id, it.name) }
     )
 }
+
+/**
+ * Trailer do filme no YouTube, em `movies/{tmdbId}.trailer` (o backend escolhe o oficial, em
+ * português antes de inglês, o mais recente).
+ *
+ * @property key Id do vídeo: `youtube.com/watch?v={key}`.
+ * @property name Título do vídeo no YouTube.
+ * @property lang Idioma do vídeo (`pt`, `en`…).
+ * @property published Dia da publicação.
+ */
+data class MovieTrailer(val key: String, val name: String, val lang: String?, val published: LocalDate?)
 
 /**
  * Um filme recomendado pelo TMDb, em `movies/{tmdbId}.recsInfo`.

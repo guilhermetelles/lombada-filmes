@@ -11,8 +11,10 @@ import io.github.guilhermetelles.lombada.data.model.Director
 import io.github.guilhermetelles.lombada.data.model.Movie
 import io.github.guilhermetelles.lombada.data.model.MovieCollection
 import io.github.guilhermetelles.lombada.data.model.MovieRecInfo
+import io.github.guilhermetelles.lombada.data.model.MovieTrailer
 import io.github.guilhermetelles.lombada.data.model.ProvidersBR
 import io.github.guilhermetelles.lombada.data.model.Rating
+import java.time.LocalDate
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOf
@@ -122,12 +124,21 @@ class MovieRepository(private val db: FirebaseFirestore) {
                 (get("providersBR") as? Map<*, *>)?.let { item ->
                     ProvidersBR(item.strings("flatrate"), item.strings("previous"), item["fetchedAt"].asInstant())
                 },
+            backdropPath = getString("backdropPath")?.takeIf { it.isNotBlank() },
+            trailer = (get("trailer") as? Map<*, *>)?.toTrailer(),
             awards = (get("awards") as? Map<*, *>)?.toAwards(),
             popularity = (get("popularity") as? Number)?.toDouble(),
             vote = (get("vote") as? Number)?.toDouble(),
             votes = (get("votes") as? Number)?.toInt(),
             extraFetchedAt = getTimestamp("extraFetchedAt")?.toDate()?.toInstant()
         )
+    }
+
+    // Sem id do vídeo vira null; data fora do formato AAAA-MM-DD fica sem data.
+    private fun Map<*, *>.toTrailer(): MovieTrailer? {
+        val key = string("key")?.takeIf { it.isNotBlank() } ?: return null
+        val published = string("published")?.let { runCatching { LocalDate.parse(it) }.getOrNull() }
+        return MovieTrailer(key, string("name").orEmpty(), string("lang"), published)
     }
 
     // Fora do formato vira null: id que não é número, ou filme no site sem critérios de 0 a 3.

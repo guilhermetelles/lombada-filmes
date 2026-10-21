@@ -113,6 +113,24 @@ object Emulators {
         )
     }
 
+    /**
+     * Grava um documento como o backend faria (o app não grava em `movies/`): acesso de
+     * administrador do emulador, que ignora as regras.
+     *
+     * @param path Caminho do documento, como `movies/2756`.
+     * @param fields Campos no formato JSON da API REST do Firestore (o conteúdo de `"fields"`).
+     */
+    suspend fun seedDocument(path: String, fields: String) {
+        send(
+            Request
+                .Builder()
+                .url("http://$HOST:$FIRESTORE_PORT/v1/projects/$PROJECT/databases/(default)/documents/$path")
+                .header("Authorization", "Bearer owner")
+                .patch("""{"fields":$fields}""".toRequestBody(json))
+                .build()
+        )
+    }
+
     private suspend fun send(request: Request) {
         withContext(Dispatchers.IO) {
             http.newCall(request).execute().use { response ->

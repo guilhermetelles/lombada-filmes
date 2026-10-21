@@ -44,6 +44,14 @@ object TmdbImages {
      * @return URL da imagem, ou null sem foto.
      */
     fun profile(path: String?): String? = path?.let { "https://image.tmdb.org/t/p/w185$it" }
+
+    /**
+     * Imagem horizontal (16:9) no topo da página do filme.
+     *
+     * @param path `backdropPath` do filme.
+     * @return URL da imagem, ou null sem imagem.
+     */
+    fun backdrop(path: String?): String? = path?.let { "https://image.tmdb.org/t/p/w780$it" }
 }
 
 /**

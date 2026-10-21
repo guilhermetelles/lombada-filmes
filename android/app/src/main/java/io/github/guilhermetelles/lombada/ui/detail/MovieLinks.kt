@@ -43,6 +43,22 @@ object MovieLinks {
     fun metacritic(title: String): String = "https://www.metacritic.com/search/${Uri.encode(title)}/?category=2"
 
     /**
+     * Vídeo no YouTube (abre o app do YouTube quando instalado).
+     *
+     * @param key Id do vídeo.
+     * @return URL.
+     */
+    fun youtube(key: String): String = "https://www.youtube.com/watch?v=$key"
+
+    /**
+     * Miniatura do vídeo no YouTube (480×360, com faixas pretas em cima e embaixo; a tela recorta).
+     *
+     * @param key Id do vídeo.
+     * @return URL da imagem.
+     */
+    fun youtubeThumbnail(key: String): String = "https://i.ytimg.com/vi/$key/hqdefault.jpg"
+
+    /**
      * Página de uma pessoa no TMDb.
      *
      * @param personId Pessoa.
