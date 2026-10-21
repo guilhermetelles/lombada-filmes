@@ -4,6 +4,7 @@ import { SourceUnavailableError } from '../../errors/app-errors.js';
 import type { Fetch, GeminiClient } from '../../types/sources.js';
 import { parseSourceData } from '../shared/fetch-json.js';
 import { toGeminiJsonSchema } from './gemini-json-schema.js';
+import { quotaRetryAt } from './quota-retry.js';
 
 /** Tempo máximo de um pedido ao Gemini; acima disso a rota responde 502 em vez de esperar. */
 export const GEMINI_TIMEOUT_MS = 30_000;
@@ -14,13 +15,22 @@ export const GEMINI_TIMEOUT_MS = 30_000;
  * Os modelos vêm de GEMINI_MODELS (versões fixas, em ordem de preferência): com a cota de um
  * esgotada, o pedido vai ao próximo. Sem nova tentativa no mesmo modelo. Com o medidor de consumo no
  * pedido, cada modelo tem os pedidos, erros e 429 contados em usage/{dia}.geminiModels, e o modelo
- * que já respondeu 429 hoje é pulado direto (se todos já responderam, tenta só o primeiro, para
- * notar quando a cota voltar).
+ * que respondeu 429 fica pulado até quando o próprio erro diz que a cota volta (quotaRetryAt): um
+ * limite por minuto tira o modelo por segundos, a cota diária até ela zerar. Se todos estão no
+ * prazo, tenta só o primeiro, para notar quando a cota voltar.
  *
- * @param options - Chave da API (opcional) e o fetch a usar.
+ * @param options - Chave da API (opcional), o fetch a usar e o relógio.
  * @returns Cliente que gera JSON validado.
  */
-function createGeminiClient({ apiKey, fetch }: { apiKey: string | undefined; fetch: Fetch }): GeminiClient {
+function createGeminiClient({
+  apiKey,
+  fetch,
+  now = () => new Date(),
+}: {
+  apiKey: string | undefined;
+  fetch: Fetch;
+  now?: () => Date;
+}): GeminiClient {
   // Montado só no primeiro pedido, e só se houver chave.
   let sdk: GoogleGenAI | undefined;
 
@@ -38,8 +48,8 @@ function createGeminiClient({ apiKey, fetch }: { apiKey: string | undefined; fet
       sdk ??= new GoogleGenAI({ apiKey, httpOptions: { fetch, timeout: GEMINI_TIMEOUT_MS } });
       const client = sdk;
       const models: readonly string[] = typeof model === 'string' ? [model] : model;
-      const outOfQuota = usage ? await usage.geminiModelsOutOfQuota() : new Set<string>();
-      const available = models.filter((candidate) => !outOfQuota.has(candidate));
+      const resting = usage ? await usage.geminiModelsToSkip() : new Set<string>();
+      const available = models.filter((candidate) => !resting.has(candidate));
       const candidates = available.length > 0 ? available : models.slice(0, 1);
 
       // Cota diária esgotada (429) ou modelo indisponível (404, 503): tenta o próximo da lista.
@@ -52,6 +62,7 @@ function createGeminiClient({ apiKey, fetch }: { apiKey: string | undefined; fet
           usage?.countGeminiModel(candidate, 'errors');
           if (error instanceof SourceUnavailableError && statusOf(error.cause) === 429) {
             usage?.countGeminiModel(candidate, 'quota');
+            usage?.skipGeminiModel(candidate, quotaRetryAt(error.cause, now()));
           }
           if (!(error instanceof SourceUnavailableError) || !isFallbackStatus(error.cause)) throw error;
           lastError = error;

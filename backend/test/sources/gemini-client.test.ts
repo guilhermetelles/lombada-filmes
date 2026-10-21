@@ -7,7 +7,10 @@ import { InterpretReplySchema } from '../../lib/schemas/discover.js';
 import { createGeminiClient } from '../../lib/sources/gemini/gemini-client.js';
 import { GEMINI_MODELS } from '../../lib/sources/gemini/gemini-models.js';
 import type { Fetch } from '../../lib/types/sources.js';
-import { UsageMeter } from '../../lib/usage/usage-meter.js';
+import { GEMINI_QUOTA_DOC, UsageMeter } from '../../lib/usage/usage-meter.js';
+import { createTestDependencies } from '../support/dependencies.js';
+import { resetEmulators } from '../support/emulators.js';
+import { fakeSources } from '../support/fake-sources.js';
 
 /** Resposta real da API de Interações (gemini-3.8-flash, 2026-10-18) à frase "comédia curta dos anos 90 na Netflix". */
 const recorded = readFileSync(new URL('../fixtures/gemini-interpret.json', import.meta.url), 'utf8');
@@ -162,10 +165,43 @@ describe('createGeminiClient', () => {
     assert.deepEqual(usage.geminiQuotaHits(), [first]);
   });
 
-  test('todos os modelos sem cota hoje: tenta só o primeiro', async () => {
+  test('o 429 pula o modelo até quando o erro diz que a cota volta', async () => {
+    const clock = new Date();
+    const body = JSON.stringify({
+      error: {
+        code: 429,
+        message: 'Rate limit exceeded for model gemini-3.8-flash (limit: 20 requests per day on Free Tier).',
+        details: [{ '@type': 'type.googleapis.com/google.rpc.RetryInfo', retryDelay: '6711s' }],
+      },
+    });
+    const fetch: Fetch = async (input, init) => {
+      const request = input instanceof Request ? input : new Request(input, init);
+      const model = String(JSON.parse(await request.text()).model);
+      return new Response(model === GEMINI_MODELS.interpret[0] ? body : recorded, {
+        status: model === GEMINI_MODELS.interpret[0] ? 429 : 200,
+        headers: { 'content-type': 'application/json' },
+      });
+    };
+    const { db } = createTestDependencies(fakeSources().fetch);
+    await resetEmulators();
+    const usage = new UsageMeter({ db, now: () => clock });
+
+    await createGeminiClient({ apiKey: 'chave-de-teste', fetch, now: () => clock }).generateJson({
+      ...interpretRequest,
+      usage,
+    });
+    await usage.save(db, clock);
+
+    const stored = (await db.doc(GEMINI_QUOTA_DOC).get()).get('skipUntil');
+    assert.deepEqual(Object.keys(stored), [GEMINI_MODELS.interpret[0]]);
+    assert.equal(stored[GEMINI_MODELS.interpret[0]].toMillis(), clock.getTime() + 6711_000);
+  });
+
+  test('todos os modelos no prazo: tenta só o primeiro', async () => {
     const { fetch, seen } = geminiFetch('{"error":{"code":429,"message":"quota"}}', 429);
     const usage = new UsageMeter();
-    for (const model of GEMINI_MODELS.interpret) usage.countGeminiModel(model, 'quota');
+    const later = new Date(Date.now() + 60_000);
+    for (const model of GEMINI_MODELS.interpret) usage.skipGeminiModel(model, later);
 
     await assert.rejects(
       createGeminiClient({ apiKey: 'chave-de-teste', fetch }).generateJson({ ...interpretRequest, usage }),

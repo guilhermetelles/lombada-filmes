@@ -50,7 +50,8 @@ function createRecsRun(dependencies: Dependencies, usage: UsageRecorder, limits:
         return usage.track(source, call);
       },
       countGeminiModel: (model, outcome) => usage.countGeminiModel(model, outcome),
-      geminiModelsOutOfQuota: () => usage.geminiModelsOutOfQuota(),
+      skipGeminiModel: (model, until) => usage.skipGeminiModel(model, until),
+      geminiModelsToSkip: () => usage.geminiModelsToSkip(),
       geminiQuotaHits: () => usage.geminiQuotaHits(),
     },
     canFetch: () => !expired() && tmdbCalls < limits.tmdbCalls,

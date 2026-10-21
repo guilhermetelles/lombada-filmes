@@ -1,4 +1,4 @@
-import { FieldValue, type Firestore } from 'firebase-admin/firestore';
+import { FieldValue, type Firestore, Timestamp } from 'firebase-admin/firestore';
 import { logger } from '../logging/logger.js';
 import type { SourceName } from '../types/sources.js';
 import type { GeminiModelOutcome, UsageOutcome, UsageRecorder } from '../types/usage.js';
@@ -15,23 +15,28 @@ type UsageIncrements = Partial<Record<SourceName, SourceIncrements>> & {
   geminiModels?: Record<string, Partial<Record<GeminiModelOutcome, FieldValue>>>;
 };
 
-/** Onde ler o consumo já gravado hoje (para saber que modelos do Gemini ficaram sem cota). */
+/** Onde ler os prazos já gravados dos modelos do Gemini sem cota, e o relógio. */
 type UsageStore = { db: Firestore; now: () => Date };
+
+/** Documento com até quando pular cada modelo do Gemini (`skipUntil.{modelo}`). Só o backend lê. */
+export const GEMINI_QUOTA_DOC = 'quotas/gemini';
 
 /**
  * Conta o consumo das fontes durante um pedido e grava tudo no fim, numa gravação só. Também conta
- * os pedidos a cada modelo do Gemini (`geminiModels.{modelo}.{calls,errors,quota}`) e lembra que
- * modelos responderam 429 hoje, para o cliente do Gemini pular direto para o próximo.
+ * os pedidos a cada modelo do Gemini (`geminiModels.{modelo}.{calls,errors,quota}`) e lembra até
+ * quando pular os modelos que responderam 429 (em quotas/gemini, que atravessa a virada do dia),
+ * para o cliente do Gemini ir direto ao próximo.
  */
 export class UsageMeter implements UsageRecorder {
   readonly #counts = new Map<SourceName, Map<UsageOutcome, number>>();
   readonly #models = new Map<string, Map<GeminiModelOutcome, number>>();
   readonly #quotaHits = new Set<string>();
+  readonly #skips = new Map<string, Date>();
   readonly #store: UsageStore | undefined;
-  #storedOutOfQuota: Promise<ReadonlySet<string>> | undefined;
+  #storedSkips: Promise<ReadonlyMap<string, Date>> | undefined;
 
   /**
-   * @param store - Banco e relógio para ler o que já foi gravado hoje; sem ele, só vale o que esta
+   * @param store - Banco e relógio para ler os prazos já gravados; sem ele, só vale o que esta
    *   execução viu.
    */
   constructor(store?: UsageStore) {
@@ -69,7 +74,7 @@ export class UsageMeter implements UsageRecorder {
   }
 
   /**
-   * Soma 1 a um contador de um modelo do Gemini. `quota` marca o modelo como sem cota hoje.
+   * Soma 1 a um contador de um modelo do Gemini. `quota` conta os 429.
    *
    * @param model - Versão do modelo (ex.: gemini-3.8-flash).
    * @param outcome - Pedido, erro ou cota esgotada (429).
@@ -82,14 +87,28 @@ export class UsageMeter implements UsageRecorder {
   }
 
   /**
-   * Modelos do Gemini que responderam 429 hoje: os gravados em usage/{dia} (lidos uma vez por
-   * execução) mais os desta execução. Uma falha ao ler vai para o log e conta como nenhum.
+   * Pula um modelo do Gemini até o momento dado; o prazo mais longo vale.
    *
-   * @returns Os modelos sem cota hoje.
+   * @param model - Versão do modelo.
+   * @param until - Quando o modelo pode ser tentado de novo.
    */
-  async geminiModelsOutOfQuota(): Promise<ReadonlySet<string>> {
-    this.#storedOutOfQuota ??= this.#readStoredOutOfQuota();
-    return new Set([...(await this.#storedOutOfQuota), ...this.#quotaHits]);
+  skipGeminiModel(model: string, until: Date): void {
+    const current = this.#skips.get(model);
+    if (!current || until > current) this.#skips.set(model, until);
+  }
+
+  /**
+   * Modelos do Gemini a pular agora: os prazos gravados em quotas/gemini (lidos uma vez por
+   * execução) e os desta execução que ainda não passaram. Uma falha ao ler vai para o log e conta
+   * como nenhum.
+   *
+   * @returns Os modelos ainda no prazo.
+   */
+  async geminiModelsToSkip(): Promise<ReadonlySet<string>> {
+    this.#storedSkips ??= this.#readStoredSkips();
+    const now = this.#store?.now() ?? new Date();
+    const all = [...(await this.#storedSkips), ...this.#skips];
+    return new Set(all.flatMap(([model, until]) => (until > now ? [model] : [])));
   }
 
   /**
@@ -109,34 +128,39 @@ export class UsageMeter implements UsageRecorder {
    * @param now - Momento que define o dia.
    */
   async save(db: Firestore, now: Date): Promise<void> {
+    const skips = new Map(this.#skips);
+    this.#skips.clear();
+    if (skips.size > 0) {
+      // Com set() e merge, as chaves dos mapas são nomes de campo: o ponto de "gemini-3.8-flash" não
+      // vira caminho.
+      const skipUntil = Object.fromEntries([...skips].map(([model, until]) => [model, Timestamp.fromDate(until)]));
+      await db.doc(GEMINI_QUOTA_DOC).set({ skipUntil }, { merge: true });
+    }
     if (this.#counts.size === 0 && this.#models.size === 0) return;
     const increments = this.#toIncrements();
     this.#counts.clear();
     this.#models.clear();
-    // Com set() e merge, as chaves dos mapas são nomes de campo: o ponto de "gemini-3.8-flash" não
-    // vira caminho.
     await db.doc(`usage/${usageDay(now)}`).set(increments, { merge: true });
   }
 
   /**
-   * Lê usage/{dia} e devolve os modelos com `quota` maior que zero.
+   * Lê quotas/gemini e devolve o prazo gravado de cada modelo.
    *
-   * @returns Os modelos sem cota hoje, segundo o que já foi gravado.
+   * @returns Até quando pular cada modelo, segundo o que já foi gravado.
    */
-  async #readStoredOutOfQuota(): Promise<ReadonlySet<string>> {
-    if (!this.#store) return new Set();
+  async #readStoredSkips(): Promise<ReadonlyMap<string, Date>> {
+    if (!this.#store) return new Map();
     try {
-      const { db, now } = this.#store;
-      const models: unknown = (await db.doc(`usage/${usageDay(now())}`).get()).get('geminiModels');
-      if (typeof models !== 'object' || models === null) return new Set();
-      return new Set(
-        Object.entries(models).flatMap(([model, counts]) =>
-          typeof counts === 'object' && counts !== null && 'quota' in counts && Number(counts.quota) > 0 ? [model] : [],
+      const skipUntil: unknown = (await this.#store.db.doc(GEMINI_QUOTA_DOC).get()).get('skipUntil');
+      if (typeof skipUntil !== 'object' || skipUntil === null) return new Map();
+      return new Map(
+        Object.entries(skipUntil).flatMap(([model, until]) =>
+          until instanceof Timestamp ? [[model, until.toDate()]] : [],
         ),
       );
     } catch (error) {
-      logger.warn('consumo do Gemini de hoje não lido; todos os modelos ficam disponíveis', { error });
-      return new Set();
+      logger.warn('prazos dos modelos do Gemini não lidos; todos os modelos ficam disponíveis', { error });
+      return new Map();
     }
   }
 

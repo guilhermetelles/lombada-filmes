@@ -12,8 +12,10 @@ export type UsageRecorder = {
   track<T>(source: SourceName, call: () => Promise<T>): Promise<T>;
   /** Conta um pedido, erro ou 429 de um modelo do Gemini. */
   countGeminiModel(model: string, outcome: GeminiModelOutcome): void;
-  /** Modelos do Gemini que responderam 429 hoje (gravados em usage/{dia} ou vistos nesta execução). */
-  geminiModelsOutOfQuota(): Promise<ReadonlySet<string>>;
+  /** Pula um modelo do Gemini até o momento dado (o 429 diz quando a cota volta). */
+  skipGeminiModel(model: string, until: Date): void;
+  /** Modelos do Gemini a pular agora: os gravados em quotas/gemini e os desta execução, ainda no prazo. */
+  geminiModelsToSkip(): Promise<ReadonlySet<string>>;
   /** Modelos do Gemini que responderam 429 nesta execução. */
   geminiQuotaHits(): string[];
 };

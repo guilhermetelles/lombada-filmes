@@ -54,12 +54,15 @@ class CountingUsage implements UsageRecorder {
   /** A busca não usa o Gemini: não conta nada. */
   countGeminiModel(): void {}
 
+  /** A busca não usa o Gemini: nada a pular. */
+  skipGeminiModel(): void {}
+
   /**
-   * A busca não usa o Gemini: nenhum modelo sem cota.
+   * A busca não usa o Gemini: nenhum modelo a pular.
    *
    * @returns Conjunto vazio.
    */
-  async geminiModelsOutOfQuota(): Promise<ReadonlySet<string>> {
+  async geminiModelsToSkip(): Promise<ReadonlySet<string>> {
     return new Set();
   }
 

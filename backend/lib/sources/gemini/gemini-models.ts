@@ -14,7 +14,9 @@ export const GEMINI_MODELS = {
   interpret: ['gemini-3.8-flash', 'gemini-3.7-flash', 'gemini-3.5-flash-lite', 'gemini-3.1-flash-lite'],
   /**
    * Textos: motivos das sugestões, retrospectiva, quiz (trecho, emojis, sinopse sem nomes). Começa
-   * pelo 3.7 Flash para deixar a cota do 3.8 para a busca.
+   * pelo 3.5 Flash Lite: de 19 a 21/10/2026 o 3.7 Flash respondeu 503 em todos os pedidos, e cada um
+   * custava uma chamada e a espera antes do modelo que respondia. O 3.8 fica por último, para deixar
+   * a cota dele para a busca.
    */
-  text: ['gemini-3.7-flash', 'gemini-3.5-flash-lite', 'gemini-3.1-flash-lite', 'gemini-3.8-flash'],
+  text: ['gemini-3.5-flash-lite', 'gemini-3.7-flash', 'gemini-3.1-flash-lite', 'gemini-3.8-flash'],
 } as const;
