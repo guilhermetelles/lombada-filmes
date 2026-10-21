@@ -1,4 +1,5 @@
 import { buildQuestion, type GeneratedQuiz, type QuizGeneratorContext, WRONG_OPTIONS } from '../build-question.js';
+import { restedEntries } from '../quiz-history.js';
 import { joinPt, movieLabel } from '../quiz-text.js';
 import { pick, shuffle } from '../seeded-random.js';
 
@@ -12,9 +13,13 @@ const NEAREST_DIRECTORS = 8;
  * @param context - Material da lista e gerador com semente.
  * @returns A pergunta, ou undefined se a lista não tiver 4 diretores diferentes.
  */
-async function generateDirectorQuiz({ material, random }: QuizGeneratorContext): Promise<GeneratedQuiz | undefined> {
+async function generateDirectorQuiz({
+  material,
+  random,
+  recentMovieIds,
+}: QuizGeneratorContext): Promise<GeneratedQuiz | undefined> {
   const directed = material.entries.filter((entry) => (entry.movie?.directors.length ?? 0) > 0);
-  const target = pick(directed, random);
+  const target = pick(restedEntries(directed, recentMovieIds), random);
   const directors = target?.movie?.directors ?? [];
   const main = directors[0];
   if (!target || !main) return undefined;
@@ -37,6 +42,7 @@ async function generateDirectorQuiz({ material, random }: QuizGeneratorContext):
       type: 'diretor',
       prompt: `Quem dirigiu ${movieLabel(target)}?`,
       explanation: `${movieLabel(target)} tem direção de ${joinPt(directors.map((director) => director.name))}.`,
+      tmdbId: target.tmdbId,
     },
     { label: main.name },
     wrong.map((label) => ({ label })),

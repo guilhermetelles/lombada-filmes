@@ -18,6 +18,7 @@ export type GeneratedQuiz = {
   media?: QuizMedia | undefined;
   rightOptionId: QuizOptionId;
   explanation: string;
+  tmdbId: number; // filme da pergunta (o da resposta certa); vai para quizKeys, nunca para a pergunta pública
 };
 
 /** O que cada gerador recebe. */
@@ -27,6 +28,7 @@ export type QuizGeneratorContext = {
   day: string; // AAAA-MM-DD de Brasília
   gemini: GeminiClient;
   usage: UsageRecorder;
+  recentMovieIds?: ReadonlySet<number> | undefined; // filmes que descansam: não podem ser o da pergunta
 };
 
 /** Gera uma pergunta de um tipo, ou devolve undefined quando a lista não tem dados para ela. */
@@ -35,14 +37,14 @@ export type QuizGenerator = (context: QuizGeneratorContext) => Promise<Generated
 /** Uma alternativa antes de ganhar id. */
 export type Choice = { label: string; imageUrl?: string | null | undefined };
 
-/** Enunciado, mídia e explicação da pergunta. */
-type QuestionBase = Pick<GeneratedQuiz, 'type' | 'prompt' | 'media' | 'explanation'>;
+/** Enunciado, mídia, explicação e filme da pergunta. */
+type QuestionBase = Pick<GeneratedQuiz, 'type' | 'prompt' | 'media' | 'explanation' | 'tmdbId'>;
 
 /**
  * Monta a pergunta com a alternativa certa e as três erradas, embaralhadas (ou na ordem dada) e com
  * ids a–d. Recusa alternativas repetidas ou em número errado.
  *
- * @param base - Tipo, enunciado, mídia e explicação.
+ * @param base - Tipo, enunciado, mídia, explicação e filme.
  * @param right - Alternativa certa.
  * @param wrong - Alternativas erradas (precisam ser 3, todas diferentes da certa).
  * @param random - Gerador com semente; sem ele, a ordem fica certa primeiro e as erradas depois.
@@ -61,7 +63,7 @@ export function buildQuestion(
 /**
  * Monta a pergunta com as alternativas já na ordem final.
  *
- * @param base - Tipo, enunciado, mídia e explicação.
+ * @param base - Tipo, enunciado, mídia, explicação e filme.
  * @param ordered - As quatro alternativas, uma delas marcada como certa.
  * @returns A pergunta, ou undefined se não houver exatamente 4 alternativas diferentes e 1 certa.
  */

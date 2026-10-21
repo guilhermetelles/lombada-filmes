@@ -1,4 +1,5 @@
 import { buildQuestion, type GeneratedQuiz, type QuizGeneratorContext, WRONG_OPTIONS } from '../build-question.js';
+import { restedEntries } from '../quiz-history.js';
 import { joinPt } from '../quiz-text.js';
 import { pick, shuffle } from '../seeded-random.js';
 
@@ -12,9 +13,14 @@ const YEAR_OFFSETS = [-4, -3, -2, -1, 1, 2, 3, 4];
  * @param context - Material da lista, gerador com semente e o dia.
  * @returns A pergunta, ou undefined se nenhum filme tiver ano.
  */
-async function generateYearQuiz({ material, random, day }: QuizGeneratorContext): Promise<GeneratedQuiz | undefined> {
+async function generateYearQuiz({
+  material,
+  random,
+  day,
+  recentMovieIds,
+}: QuizGeneratorContext): Promise<GeneratedQuiz | undefined> {
   const target = pick(
-    material.entries.filter((entry) => entry.year !== null),
+    restedEntries(material.entries, recentMovieIds).filter((entry) => entry.year !== null),
     random,
   );
   const year = target?.year;
@@ -33,6 +39,7 @@ async function generateYearQuiz({ material, random, day }: QuizGeneratorContext)
       type: 'ano',
       prompt: `Em que ano ${target.title} foi lançado?`,
       explanation: `${target.title} é de ${year}.${directedBy}`,
+      tmdbId: target.tmdbId,
     },
     { label: String(year) },
     offsets.map((offset) => ({ label: String(year + offset) })),

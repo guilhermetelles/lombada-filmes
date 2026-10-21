@@ -81,3 +81,26 @@ export function answersCollection(db: Firestore, listId: string, day: string): C
 export function scoresDocument(db: Firestore, listId: string, month: string): DocumentReference<Scores> {
   return db.doc(`lists/${listId}/scores/${month}`).withConverter(scoresConverter);
 }
+
+/**
+ * Coleção lists/{listId}/quizzes, sem conversor: o histórico lê documento por documento e pula os
+ * que estiverem fora do formato.
+ *
+ * @param db - Firestore.
+ * @param listId - Lista.
+ * @returns A coleção.
+ */
+export function quizzesCollection(db: Firestore, listId: string): CollectionReference {
+  return db.collection(`lists/${listId}/quizzes`);
+}
+
+/**
+ * Coleção lists/{listId}/quizKeys, sem conversor, pelo mesmo motivo de quizzesCollection.
+ *
+ * @param db - Firestore.
+ * @param listId - Lista.
+ * @returns A coleção.
+ */
+export function quizKeysCollection(db: Firestore, listId: string): CollectionReference {
+  return db.collection(`lists/${listId}/quizKeys`);
+}

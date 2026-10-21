@@ -4,7 +4,9 @@ import { quizAndMonthCronRoute } from '../../api/cron/_quiz-and-month.js';
 import { SourceUnavailableError } from '../../lib/errors/app-errors.js';
 import { DEFAULT_NOTIFY_PREFS } from '../../lib/notify/default-notify-prefs.js';
 import { deviceTokenDocument, notifyStateDocument } from '../../lib/notify/notify-repository.js';
+import { quizKey } from '../../lib/quiz/quiz-history.js';
 import type { QuizAndMonthReport } from '../../lib/quiz/run-quiz-and-month.js';
+import { QuizDocSchema } from '../../lib/schemas/quiz.js';
 import type { GeminiClient } from '../../lib/types/sources.js';
 import { createTestDependencies, TEST_CRON_SECRET } from '../support/dependencies.js';
 import { resetEmulators } from '../support/emulators.js';
@@ -179,6 +181,45 @@ describe('GET /api/cron/quiz-and-month: pergunta do dia', () => {
     await runRoutine();
 
     assert.notEqual((await read(`lists/${LIST_ID}/quizzes/2026-10-18`))?.type, firstType);
+  });
+
+  test('o gabarito guarda o filme, que fica 30 dias fora das perguntas seguintes', async () => {
+    await runRoutine();
+    const firstKey = await read(`lists/${LIST_ID}/quizKeys/2026-10-18`);
+    const movieIds = SAMPLE_FILMS.map((film) => film.tmdbId);
+    assert.ok(movieIds.includes(firstKey?.tmdbId), 'o filme da pergunta vai para o gabarito');
+    assert.equal((await read(`lists/${LIST_ID}/quizzes/2026-10-18`))?.tmdbId, undefined, 'e não para a pergunta');
+
+    // Nos dias seguintes, nenhum filme volta enquanto houver outro livre.
+    const used = [firstKey?.tmdbId];
+    for (let day = 19; day <= 22; day++) {
+      clock = new Date(`2026-10-${day}T08:30:00Z`);
+      await runRoutine();
+      const key = await read(`lists/${LIST_ID}/quizKeys/2026-10-${day}`);
+      assert.ok(key && !used.includes(key.tmdbId), `filme repetido no dia ${day}: ${key?.tmdbId}`);
+      used.push(key.tmdbId);
+    }
+  });
+
+  test('a mesma pergunta não volta nem depois de 30 dias', async () => {
+    await runRoutine();
+    const first = await read(`lists/${LIST_ID}/quizzes/2026-10-18`);
+    const firstKey = await read(`lists/${LIST_ID}/quizKeys/2026-10-18`);
+
+    // A mesma pergunta, agora como se fosse de 40 dias atrás, e o dia de hoje refeito.
+    await db()
+      .doc(`lists/${LIST_ID}/quizzes/2026-09-08`)
+      .set({ ...first, day: '2026-09-08', createdAt: new Date('2026-09-08T08:30:00Z') });
+    await db()
+      .doc(`lists/${LIST_ID}/quizKeys/2026-09-08`)
+      .set(firstKey ?? {});
+    await db().doc(`lists/${LIST_ID}/quizzes/2026-10-18`).delete();
+    await db().doc(`lists/${LIST_ID}/quizKeys/2026-10-18`).delete();
+    await runRoutine();
+
+    const today = await read(`lists/${LIST_ID}/quizzes/2026-10-18`);
+    assert.ok(first && today);
+    assert.notEqual(quizKey(QuizDocSchema.parse(today)), quizKey(QuizDocSchema.parse(first)));
   });
 });
 

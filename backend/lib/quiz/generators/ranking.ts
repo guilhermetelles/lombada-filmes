@@ -31,6 +31,7 @@ async function generateRankingQuiz({ material, random }: QuizGeneratorContext): 
       type: 'ranking',
       prompt: 'Qual destes está mais alto no ranking de vocês?',
       explanation: `No ranking: ${ranking}.`,
+      tmdbId: best.tmdbId,
     },
     { label: movieLabel(best) },
     wrong.map((entry) => ({ label: movieLabel(entry) })),

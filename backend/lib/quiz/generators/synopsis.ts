@@ -4,6 +4,7 @@ import { GEMINI_MODELS } from '../../sources/gemini/gemini-models.js';
 import { buildQuestion, type GeneratedQuiz, type QuizGeneratorContext, WRONG_OPTIONS } from '../build-question.js';
 import type { RankedEntry } from '../list-material.js';
 import { otherEntries } from '../other-entries.js';
+import { restedEntries } from '../quiz-history.js';
 import { joinPt, maskTitleWords, movieLabel } from '../quiz-text.js';
 import { pick } from '../seeded-random.js';
 
@@ -45,9 +46,12 @@ async function generateSynopsisQuiz({
   random,
   gemini,
   usage,
+  recentMovieIds,
 }: QuizGeneratorContext): Promise<GeneratedQuiz | undefined> {
   const target = pick(
-    material.entries.filter((entry) => entry.movie?.synopsis.pt || entry.movie?.synopsis.en),
+    restedEntries(material.entries, recentMovieIds).filter(
+      (entry) => entry.movie?.synopsis.pt || entry.movie?.synopsis.en,
+    ),
     random,
   );
   const original = target?.movie?.synopsis.pt ?? target?.movie?.synopsis.en;
@@ -83,6 +87,7 @@ async function generateSynopsisQuiz({
       prompt: 'De qual filme é esta sinopse sem nomes?',
       media: { synopsis },
       explanation: `É ${movieLabel(target)}${directors.length > 0 ? `, de ${joinPt(directors)}` : ''}.`,
+      tmdbId: target.tmdbId,
     },
     { label: movieLabel(target) },
     others.map((entry) => ({ label: movieLabel(entry) })),

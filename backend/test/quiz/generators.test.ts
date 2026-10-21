@@ -3,6 +3,7 @@ import { describe, test } from 'node:test';
 import type { GeneratedQuiz, QuizGeneratorContext } from '../../lib/quiz/build-question.js';
 import { generateDailyQuiz, QUIZ_GENERATORS } from '../../lib/quiz/generate-daily-quiz.js';
 import type { ListMaterial } from '../../lib/quiz/list-material.js';
+import { quizKey } from '../../lib/quiz/quiz-history.js';
 import { monthLabel, movieLabel } from '../../lib/quiz/quiz-text.js';
 import { createSeededRandom } from '../../lib/quiz/seeded-random.js';
 import type { QuizType } from '../../lib/types/quiz.js';
@@ -20,12 +21,12 @@ const SEEDS = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
  * Monta o contexto de um gerador.
  *
  * @param seed - Semente do sorteio.
- * @param overrides - Material e Gemini do teste.
+ * @param overrides - Material, Gemini e filmes que descansam no teste.
  * @returns O contexto.
  */
 function context(
   seed: string,
-  overrides: { material?: ListMaterial; gemini?: GeminiClient } = {},
+  overrides: { material?: ListMaterial; gemini?: GeminiClient; recentMovieIds?: ReadonlySet<number> } = {},
 ): QuizGeneratorContext {
   return {
     material: overrides.material ?? sampleMaterial(),
@@ -33,6 +34,7 @@ function context(
     day: DAY,
     gemini: overrides.gemini ?? createFakeGemini().client,
     usage: countingUsage(),
+    recentMovieIds: overrides.recentMovieIds,
   };
 }
 
@@ -411,5 +413,77 @@ describe('generateDailyQuiz', () => {
       recentTypes: allTypes.filter((type) => type !== 'bechdel'),
     });
     assert.equal(quiz?.type, 'bechdel');
+  });
+
+  test('não repete uma pergunta já feita: sorteia outra do mesmo tipo', async () => {
+    const recentTypes = (Object.keys(QUIZ_GENERATORS) as QuizType[]).filter((type) => type !== 'diretor');
+    const request = { material: sampleMaterial(), day: DAY, usage: countingUsage(), recentTypes };
+    const first = await generateDailyQuiz({ ...request, gemini: createFakeGemini().client });
+    assert.equal(first?.type, 'diretor');
+    assert.ok(first);
+
+    const history = { usedKeys: new Set([quizKey(first)]), recentMovieIds: new Set<number>() };
+    const second = await generateDailyQuiz({ ...request, gemini: createFakeGemini().client, history });
+    assert.equal(second?.type, 'diretor');
+    assert.notEqual(second?.prompt, first.prompt);
+  });
+
+  test('filme que descansa não é o da pergunta, em nenhum tipo', async () => {
+    const resting = SAMPLE_FILMS.slice(0, 6).map((film) => film.tmdbId);
+    for (let day = 1; day <= 20; day++) {
+      const quiz = await generateDailyQuiz({
+        material: sampleMaterial(),
+        day: `2026-10-${String(day).padStart(2, '0')}`,
+        gemini: createFakeGemini().client,
+        usage: countingUsage(),
+        history: { usedKeys: new Set(), recentMovieIds: new Set(resting) },
+      });
+      assert.ok(quiz && !resting.includes(quiz.tmdbId), `${quiz?.type} ${quiz?.tmdbId}`);
+    }
+  });
+
+  test('sem pergunta inédita com filme livre, não há pergunta', async () => {
+    const quiz = await generateDailyQuiz({
+      material: sampleMaterial(),
+      day: DAY,
+      gemini: createFakeGemini().client,
+      usage: countingUsage(),
+      history: { usedKeys: new Set(), recentMovieIds: new Set(SAMPLE_FILMS.map((film) => film.tmdbId)) },
+    });
+    assert.equal(quiz, undefined);
+  });
+});
+
+describe('quizKey e filme da pergunta', () => {
+  test('cada gerador grava o filme da resposta certa e evita os que descansam', async () => {
+    const free = SAMPLE_FILMS[3]?.tmdbId ?? 0;
+    const resting = new Set(SAMPLE_FILMS.map((film) => film.tmdbId).filter((id) => id !== free));
+    const quiz = await generate('diretor', context('a', { recentMovieIds: resting }));
+    assert.equal(quiz.tmdbId, free);
+    assert.equal(filmInPrompt(quiz.prompt).tmdbId, free);
+    for (const type of ['ano', 'mes', 'poster', 'ranking'] as const) {
+      const other = await generate(type, context('b'));
+      const right = rightLabel(other);
+      if (type === 'poster' || type === 'ranking') assert.equal(filmByLabel(right).tmdbId, other.tmdbId);
+      else assert.equal(filmInPrompt(other.prompt).tmdbId, other.tmdbId);
+    }
+  });
+
+  test('mesmo enunciado com outras alternativas é a mesma pergunta; nos de enunciado fixo, não', () => {
+    const options = (labels: string[]) => labels.map((label, index) => ({ id: 'abcd'[index] as 'a', label }));
+    const director = (labels: string[]) => ({
+      type: 'diretor' as const,
+      prompt: 'Quem dirigiu X (2000)?',
+      options: options(labels),
+    });
+    assert.equal(quizKey(director(['A', 'B', 'C', 'D'])), quizKey(director(['A', 'E', 'F', 'G'])));
+
+    const ranking = (labels: string[]) => ({
+      type: 'ranking' as const,
+      prompt: 'Qual destes está mais alto?',
+      options: options(labels),
+    });
+    assert.equal(quizKey(ranking(['A', 'B', 'C', 'D'])), quizKey(ranking(['D', 'C', 'B', 'A'])));
+    assert.notEqual(quizKey(ranking(['A', 'B', 'C', 'D'])), quizKey(ranking(['A', 'B', 'C', 'E'])));
   });
 });

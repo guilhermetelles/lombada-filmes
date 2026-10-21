@@ -1,4 +1,5 @@
 import { buildFromOrdered, type GeneratedQuiz, type QuizGeneratorContext } from '../build-question.js';
+import { restedEntries } from '../quiz-history.js';
 import { movieLabel } from '../quiz-text.js';
 import { pick } from '../seeded-random.js';
 
@@ -19,9 +20,13 @@ const CRITERIA = [
  * @param context - Material da lista e gerador com semente.
  * @returns A pergunta, ou undefined se nenhum filme da lista estiver no bechdeltest.com.
  */
-async function generateBechdelQuiz({ material, random }: QuizGeneratorContext): Promise<GeneratedQuiz | undefined> {
+async function generateBechdelQuiz({
+  material,
+  random,
+  recentMovieIds,
+}: QuizGeneratorContext): Promise<GeneratedQuiz | undefined> {
   const target = pick(
-    material.entries.filter((entry) => typeof entry.movie?.bechdel?.rating === 'number'),
+    restedEntries(material.entries, recentMovieIds).filter((entry) => typeof entry.movie?.bechdel?.rating === 'number'),
     random,
   );
   const bechdel = target?.movie?.bechdel;
@@ -35,6 +40,7 @@ async function generateBechdelQuiz({ material, random }: QuizGeneratorContext): 
       type: 'bechdel',
       prompt: `${movieLabel(target)} passa no Teste de Bechdel?`,
       explanation: `Segundo o bechdeltest.com, ${target.title} cumpre ${rating} de 3 critérios${dubious}:\n${criteria}`,
+      tmdbId: target.tmdbId,
     },
     [3, 2, 1, 0].map((value) => ({ label: RATING_LABELS[value] ?? String(value), right: value === rating })),
   );

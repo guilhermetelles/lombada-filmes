@@ -1,4 +1,5 @@
 import { buildQuestion, type GeneratedQuiz, type QuizGeneratorContext, WRONG_OPTIONS } from '../build-question.js';
+import { restedEntries } from '../quiz-history.js';
 import { addMonths, formatDay, monthLabel, movieLabel } from '../quiz-text.js';
 import { pick, shuffle } from '../seeded-random.js';
 
@@ -12,9 +13,14 @@ const MONTH_OFFSETS = [-6, -5, -4, -3, -2, -1, 1, 2, 3, 4, 5, 6];
  * @param context - Material da lista, gerador com semente e o dia.
  * @returns A pergunta, ou undefined se nenhuma entrada tiver data.
  */
-async function generateMonthQuiz({ material, random, day }: QuizGeneratorContext): Promise<GeneratedQuiz | undefined> {
+async function generateMonthQuiz({
+  material,
+  random,
+  day,
+  recentMovieIds,
+}: QuizGeneratorContext): Promise<GeneratedQuiz | undefined> {
   const target = pick(
-    material.entries.filter((entry) => entry.watchedOn),
+    restedEntries(material.entries, recentMovieIds).filter((entry) => entry.watchedOn),
     random,
   );
   const watchedOn = target?.watchedOn;
@@ -32,6 +38,7 @@ async function generateMonthQuiz({ material, random, day }: QuizGeneratorContext
       type: 'mes',
       prompt: `Em que mês vocês viram ${movieLabel(target)}?`,
       explanation: `Vocês viram ${target.title} em ${formatDay(watchedOn)}, segundo o registro da lista.`,
+      tmdbId: target.tmdbId,
     },
     { label: monthLabel(month) },
     wrong.map((other) => ({ label: monthLabel(other) })),

@@ -1,5 +1,6 @@
 import { buildQuestion, type GeneratedQuiz, type QuizGeneratorContext, WRONG_OPTIONS } from '../build-question.js';
 import type { RankedEntry } from '../list-material.js';
+import { restedEntries } from '../quiz-history.js';
 import { joinPt, movieLabel } from '../quiz-text.js';
 import { pick, shuffle } from '../seeded-random.js';
 
@@ -41,13 +42,18 @@ function knownWithout(entry: RankedEntry, org: Org): boolean {
  * @param context - Material da lista, gerador com semente e o dia.
  * @returns A pergunta, ou undefined se faltarem vencedor ou três filmes sem indicação.
  */
-async function generateAwardQuiz({ material, random, day }: QuizGeneratorContext): Promise<GeneratedQuiz | undefined> {
+async function generateAwardQuiz({
+  material,
+  random,
+  day,
+  recentMovieIds,
+}: QuizGeneratorContext): Promise<GeneratedQuiz | undefined> {
   const lastAwardedYear = Number(day.slice(0, 4)) - 1;
   const orgs: Org[] = random() < 0.5 ? ['Framboesa de Ouro', 'Oscar'] : ['Oscar', 'Framboesa de Ouro'];
 
   for (const org of orgs) {
     const target = pick(
-      material.entries.filter((entry) => won(entry, org)),
+      restedEntries(material.entries, recentMovieIds).filter((entry) => won(entry, org)),
       random,
     );
     if (!target) continue;
@@ -79,6 +85,7 @@ async function generateAwardQuiz({ material, random, day }: QuizGeneratorContext
         type: 'premio',
         prompt: `Qual destes ganhou ${org === 'Oscar' ? 'um Oscar' : 'uma Framboesa de Ouro'}?`,
         explanation: `${movieLabel(target)} ${what}. Os outros três não têm nem indicação.`,
+        tmdbId: target.tmdbId,
       },
       { label: movieLabel(target) },
       wrong.map((entry) => ({ label: movieLabel(entry) })),

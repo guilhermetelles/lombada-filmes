@@ -6,6 +6,7 @@ import {
   type QuizGeneratorContext,
   WRONG_OPTIONS,
 } from '../build-question.js';
+import { restedEntries } from '../quiz-history.js';
 import { movieLabel } from '../quiz-text.js';
 import { pick, shuffle } from '../seeded-random.js';
 
@@ -50,10 +51,14 @@ function castChoice(member: CastMember): Choice {
  * @param context - Material da lista e gerador com semente.
  * @returns A pergunta, ou undefined se nenhum filme do topo tiver 4 pessoas com personagem.
  */
-async function generateCharacterQuiz({ material, random }: QuizGeneratorContext): Promise<GeneratedQuiz | undefined> {
-  const candidates = material.entries
-    .slice(0, TOP_ENTRIES)
-    .filter((entry) => mainCastWithCharacter(entry.movie?.cast ?? []).length > WRONG_OPTIONS);
+async function generateCharacterQuiz({
+  material,
+  random,
+  recentMovieIds,
+}: QuizGeneratorContext): Promise<GeneratedQuiz | undefined> {
+  const candidates = restedEntries(material.entries.slice(0, TOP_ENTRIES), recentMovieIds).filter(
+    (entry) => mainCastWithCharacter(entry.movie?.cast ?? []).length > WRONG_OPTIONS,
+  );
   const target = pick(candidates, random);
   if (!target) return undefined;
 
@@ -71,6 +76,7 @@ async function generateCharacterQuiz({ material, random }: QuizGeneratorContext)
       type: 'personagem',
       prompt: `Quem fez o personagem ${chosen.character} em ${target.title}?`,
       explanation: `${chosen.name} fez ${chosen.character} em ${movieLabel(target)}, o #${target.rank} da lista de vocês.`,
+      tmdbId: target.tmdbId,
     },
     castChoice(chosen),
     wrong.map(castChoice),

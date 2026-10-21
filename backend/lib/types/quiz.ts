@@ -57,6 +57,7 @@ export type QuizDoc = {
 export type QuizKey = {
   rightOptionId: QuizOptionId;
   explanation: string;
+  tmdbId?: number | undefined; // filme da pergunta (o da resposta certa); ausente nas perguntas antigas
 };
 
 /** Documento lists/{listId}/quizzes/{dia}/answers/{uid}. */

@@ -64,6 +64,7 @@ export const QuizDocSchema: z.ZodType<QuizDoc> = z.object({
 export const QuizKeySchema: z.ZodType<QuizKey> = z.object({
   rightOptionId: QuizOptionIdSchema,
   explanation: z.string(),
+  tmdbId: z.number().int().optional(),
 });
 
 /** lists/{listId}/quizzes/{dia}/answers/{uid}, validado ao ler. */

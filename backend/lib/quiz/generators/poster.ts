@@ -1,5 +1,6 @@
 import { buildQuestion, type GeneratedQuiz, type QuizGeneratorContext, WRONG_OPTIONS } from '../build-question.js';
 import { otherEntries } from '../other-entries.js';
+import { restedEntries } from '../quiz-history.js';
 import { movieLabel } from '../quiz-text.js';
 import { pick } from '../seeded-random.js';
 
@@ -26,9 +27,13 @@ function cropCenter(random: () => number) {
  * @param context - Material da lista e gerador com semente.
  * @returns A pergunta, ou undefined se não houver 4 filmes com pôster.
  */
-async function generatePosterQuiz({ material, random }: QuizGeneratorContext): Promise<GeneratedQuiz | undefined> {
+async function generatePosterQuiz({
+  material,
+  random,
+  recentMovieIds,
+}: QuizGeneratorContext): Promise<GeneratedQuiz | undefined> {
   const target = pick(
-    material.entries.filter((entry) => entry.posterPath),
+    restedEntries(material.entries, recentMovieIds).filter((entry) => entry.posterPath),
     random,
   );
   if (!target?.posterPath) return undefined;
@@ -40,6 +45,7 @@ async function generatePosterQuiz({ material, random }: QuizGeneratorContext): P
       prompt: 'De qual filme é este pedaço do pôster?',
       media: { posterPath: target.posterPath, crop: cropCenter(random) },
       explanation: `É o pôster de ${movieLabel(target)}.`,
+      tmdbId: target.tmdbId,
     },
     { label: movieLabel(target) },
     others.map((entry) => ({ label: movieLabel(entry) })),

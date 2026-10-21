@@ -5,6 +5,7 @@ import { NAME_PLACEHOLDER, scrubNames } from '../../sources/gemini/scrub-names.j
 import { buildQuestion, type GeneratedQuiz, type QuizGeneratorContext, WRONG_OPTIONS } from '../build-question.js';
 import type { RankedEntry } from '../list-material.js';
 import { otherEntries } from '../other-entries.js';
+import { restedEntries } from '../quiz-history.js';
 import { EXCERPT_LIMITS, formatDay, maskTitleWords, movieLabel, pickSentenceExcerpt } from '../quiz-text.js';
 import { shuffle } from '../seeded-random.js';
 
@@ -83,9 +84,11 @@ function snapToWords(text: string, start: number, end: number): string {
  * @returns A pergunta, ou undefined se nenhum comentário der um trecho.
  */
 async function generateExcerptQuiz(context: QuizGeneratorContext): Promise<GeneratedQuiz | undefined> {
-  const { material, random } = context;
+  const { material, random, recentMovieIds } = context;
   const candidates = shuffle(
-    material.entries.filter((entry) => entry.comment.trim().length >= EXCERPT_LIMITS.min),
+    restedEntries(material.entries, recentMovieIds).filter(
+      (entry) => entry.comment.trim().length >= EXCERPT_LIMITS.min,
+    ),
     random,
   );
 
@@ -111,6 +114,7 @@ async function generateExcerptQuiz(context: QuizGeneratorContext): Promise<Gener
       prompt: 'De qual filme é este comentário de vocês?',
       media: { excerpt: maskTitleWords(excerpt, titles) },
       explanation: `É o comentário de vocês sobre ${entry.title}, #${entry.rank} no ranking${seenOn}.`,
+      tmdbId: entry.tmdbId,
     },
     { label: movieLabel(entry) },
     others.map((other) => ({ label: movieLabel(other) })),

@@ -3,6 +3,7 @@ import { PlotEmojiSchema } from '../../schemas/quiz-material.js';
 import { GEMINI_MODELS } from '../../sources/gemini/gemini-models.js';
 import { buildQuestion, type GeneratedQuiz, type QuizGeneratorContext, WRONG_OPTIONS } from '../build-question.js';
 import { otherEntries } from '../other-entries.js';
+import { restedEntries } from '../quiz-history.js';
 import { movieLabel } from '../quiz-text.js';
 import { pick } from '../seeded-random.js';
 
@@ -41,9 +42,12 @@ async function generateEmojiQuiz({
   random,
   gemini,
   usage,
+  recentMovieIds,
 }: QuizGeneratorContext): Promise<GeneratedQuiz | undefined> {
   const target = pick(
-    material.entries.filter((entry) => entry.movie?.synopsis.pt || entry.movie?.synopsis.en),
+    restedEntries(material.entries, recentMovieIds).filter(
+      (entry) => entry.movie?.synopsis.pt || entry.movie?.synopsis.en,
+    ),
     random,
   );
   const synopsis = target?.movie?.synopsis.pt ?? target?.movie?.synopsis.en;
@@ -77,6 +81,7 @@ async function generateEmojiQuiz({
       prompt: 'Qual filme é este enredo em emojis?',
       media: { emoji },
       explanation: `Os emojis contam ${movieLabel(target)}: ${synopsis}`,
+      tmdbId: target.tmdbId,
     },
     { label: movieLabel(target) },
     others.map((entry) => ({ label: movieLabel(entry) })),

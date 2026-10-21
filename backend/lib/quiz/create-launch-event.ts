@@ -70,12 +70,12 @@ async function createLaunchEvent(
       const generated = await QUIZ_GENERATORS[type]({ material, random, day, gemini: sources.gemini, usage });
       if (!generated) continue;
       used.add(type);
-      const { rightOptionId, explanation, ...question } = generated;
+      const { rightOptionId, explanation, tmdbId, ...question } = generated;
       const quiz: QuizDoc = { day, ...question, createdAt: now(), event: LAUNCH_EVENT, eventIndex: index };
       const created = await db.runTransaction(async (transaction) => {
         if ((await transaction.get(quizRef)).exists) return false;
         transaction.create(quizRef, quiz);
-        transaction.set(quizKeyDocument(db, listId, id), { rightOptionId, explanation });
+        transaction.set(quizKeyDocument(db, listId, id), { rightOptionId, explanation, tmdbId });
         return true;
       });
       if (created) report.created.push({ id, type });

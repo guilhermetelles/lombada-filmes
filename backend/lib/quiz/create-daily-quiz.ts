@@ -5,6 +5,7 @@ import type { QuizDoc, QuizType } from '../types/quiz.js';
 import type { UsageRecorder } from '../types/usage.js';
 import { generateDailyQuiz } from './generate-daily-quiz.js';
 import type { ListMaterial } from './list-material.js';
+import { readQuizHistory } from './quiz-history.js';
 import { quizDocument, quizKeyDocument } from './quiz-repository.js';
 
 /** Nome curto de cada tipo, como a aba Quiz mostra. */
@@ -35,7 +36,8 @@ export type DailyQuizOutcome = 'created' | 'exists' | 'no-data';
 /**
  * Cria a pergunta do dia da lista: quizzes/{dia} e quizKeys/{dia} juntos, numa transação que não faz
  * nada se a pergunta já existir (rodar de novo não troca a pergunta), e o item `daily.quiz` da
- * Atividade com id `quiz-{dia}`, também só uma vez.
+ * Atividade com id `quiz-{dia}`, também só uma vez. A pergunta não repete nenhuma já feita e não usa
+ * filme de pergunta dos últimos 30 dias; o filme fica gravado em quizKeys para os dias seguintes.
  *
  * @param dependencies - Banco, Gemini e relógio.
  * @param usage - Medidor de consumo da rotina.
@@ -57,17 +59,20 @@ async function createDailyQuiz(
     return 'exists';
   }
 
-  const recentTypes = await readRecentTypes(db, listId, day);
-  const generated = await generateDailyQuiz({ material, day, gemini: sources.gemini, usage, recentTypes });
+  const [recentTypes, history] = await Promise.all([
+    readRecentTypes(db, listId, day),
+    readQuizHistory(db, listId, now()),
+  ]);
+  const generated = await generateDailyQuiz({ material, day, gemini: sources.gemini, usage, recentTypes, history });
   if (!generated) return 'no-data';
 
-  const { rightOptionId, explanation, ...question } = generated;
+  const { rightOptionId, explanation, tmdbId, ...question } = generated;
   const quiz: QuizDoc = { day, ...question, createdAt: now() };
   const keyRef = quizKeyDocument(db, listId, day);
   const created = await db.runTransaction(async (transaction) => {
     if ((await transaction.get(quizRef)).exists) return false;
     transaction.create(quizRef, quiz);
-    transaction.set(keyRef, { rightOptionId, explanation });
+    transaction.set(keyRef, { rightOptionId, explanation, tmdbId });
     return true;
   });
 

@@ -52,6 +52,7 @@ async function generateBudgetQuiz({ material, random }: QuizGeneratorContext): P
       type: 'bilheteria',
       prompt: 'Qual destes custou mais para fazer?',
       explanation: `Orçamentos: ${picks.map((entry) => `${entry.title} ${formatMoney(budgetOf(entry))}`).join(', ')}.`,
+      tmdbId: best.tmdbId,
     },
     { label: movieLabel(best) },
     wrong.map((entry) => ({ label: movieLabel(entry) })),
