@@ -1,5 +1,13 @@
 import * as z from 'zod';
-import type { Bechdel, Movie, MovieCollection, MovieRecInfo, MovieSnapshot, ProvidersBR } from '../types/movie.js';
+import type {
+  Bechdel,
+  Movie,
+  MovieCollection,
+  MovieRecInfo,
+  MovieSnapshot,
+  MovieTrailer,
+  ProvidersBR,
+} from '../types/movie.js';
 import { AwardsSchema } from './awards.js';
 import { BrazilDaySchema } from './dates.js';
 import { firestoreDate } from './firestore.js';
@@ -16,6 +24,14 @@ export const BechdelSchema: z.ZodType<Bechdel> = z.object({
   dubious: z.boolean(),
   disputes: z.number().int().nonnegative(),
   fetchedAt: firestoreDate,
+});
+
+/** movies/{tmdbId}.trailer: trailer no YouTube. */
+export const MovieTrailerSchema: z.ZodType<MovieTrailer> = z.object({
+  key: z.string().min(1),
+  name: z.string(),
+  lang: z.string().nullable(),
+  published: BrazilDaySchema.nullable(),
 });
 
 /** movies/{tmdbId}.collection: saga do TMDb. */
@@ -70,6 +86,8 @@ export const MovieSchema: z.ZodType<Movie> = z.object({
   recsInfo: z.array(MovieRecInfoSchema).max(10).optional(),
   release: BrazilDaySchema.nullable().optional(),
   providersBR: ProvidersBRSchema.optional(),
+  backdropPath: z.string().nullable().optional(),
+  trailer: MovieTrailerSchema.nullable().optional(),
   awards: AwardsSchema.optional(),
   popularity: z.number().optional(),
   vote: z.number().nullable().optional(),

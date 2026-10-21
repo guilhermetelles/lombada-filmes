@@ -81,6 +81,8 @@ function applyTmdbExtras(stored: Movie | undefined, extras: TmdbMovieExtras, now
     recsInfo: extras.recsInfo,
     release: extras.release,
     providersBR: { flatrate: extras.providersBR, previous: previousProviders(stored, extras, now), fetchedAt: now },
+    backdropPath: extras.backdropPath,
+    trailer: extras.trailer,
     popularity: extras.popularity,
     vote: extras.vote,
     votes: extras.votes,

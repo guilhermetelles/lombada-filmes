@@ -68,6 +68,8 @@ describe('mergeMovie: campos extras', () => {
     recsInfo: [{ tmdbId: 14372, title: 'Leviathan', year: 1989, posterPath: null }],
     release: '1989-08-09',
     providersBR: ['Disney Plus'],
+    backdropPath: '/xLzkWj2C6zCWyFT8Z7tKKtfrwcR.jpg',
+    trailer: { key: '7cCVYAcIIAo', name: '4K Remastered Official Trailer', lang: 'en', published: '2023-11-13' },
     popularity: 16.2,
     vote: 7.4,
     votes: 3631,
@@ -90,6 +92,8 @@ describe('mergeMovie: campos extras', () => {
     assert.equal(movie.release, '1989-08-09');
     assert.equal(movie.collection, null);
     assert.deepEqual(movie.providersBR, { flatrate: ['Disney Plus'], previous: ['Disney Plus'], fetchedAt: firstDay });
+    assert.equal(movie.backdropPath, '/xLzkWj2C6zCWyFT8Z7tKKtfrwcR.jpg');
+    assert.equal(movie.trailer?.key, '7cCVYAcIIAo');
     assert.equal('extraFetchedAt' in movie, false);
   });
 
@@ -104,6 +108,8 @@ describe('mergeMovie: campos extras', () => {
       'recsInfo',
       'release',
       'providersBR',
+      'backdropPath',
+      'trailer',
       'awards',
       'extraFetchedAt',
       'popularity',

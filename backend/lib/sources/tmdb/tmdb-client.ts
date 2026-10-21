@@ -15,7 +15,10 @@ import { toTmdbPerson, toTmdbPersonSearchResults } from './tmdb-person-mapper.js
 const BASE_URL = 'https://api.themoviedb.org/3';
 
 /** O que vem junto com os detalhes do filme, numa chamada só. */
-const MOVIE_APPEND = 'credits,external_ids,translations,keywords,recommendations,watch/providers,release_dates';
+const MOVIE_APPEND = 'credits,external_ids,translations,keywords,recommendations,watch/providers,release_dates,videos';
+
+/** Idiomas dos vídeos: sem isto, o language=pt-BR deixaria só os trailers em português. */
+const VIDEO_LANGUAGES = 'pt,en,null';
 
 /**
  * Cria o cliente do TMDb.
@@ -41,7 +44,7 @@ function createTmdbClient({ token, fetch }: { token: string; fetch: Fetch }): Tm
      * @throws {SourceUnavailableError} Se o TMDb falhar ou responder fora do formato.
      */
     async getMovie(tmdbId) {
-      const path = `/movie/${tmdbId}?language=pt-BR&append_to_response=${MOVIE_APPEND}`;
+      const path = `/movie/${tmdbId}?language=pt-BR&append_to_response=${MOVIE_APPEND}&include_video_language=${VIDEO_LANGUAGES}`;
       return toTmdbMovie(await getFromTmdb(path, TmdbMovieResponse));
     },
 

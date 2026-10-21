@@ -610,5 +610,129 @@
     ]
    }
   ]
+ },
+ "videos": {
+  "results": [
+   {
+    "iso_639_1": "en",
+    "iso_3166_1": "US",
+    "name": "Exclusive Behind-the-Scenes Featurette",
+    "key": "a4BBh3n7QZE",
+    "site": "YouTube",
+    "size": 1080,
+    "type": "Featurette",
+    "official": false,
+    "id": "676455584f844d31e7ae1dae",
+    "published_at": "2024-03-11T17:00:00.000Z"
+   },
+   {
+    "iso_639_1": "en",
+    "iso_3166_1": "US",
+    "name": "4K Remastered Official Trailer",
+    "key": "7cCVYAcIIAo",
+    "site": "YouTube",
+    "size": 1080,
+    "type": "Trailer",
+    "official": true,
+    "id": "65526e39d4fe0400fe049602",
+    "published_at": "2023-11-13T17:00:05.000Z"
+   },
+   {
+    "iso_639_1": "en",
+    "iso_3166_1": "US",
+    "name": "Original Theatrical International Trailer",
+    "key": "uhdvaybv1Jw",
+    "site": "YouTube",
+    "size": 2160,
+    "type": "Trailer",
+    "official": false,
+    "id": "6764547cf410f6c0881f63df",
+    "published_at": "2023-06-01T05:00:27.000Z"
+   },
+   {
+    "iso_639_1": "en",
+    "iso_3166_1": "US",
+    "name": "Original Theatrical Trailer",
+    "key": "iWr1-iMrEjU",
+    "site": "YouTube",
+    "size": 1080,
+    "type": "Trailer",
+    "official": false,
+    "id": "623326ce109cd00077e78bcb",
+    "published_at": "2021-02-25T06:00:16.000Z"
+   },
+   {
+    "iso_639_1": "en",
+    "iso_3166_1": "US",
+    "name": "Special Edition Trailer",
+    "key": "yBfNXaJAX_A",
+    "site": "YouTube",
+    "size": 2160,
+    "type": "Trailer",
+    "official": false,
+    "id": "619777caae384300427104f7",
+    "published_at": "2020-07-05T04:02:34.000Z"
+   },
+   {
+    "iso_639_1": "en",
+    "iso_3166_1": "US",
+    "name": "James Cameron introduces The Abyss | Film4 Interview",
+    "key": "yVLGf6GuPTg",
+    "site": "YouTube",
+    "size": 720,
+    "type": "Featurette",
+    "official": true,
+    "id": "6233260d2dc44e004517cd61",
+    "published_at": "2018-01-17T16:06:43.000Z"
+   },
+   {
+    "iso_639_1": "en",
+    "iso_3166_1": "US",
+    "name": "Thowback Trailer",
+    "key": "MuM7uRdIcb8",
+    "site": "YouTube",
+    "size": 1080,
+    "type": "Trailer",
+    "official": true,
+    "id": "6233265a53866e001eae47bc",
+    "published_at": "2014-08-14T21:44:38.000Z"
+   },
+   {
+    "iso_639_1": "en",
+    "iso_3166_1": "US",
+    "name": "The Abyss Wins Visual Effects: 1990 Oscars",
+    "key": "LdH5xcBOiBA",
+    "site": "YouTube",
+    "size": 480,
+    "type": "Featurette",
+    "official": true,
+    "id": "66ed91301923fe0327adde9a",
+    "published_at": "2014-07-11T17:42:04.000Z"
+   },
+   {
+    "iso_639_1": "en",
+    "iso_3166_1": "US",
+    "name": "Pre-Release Promotional Teaser",
+    "key": "DAVyyi-shtg",
+    "site": "YouTube",
+    "size": 480,
+    "type": "Teaser",
+    "official": false,
+    "id": "6764551e4f844d31e7ae1d81",
+    "published_at": "2011-01-08T03:17:39.000Z"
+   },
+   {
+    "iso_639_1": "en",
+    "iso_3166_1": "US",
+    "name": "Original Theatrical Teaser",
+    "key": "WYPcLYPoaxo",
+    "site": "YouTube",
+    "size": 480,
+    "type": "Teaser",
+    "official": false,
+    "id": "6552bb4f0816c70137e78ed8",
+    "published_at": "2010-12-12T22:47:40.000Z"
+   }
+  ]
  }
 }

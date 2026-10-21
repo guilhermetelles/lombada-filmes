@@ -39,8 +39,11 @@ const tmdb = async <T extends z.ZodType>(path: string, schema: T) => {
 };
 
 if (records('tmdb')) {
-  const append = 'credits,external_ids,translations,keywords,recommendations,watch/providers,release_dates';
-  const details = await tmdb(`/movie/2756?language=pt-BR&append_to_response=${append}`, TmdbDetailsToRecord);
+  const append = 'credits,external_ids,translations,keywords,recommendations,watch/providers,release_dates,videos';
+  const details = await tmdb(
+    `/movie/2756?language=pt-BR&append_to_response=${append}&include_video_language=pt,en,null`,
+    TmdbDetailsToRecord,
+  );
   const extras = TmdbExtrasToRecord.parse(details);
   save('tmdb-movie-2756.json', {
     ...details,

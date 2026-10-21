@@ -46,6 +46,17 @@ const CastCredit = z.object({
 });
 
 /** Data de estreia num país, em release_dates; a classificação vem vazia quando o país não tem. */
+/** Um vídeo de /movie/{id}/videos (trailers, teasers, bastidores). */
+const Video = z.object({
+  key: z.string(),
+  name: z.string().default(''),
+  site: z.string(),
+  type: z.string(),
+  official: z.boolean().default(false),
+  iso_639_1: optionalText,
+  published_at: optionalText,
+});
+
 const ReleaseDate = z.object({ certification: optionalText, type: z.number().int().optional() });
 
 /** Serviços de um país em watch/providers; só a assinatura (flatrate) interessa. */
@@ -55,7 +66,7 @@ const CountryProviders = z.object({
 
 /**
  * Resposta de /movie/{id}?append_to_response=credits,external_ids,translations,keywords,
- * recommendations,watch/providers,release_dates. Os campos extras (versão 0.3) são opcionais para
+ * recommendations,watch/providers,release_dates,videos. Os campos extras (versão 0.3) são opcionais para
  * aceitar respostas montadas nos testes sem eles.
  */
 export const TmdbMovieResponse = z.object({
@@ -71,6 +82,8 @@ export const TmdbMovieResponse = z.object({
   keywords: z.object({ keywords: z.array(z.object({ name: z.string() })).default([]) }).optional(),
   recommendations: z.object({ results: z.array(Recommendation).default([]) }).optional(),
   'watch/providers': z.object({ results: z.record(z.string(), CountryProviders).default({}) }).optional(),
+  videos: z.object({ results: z.array(Video).default([]) }).optional(),
+  backdrop_path: optionalText,
   release_dates: z
     .object({
       results: z.array(z.object({ iso_3166_1: z.string(), release_dates: z.array(ReleaseDate).default([]) })),
@@ -91,6 +104,9 @@ export const TmdbMovieResponse = z.object({
   external_ids: z.object({ imdb_id: optionalText }).optional(),
   translations: z.object({ translations: z.array(Translation) }).optional(),
 });
+
+/** Um vídeo do filme já validado. */
+export type TmdbVideo = z.output<typeof Video>;
 
 /** Resposta de /movie/{id} já validada. */
 export type TmdbMovieResponse = z.output<typeof TmdbMovieResponse>;

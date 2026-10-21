@@ -6,8 +6,9 @@ import {
   type TmdbCollectionResponse,
   type TmdbMovieResponse,
   type TmdbSearchResponse,
+  type TmdbVideo,
 } from '../../schemas/sources/tmdb.js';
-import type { MovieRecInfo } from '../../types/movie.js';
+import type { MovieRecInfo, MovieTrailer } from '../../types/movie.js';
 import type { CastMember, Director } from '../../types/person.js';
 import type { TmdbCollection, TmdbMovie, TmdbMovieExtras, TmdbSearchResult } from '../../types/sources.js';
 
@@ -53,7 +54,8 @@ export function toTmdbMovie(response: TmdbMovieResponse): TmdbMovie {
  * orçamento e bilheteria (0 vira null, porque o TMDb usa 0 para "não sei"), classificação
  * indicativa no Brasil, saga, palavras-chave, recomendações (ids e resumo para a fileira de
  * parecidos), data de estreia, streaming por assinatura no Brasil (com os nomes normalizados:
- * sem planos repetidos nem canais de serviço que já está na lista), popularidade e nota.
+ * sem planos repetidos nem canais de serviço que já está na lista), imagem horizontal, trailer,
+ * popularidade e nota.
  *
  * @param response - Resposta validada de /movie/{id}.
  * @returns Os campos extras no formato de movies/{tmdbId}.
@@ -78,9 +80,44 @@ export function toTmdbExtras(response: TmdbMovieResponse): TmdbMovieExtras {
     recsInfo: recommendations.map(toRecInfo),
     release: releaseDay.parse(response.release_date),
     providersBR: normalizeStreamingServices(providers.map((provider) => provider.provider_name)),
+    backdropPath: response.backdrop_path,
+    trailer: pickTrailer(response.videos?.results ?? []),
     popularity: response.popularity,
     vote: response.vote_count > 0 ? response.vote_average : null,
     votes: response.vote_count,
+  };
+}
+
+/** Ordem dos idiomas na escolha do trailer: português antes de inglês, os outros depois. */
+const TRAILER_LANGUAGES = ['pt', 'en'];
+
+/**
+ * Escolhe o trailer do filme: vídeo do YouTube do tipo Trailer, de preferência oficial, em português
+ * antes de inglês e, no empate, o mais recente.
+ *
+ * @param videos - Vídeos de /movie/{id}/videos.
+ * @returns O trailer, ou null sem trailer no YouTube.
+ */
+export function pickTrailer(videos: readonly TmdbVideo[]): MovieTrailer | null {
+  const languageRank = (lang: string | null) => {
+    const index = TRAILER_LANGUAGES.indexOf(lang ?? '');
+    return index < 0 ? TRAILER_LANGUAGES.length : index;
+  };
+  const [best] = videos
+    .filter((video) => video.site === 'YouTube' && video.type === 'Trailer' && video.key)
+    .sort(
+      (a, b) =>
+        Number(b.official) - Number(a.official) ||
+        languageRank(a.iso_639_1) - languageRank(b.iso_639_1) ||
+        (b.published_at ?? '').localeCompare(a.published_at ?? ''),
+    );
+  if (!best) return null;
+  return {
+    key: best.key,
+    name: best.name,
+    lang: best.iso_639_1,
+    published:
+      best.published_at && /^\d{4}-\d{2}-\d{2}/.test(best.published_at) ? best.published_at.slice(0, 10) : null,
   };
 }
 

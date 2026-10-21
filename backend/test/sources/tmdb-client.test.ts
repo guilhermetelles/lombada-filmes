@@ -1,7 +1,9 @@
 import assert from 'node:assert/strict';
 import { describe, test } from 'node:test';
 import { NotFoundError, SourceUnavailableError } from '../../lib/errors/app-errors.js';
+import type { TmdbVideo } from '../../lib/schemas/sources/tmdb.js';
 import { createTmdbClient } from '../../lib/sources/tmdb/tmdb-client.js';
+import { pickTrailer } from '../../lib/sources/tmdb/tmdb-mappers.js';
 import type { Fetch } from '../../lib/types/sources.js';
 import { fakeSources, respondWith } from '../support/fake-sources.js';
 
@@ -41,6 +43,18 @@ describe('TMDb: getMovie', () => {
     assert.deepEqual(extras?.providersBR, ['Disney Plus']);
     assert.equal(extras?.votes, 3631);
     assert.ok((extras?.vote ?? 0) > 7 && (extras?.popularity ?? 0) > 0);
+  });
+
+  test('imagem horizontal e trailer: o oficial mais recente no YouTube, entre os vídeos gravados', async () => {
+    const extras = (await tmdbClient().getMovie(2756)).extras;
+
+    assert.equal(extras?.backdropPath, '/mW6XzxelLY8T2oW2NjciG9LpZT5.jpg');
+    assert.deepEqual(extras?.trailer, {
+      key: '7cCVYAcIIAo',
+      name: '4K Remastered Official Trailer',
+      lang: 'en',
+      published: '2023-11-13',
+    });
   });
 
   test('lançado direto em streaming: digital em 20+ países e cinema em até 2; sem release_dates, null', async () => {
@@ -170,7 +184,11 @@ describe('TMDb: getMovie', () => {
 
     assert.equal(urls.length, 1);
     const append = new URL(urls[0] ?? '').searchParams.get('append_to_response');
-    assert.equal(append, 'credits,external_ids,translations,keywords,recommendations,watch/providers,release_dates');
+    assert.equal(
+      append,
+      'credits,external_ids,translations,keywords,recommendations,watch/providers,release_dates,videos',
+    );
+    assert.equal(new URL(urls[0] ?? '').searchParams.get('include_video_language'), 'pt,en,null');
   });
 
   test('sem tradução em inglês, usa o título original', async () => {
@@ -391,5 +409,32 @@ describe('TMDb: searchPeople', () => {
     const [person] = await tmdbClient(respondWith(response)).searchPeople('atriz');
     assert.deepEqual(person?.knownFor, ['Série', 'Filme 1', 'Filme 2']);
     assert.equal(person?.profilePath, null);
+  });
+});
+
+describe('pickTrailer', () => {
+  const video = (key: string, extra: Partial<TmdbVideo> = {}): TmdbVideo => ({
+    key,
+    name: key,
+    site: 'YouTube',
+    type: 'Trailer',
+    official: true,
+    iso_639_1: 'en',
+    published_at: '2020-01-01T00:00:00.000Z',
+    ...extra,
+  });
+
+  test('prefere o oficial, depois o português, depois o mais recente', () => {
+    assert.equal(pickTrailer([video('a', { official: false, iso_639_1: 'pt' }), video('b')])?.key, 'b');
+    assert.equal(pickTrailer([video('en'), video('pt', { iso_639_1: 'pt' })])?.key, 'pt');
+    assert.equal(
+      pickTrailer([video('velho'), video('novo', { published_at: '2023-11-13T17:00:00.000Z' })])?.key,
+      'novo',
+    );
+  });
+
+  test('ignora o que não é trailer do YouTube; sem nenhum, null', () => {
+    assert.equal(pickTrailer([video('t', { type: 'Teaser' }), video('v', { site: 'Vimeo' })]), null);
+    assert.equal(pickTrailer([]), null);
   });
 });

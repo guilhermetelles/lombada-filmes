@@ -46,6 +46,14 @@ export type MovieRecInfo = {
   posterPath: string | null;
 };
 
+/** Trailer do filme no YouTube, escolhido entre os vídeos do TMDb. */
+export type MovieTrailer = {
+  key: string; // id do vídeo: youtube.com/watch?v={key}
+  name: string; // título do vídeo no YouTube
+  lang: string | null; // idioma do vídeo (pt, en…)
+  published: string | null; // AAAA-MM-DD
+};
+
 /** Onde assistir no Brasil por assinatura, com os serviços da busca anterior para notar o que chegou. */
 export type ProvidersBR = {
   flatrate: string[];
@@ -81,6 +89,8 @@ export type Movie = {
   recsInfo?: MovieRecInfo[] | undefined; // os mesmos ids de recs, com título, ano e pôster
   release?: string | null | undefined; // AAAA-MM-DD, release_date do TMDb (aniversário de estreia)
   providersBR?: ProvidersBR | undefined;
+  backdropPath?: string | null | undefined; // imagem horizontal (16:9): image.tmdb.org/t/p/w780{backdropPath}
+  trailer?: MovieTrailer | null | undefined; // null quando o TMDb não tem trailer no YouTube
   awards?: Awards | undefined;
   popularity?: number | undefined;
   vote?: number | null | undefined;

@@ -73,6 +73,7 @@ async function seedFreshMovie(overrides: Partial<Movie> = {}): Promise<Movie> {
     providersBR: { flatrate: [], previous: [], fetchedAt: clock },
     extraFetchedAt: clock,
     streamingFirst: false,
+    trailer: null,
     awards: { items: [], summary: null, fetchedAt: clock },
     ...overrides,
   };
@@ -123,6 +124,8 @@ describe('rotina enrich: filmes e pessoas', () => {
     assert.equal(abyss?.titlePt, 'O Segredo do Abismo');
     assert.ok((abyss?.keywords?.length ?? 0) > 0 && (abyss?.recs?.length ?? 0) > 0);
     assert.deepEqual(abyss?.providersBR?.flatrate, ['Disney Plus']);
+    assert.equal(abyss?.backdropPath, '/mW6XzxelLY8T2oW2NjciG9LpZT5.jpg');
+    assert.equal(abyss?.trailer?.key, '7cCVYAcIIAo');
     assert.equal(abyss?.extraFetchedAt?.getTime(), clock.getTime());
     assert.equal(abyss?.boxOfficeUS, 54_981_151);
     assert.equal(abyss?.awards?.summary, 'Ganhou 1 Oscar. 9 prêmios e 16 indicações no total');
@@ -137,6 +140,16 @@ describe('rotina enrich: filmes e pessoas', () => {
     assert.ok(cameron?.awards?.items.some((item) => item.org === 'Oscar' && item.kind === 'win'));
     assert.deepEqual((await findPerson(dependencies.db, 2712))?.awards?.items, []);
     assert.equal((await doc('jobs/enrich').get()).get('phase'), 'done');
+  });
+
+  test('filme fresco gravado antes do trailer existir conta como vencido', async () => {
+    await seedFreshMovie({ trailer: undefined });
+    await seedList();
+
+    const report = await run();
+
+    // O 603 entra na busca (e o TMDb falso não o tem); com `trailer: null`, ficaria de fora.
+    assert.deepEqual(report.movies, { updated: 1, failed: 1 });
   });
 
   test('rodada duas vezes no mesmo dia: a segunda não pede nada nem grava nada', async () => {

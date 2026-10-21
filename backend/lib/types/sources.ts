@@ -6,7 +6,7 @@ import type { TmdbDiscoverClient } from '../discover/tmdb-discover-client.js';
 
 import type * as z from 'zod';
 import type { AwardItem } from './awards.js';
-import type { MovieRecInfo } from './movie.js';
+import type { MovieRecInfo, MovieTrailer } from './movie.js';
 import type { CastMember, Director, Person, PersonDepartment } from './person.js';
 import type { UsageRecorder } from './usage.js';
 
@@ -53,6 +53,8 @@ export type TmdbMovieExtras = {
   recsInfo: MovieRecInfo[]; // os mesmos ids de recs, com título, ano e pôster
   release: string | null; // AAAA-MM-DD, release_date do TMDb
   providersBR: string[]; // streaming por assinatura no Brasil (flatrate)
+  backdropPath: string | null; // imagem horizontal (16:9)
+  trailer: MovieTrailer | null; // trailer no YouTube, pela regra de pickTrailer
   popularity: number;
   vote: number | null; // média do TMDb; null sem votos
   votes: number;
