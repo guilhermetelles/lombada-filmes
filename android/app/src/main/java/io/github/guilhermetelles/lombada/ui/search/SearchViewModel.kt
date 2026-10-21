@@ -9,12 +9,12 @@ import io.github.guilhermetelles.lombada.data.backend.MovieSearchResult
 import io.github.guilhermetelles.lombada.data.backend.PersonSearchResult
 import io.github.guilhermetelles.lombada.domain.ListMatch
 import io.github.guilhermetelles.lombada.domain.ListSearch
+import io.github.guilhermetelles.lombada.ui.SCREEN_SHARING
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
@@ -112,7 +112,7 @@ class SearchViewModel(private val container: AppContainer, listId: String) : Vie
                 people = if (text.trim().length < 2) RemoteResults() else results.people,
                 movies = if (text.trim().length < 2) RemoteResults() else results.movies
             )
-        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SearchUiState())
+        }.stateIn(viewModelScope, SCREEN_SHARING, SearchUiState())
 
     /**
      * Atualiza o termo.

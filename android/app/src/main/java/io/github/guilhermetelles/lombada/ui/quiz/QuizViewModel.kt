@@ -8,10 +8,10 @@ import io.github.guilhermetelles.lombada.data.model.Scores
 import io.github.guilhermetelles.lombada.domain.BrazilDay
 import io.github.guilhermetelles.lombada.domain.QuizEvent
 import io.github.guilhermetelles.lombada.domain.QuizRules
+import io.github.guilhermetelles.lombada.ui.SCREEN_SHARING
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
@@ -104,7 +104,7 @@ class QuizViewModel(
                 ) { today, answers, scores, history, event ->
                     QuizTabState(false, now, today, answers, scores, history, event)
                 }
-            }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), QuizTabState())
+            }.stateIn(viewModelScope, SCREEN_SHARING, QuizTabState())
 
     private fun history(today: String): Flow<List<QuizHistoryItem>> =
         combine(dailyHistory(today), eventHistory()) { daily, event ->

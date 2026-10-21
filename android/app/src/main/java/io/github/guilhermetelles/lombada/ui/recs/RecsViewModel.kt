@@ -17,11 +17,11 @@ import io.github.guilhermetelles.lombada.domain.RecOrigin
 import io.github.guilhermetelles.lombada.domain.RecsLines
 import io.github.guilhermetelles.lombada.domain.TasteProfile
 import io.github.guilhermetelles.lombada.domain.TasteProfiles
+import io.github.guilhermetelles.lombada.ui.SCREEN_SHARING
 import java.time.Instant
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
@@ -157,7 +157,7 @@ class RecsViewModel(
         ) { (list, profile, recs), queue, dismissed, local ->
             build(list, profile, recs, queue, dismissed, local)
         }.distinctUntilChanged()
-            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), RecsUiState())
+            .stateIn(viewModelScope, SCREEN_SHARING, RecsUiState())
 
     private fun build(
         list: ListLoad,

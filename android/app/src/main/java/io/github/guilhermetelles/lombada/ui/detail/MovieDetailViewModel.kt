@@ -11,11 +11,11 @@ import io.github.guilhermetelles.lombada.data.model.RecsDoc
 import io.github.guilhermetelles.lombada.domain.FilmInfo
 import io.github.guilhermetelles.lombada.domain.Formatting
 import io.github.guilhermetelles.lombada.domain.MovieTitles
+import io.github.guilhermetelles.lombada.ui.SCREEN_SHARING
 import kotlin.math.roundToInt
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
@@ -141,7 +141,7 @@ class MovieDetailViewModel(private val container: AppContainer, private val tmdb
             similarInfo.onStart { emit(emptyMap()) }
         ) { (film, status, fit), (queued, override, busy), similar ->
             MovieDetailUiState(film, status, fit, override ?: queued, busy, similar)
-        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), MovieDetailUiState())
+        }.stateIn(viewModelScope, SCREEN_SHARING, MovieDetailUiState())
 
     init {
         retry()

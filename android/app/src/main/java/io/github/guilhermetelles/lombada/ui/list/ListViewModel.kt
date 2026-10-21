@@ -15,9 +15,9 @@ import io.github.guilhermetelles.lombada.domain.Formatting
 import io.github.guilhermetelles.lombada.domain.MovieTitles
 import io.github.guilhermetelles.lombada.events.ListEventType
 import io.github.guilhermetelles.lombada.events.ListEvents
+import io.github.guilhermetelles.lombada.ui.SCREEN_SHARING
 import java.time.LocalDate
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
@@ -123,7 +123,7 @@ class ListViewModel(
 
     /** Mudanças esperando conexão (eventos na fila com o aparelho sem internet). */
     val waitingChanges: StateFlow<Int> =
-        events.observeWaiting(listId).stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0)
+        events.observeWaiting(listId).stateIn(viewModelScope, SCREEN_SHARING, 0)
 
     /** Estado da tela. */
     val state: StateFlow<ListUiState> =
@@ -151,7 +151,7 @@ class ListViewModel(
                 preparingTmdbId = adding.preparingTmdbId,
                 justAddedId = adding.justAddedId
             )
-        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ListUiState())
+        }.stateIn(viewModelScope, SCREEN_SHARING, ListUiState())
 
     /**
      * Troca entre ranking e ordem por data.

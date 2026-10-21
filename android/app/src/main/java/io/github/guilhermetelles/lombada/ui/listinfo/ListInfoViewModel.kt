@@ -7,9 +7,9 @@ import io.github.guilhermetelles.lombada.AppContainer
 import io.github.guilhermetelles.lombada.data.backend.BackendErrorCode
 import io.github.guilhermetelles.lombada.data.backend.BackendException
 import io.github.guilhermetelles.lombada.data.model.Scores
+import io.github.guilhermetelles.lombada.ui.SCREEN_SHARING
 import java.time.Instant
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
@@ -56,7 +56,7 @@ class ListInfoViewModel(private val container: AppContainer, private val listId:
                 Log.w(TAG, "Placares não carregados", error)
                 emit(emptyList())
             }
-            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+            .stateIn(viewModelScope, SCREEN_SHARING, null)
 
     private val _invite = MutableStateFlow(InviteState())
 

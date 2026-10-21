@@ -12,10 +12,10 @@ import io.github.guilhermetelles.lombada.data.model.QueueItem
 import io.github.guilhermetelles.lombada.domain.Formatting
 import io.github.guilhermetelles.lombada.domain.MovieTitles
 import io.github.guilhermetelles.lombada.domain.QueueLines
+import io.github.guilhermetelles.lombada.ui.SCREEN_SHARING
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
@@ -95,7 +95,7 @@ class QueueViewModel(private val container: AppContainer, private val listId: St
                     )
                 }
             }.distinctUntilChanged()
-            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), QueueUiState())
+            .stateIn(viewModelScope, SCREEN_SHARING, QueueUiState())
 
     /**
      * Tira o filme da fila, com "Desfazer".

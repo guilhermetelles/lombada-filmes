@@ -15,10 +15,10 @@ import io.github.guilhermetelles.lombada.domain.RouletteFilter
 import io.github.guilhermetelles.lombada.domain.RoulettePool
 import io.github.guilhermetelles.lombada.domain.RouletteSource
 import io.github.guilhermetelles.lombada.domain.TitleLanguage
+import io.github.guilhermetelles.lombada.ui.SCREEN_SHARING
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
@@ -124,7 +124,7 @@ class RouletteViewModel(private val container: AppContainer, listId: String, inL
                 rollId = current.id
             )
         }.distinctUntilChanged()
-            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), RouletteUiState())
+            .stateIn(viewModelScope, SCREEN_SHARING, RouletteUiState())
 
     init {
         // Primeiro sorteio assim que a fila e as sugestões chegam.

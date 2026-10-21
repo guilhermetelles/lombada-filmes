@@ -11,9 +11,9 @@ import io.github.guilhermetelles.lombada.domain.Calendar
 import io.github.guilhermetelles.lombada.domain.Reports
 import io.github.guilhermetelles.lombada.domain.Summary
 import io.github.guilhermetelles.lombada.domain.TopActors
+import io.github.guilhermetelles.lombada.ui.SCREEN_SHARING
 import java.time.LocalDate
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -81,5 +81,5 @@ class ReportsViewModel(container: AppContainer, listId: String) : ViewModel() {
                 genres = Reports.genres(entries, byId),
                 decades = Reports.decades(entries)
             )
-        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ReportsUiState())
+        }.stateIn(viewModelScope, SCREEN_SHARING, ReportsUiState())
 }

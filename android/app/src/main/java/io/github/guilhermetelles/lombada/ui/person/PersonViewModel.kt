@@ -8,10 +8,10 @@ import io.github.guilhermetelles.lombada.data.backend.BackendException
 import io.github.guilhermetelles.lombada.data.model.Person
 import io.github.guilhermetelles.lombada.domain.PersonFilm
 import io.github.guilhermetelles.lombada.domain.PersonInList
+import io.github.guilhermetelles.lombada.ui.SCREEN_SHARING
 import io.github.guilhermetelles.lombada.ui.detail.RefreshStatus
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -78,7 +78,7 @@ class PersonViewModel(
                 photo = person?.profilePath ?: knownPhoto ?: PersonInList.photo(personId, byId.values),
                 refresh = status
             )
-        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), PersonUiState(photo = knownPhoto))
+        }.stateIn(viewModelScope, SCREEN_SHARING, PersonUiState(photo = knownPhoto))
 
     init {
         retry()

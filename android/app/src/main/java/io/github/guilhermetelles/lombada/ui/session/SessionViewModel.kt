@@ -9,9 +9,9 @@ import io.github.guilhermetelles.lombada.data.auth.SignInException
 import io.github.guilhermetelles.lombada.data.model.MovieList
 import io.github.guilhermetelles.lombada.data.model.UserProfile
 import io.github.guilhermetelles.lombada.notify.DeviceRegistration
+import io.github.guilhermetelles.lombada.ui.SCREEN_SHARING
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
@@ -20,6 +20,7 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -48,6 +49,12 @@ class SessionViewModel(private val container: AppContainer) : ViewModel() {
     // Cada "Tentar de novo" na tela de erro refaz a leitura do perfil e das listas.
     private val attempt = MutableStateFlow(0)
 
+    // Pessoa cuja lista já está aberta. Quando os fluxos recomeçam (o app volta do segundo plano),
+    // a sessão dela não passa por Loading nem Failed: trocar a lista aberta pelo splash ou pelo erro
+    // tiraria o MainScreen da tela e levaria junto a navegação e o estado de cada tela.
+    @Volatile
+    private var readyUid: String? = null
+
     /** Estado da sessão. */
     @OptIn(ExperimentalCoroutinesApi::class)
     val state: StateFlow<SessionState> =
@@ -65,17 +72,21 @@ class SessionViewModel(private val container: AppContainer) : ViewModel() {
                             container.lists.observeMine(user.uid),
                             holdingNewList
                         ) { profile, lists, holding -> decide(user.uid, profile, lists, holding) }
-                    }.onStart { emit(SessionState.Loading) }
+                    }.onStart { if (readyUid != user.uid) emit(SessionState.Loading) }
                         .catch { error ->
                             Log.w(TAG, "Sessão não carregada", error)
-                            emit(
-                                SessionState.Failed(
-                                    "Não deu para carregar suas listas. Confira a internet e tente de novo."
+                            // Com a lista já aberta, fica nela; os fluxos recomeçam na próxima volta ao app.
+                            if (readyUid != user.uid) {
+                                emit(
+                                    SessionState.Failed(
+                                        "Não deu para carregar suas listas. Confira a internet e tente de novo."
+                                    )
                                 )
-                            )
+                            }
                         }
                 }
-            }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SessionState.Loading)
+            }.onEach { readyUid = (it as? SessionState.Ready)?.uid }
+            .stateIn(viewModelScope, SCREEN_SHARING, SessionState.Loading)
 
     private fun decide(uid: String, profile: UserProfile, lists: List<MovieList>, holding: Boolean): SessionState {
         val ordered = orderByRecent(lists, profile.recentListIds)

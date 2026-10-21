@@ -7,10 +7,10 @@ import io.github.guilhermetelles.lombada.data.model.FeedItem
 import io.github.guilhermetelles.lombada.domain.FeedFilter
 import io.github.guilhermetelles.lombada.domain.FeedPeriod
 import io.github.guilhermetelles.lombada.domain.FeedPeriods
+import io.github.guilhermetelles.lombada.ui.SCREEN_SHARING
 import java.time.Instant
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
@@ -133,7 +133,7 @@ class FeedViewModel(
                 hasMore = loaded != null && loaded.items.size >= loaded.query.limit,
                 seenBefore = seen.at
             )
-        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), FeedState(period = period.value))
+        }.stateIn(viewModelScope, SCREEN_SHARING, FeedState(period = period.value))
 
     /**
      * Troca o tipo.

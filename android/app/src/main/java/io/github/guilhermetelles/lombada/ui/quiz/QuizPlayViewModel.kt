@@ -10,9 +10,9 @@ import io.github.guilhermetelles.lombada.data.model.QuizDoc
 import io.github.guilhermetelles.lombada.domain.BrazilDay
 import io.github.guilhermetelles.lombada.domain.QuizEvent
 import io.github.guilhermetelles.lombada.domain.QuizRules
+import io.github.guilhermetelles.lombada.ui.SCREEN_SHARING
 import java.time.Instant
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
@@ -125,7 +125,7 @@ class QuizPlayViewModel(
             )
         }.stateIn(
             viewModelScope,
-            SharingStarted.WhileSubscribed(5_000),
+            SCREEN_SHARING,
             QuizPlayState(day = day, isToday = isToday, isEvent = isEvent, eventIndex = QuizEvent.indexOf(day))
         )
 
