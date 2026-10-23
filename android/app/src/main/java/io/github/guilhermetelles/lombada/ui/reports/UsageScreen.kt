@@ -56,6 +56,7 @@ import io.github.guilhermetelles.lombada.ui.status.GeminiModels
 import io.github.guilhermetelles.lombada.ui.status.StatusState
 import io.github.guilhermetelles.lombada.ui.status.StatusViewModel
 import io.github.guilhermetelles.lombada.ui.theme.LombadaColors
+import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 import kotlinx.coroutines.flow.catch
@@ -207,7 +208,10 @@ private fun GeminiCard(status: StatusState) {
                     remember(status) {
                         StatusLines.geminiToday(status.status.gemini, status.status.usage, BrazilDay.today())
                     }
-                GeminiModels(status.status.gemini, lines)
+                val purposes =
+                    remember(status) { StatusLines.geminiPurposesToday(status.status.usage, BrazilDay.today()) }
+                val resting = remember(status) { StatusLines.geminiResting(status.status.gemini, Instant.now()) }
+                GeminiModels(status.status.gemini, lines, purposes, resting)
             }
 
             StatusState.Loading ->

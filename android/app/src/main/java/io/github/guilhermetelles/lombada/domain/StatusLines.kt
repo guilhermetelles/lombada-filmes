@@ -69,8 +69,41 @@ data class UsageTable(val days: List<LocalDate>, val rows: List<UsageTableRow>)
  * @property calls Pedidos hoje.
  * @property errors Erros hoje.
  * @property quota Respostas 429 de hoje (modelo sem cota), quando o backend sabe.
+ * @property answered Respostas hoje; null quando o backend não mandou.
+ * @property unavailable Erros de modelo fora do ar (5xx ou 404).
+ * @property timeout Pedidos sem resposta no tempo ou com falha de rede.
+ * @property format Respostas fora do formato pedido.
+ * @property latencyMs Soma do tempo das respostas.
  */
-data class GeminiModelLine(val model: String, val calls: Int, val errors: Int, val quota: Int?)
+data class GeminiModelLine(
+    val model: String,
+    val calls: Int,
+    val errors: Int,
+    val quota: Int?,
+    val answered: Int? = null,
+    val unavailable: Int = 0,
+    val timeout: Int = 0,
+    val format: Int = 0,
+    val latencyMs: Long = 0
+)
+
+/**
+ * Um uso do Gemini e o resultado dos pedidos de hoje.
+ *
+ * @property label Nome do uso para a tela.
+ * @property requests Pedidos.
+ * @property answered Respondidos.
+ * @property failed Falharam depois de tentar os modelos.
+ */
+data class GeminiPurposeLine(val label: String, val requests: Int, val answered: Int, val failed: Int)
+
+/**
+ * Modelo do Gemini pulado agora.
+ *
+ * @property model Nome do modelo.
+ * @property label "sem cota até 04:00" ou "fora do ar até 15:23".
+ */
+data class GeminiRestingLine(val model: String, val label: String)
 
 /** Textos e contas das telas de consumo e de status do app, sem Android. */
 object StatusLines {
@@ -87,6 +120,15 @@ object StatusLines {
             "wikidata" to "Wikidata",
             "wikipedia" to "Wikipedia",
             "gemini" to "Gemini"
+        )
+
+    /** Usos do Gemini, na ordem da tela, com o nome. */
+    private val GEMINI_PURPOSES =
+        linkedMapOf(
+            "search" to "Busca em texto livre",
+            "recs" to "Sugestões",
+            "quiz" to "Quiz",
+            "retro" to "Retrospectiva"
         )
 
     private val jobNames =
@@ -186,8 +228,122 @@ object StatusLines {
         val order = (gemini?.interpret.orEmpty() + gemini?.text.orEmpty() + todayUsage.keys.sorted()).distinct()
         return order.map { model ->
             val used = todayUsage[model]
-            GeminiModelLine(model, used?.calls ?: 0, used?.errors ?: 0, used?.quota)
+            GeminiModelLine(
+                model = model,
+                calls = used?.calls ?: 0,
+                errors = used?.errors ?: 0,
+                quota = used?.quota,
+                answered = used?.answered,
+                unavailable = used?.unavailable ?: 0,
+                timeout = used?.timeout ?: 0,
+                format = used?.format ?: 0,
+                latencyMs = used?.latencyMs ?: 0
+            )
         }
+    }
+
+    /**
+     * Resumo de um modelo: quantos pedidos ele respondeu.
+     *
+     * @param line Consumo do modelo hoje.
+     * @return "3 de 7 respondidos", "1 pedido" (backend sem respostas) ou "nenhum pedido".
+     */
+    fun geminiModelSummary(line: GeminiModelLine): String {
+        if (line.calls == 0) return "nenhum pedido"
+        val answered = line.answered ?: return if (line.calls == 1) "1 pedido" else "${line.calls} pedidos"
+        return if (line.calls == 1) "$answered de 1 respondido" else "$answered de ${line.calls} respondidos"
+    }
+
+    /**
+     * Detalhe de um modelo: tempo médio das respostas e os erros por tipo.
+     *
+     * @param line Consumo do modelo hoje.
+     * @return "média 1,8 s · 2 × fora do ar · 1 × sem resposta", ou vazio sem nada a dizer.
+     */
+    fun geminiModelDetail(line: GeminiModelLine): String {
+        val answered = line.answered ?: 0
+        val quota = line.quota ?: 0
+        val other = (line.errors - quota - line.unavailable - line.timeout - line.format).coerceAtLeast(0)
+        return listOfNotNull(
+            if (answered > 0 && line.latencyMs > 0) "média ${secondsLabel(line.latencyMs / answered)}" else null,
+            countLabel(quota, "sem cota"),
+            countLabel(line.unavailable, "fora do ar"),
+            countLabel(line.timeout, "sem resposta"),
+            countLabel(line.format, "resposta inválida"),
+            countLabel(other, "outro erro")
+        ).joinToString(" · ")
+    }
+
+    /**
+     * Usos do Gemini com pedidos hoje, na ordem fixa (busca, sugestões, quiz, retrospectiva) e os
+     * desconhecidos no fim, pelo nome técnico.
+     *
+     * @param usage Dias de `GET /api/status`.
+     * @param today Hoje em Brasília.
+     * @return Uma linha por uso com pedidos.
+     */
+    fun geminiPurposesToday(usage: List<StatusUsageDay>, today: LocalDate): List<GeminiPurposeLine> {
+        val todayUsage = usage.firstOrNull { it.day == today.toString() }?.geminiPurposes.orEmpty()
+        val order = (GEMINI_PURPOSES.keys + todayUsage.keys.sorted()).distinct()
+        return order.mapNotNull { key ->
+            val used = todayUsage[key]?.takeIf { it.requests > 0 } ?: return@mapNotNull null
+            GeminiPurposeLine(GEMINI_PURPOSES[key] ?: key, used.requests, used.answered, used.failed)
+        }
+    }
+
+    /**
+     * Resultado de um uso: quantos pedidos foram respondidos e quantos falharam.
+     *
+     * @param line Pedidos do uso hoje.
+     * @return "8 de 10 respondidos · 2 falharam".
+     */
+    fun geminiPurposeLabel(line: GeminiPurposeLine): String {
+        val answered =
+            if (line.requests ==
+                1
+            ) {
+                "${line.answered} de 1 respondido"
+            } else {
+                "${line.answered} de ${line.requests} respondidos"
+            }
+        val failed =
+            when (line.failed) {
+                0 -> null
+                1 -> "1 falhou"
+                else -> "${line.failed} falharam"
+            }
+        return listOfNotNull(answered, failed).joinToString(" · ")
+    }
+
+    /**
+     * Modelos pulados agora, com o motivo e até quando, no fuso de Brasília.
+     *
+     * @param gemini Modelos do backend, ou null.
+     * @param now Agora; prazos que já passaram ficam de fora.
+     * @return "sem cota até 04:00", "fora do ar até amanhã às 04:00" ou "… até 21/10 às 04:00".
+     */
+    fun geminiResting(gemini: GeminiInfo?, now: Instant): List<GeminiRestingLine> =
+        gemini?.resting.orEmpty().mapNotNull { resting ->
+            val until = runCatching { Instant.parse(resting.until) }.getOrNull()?.takeIf { it > now }
+            until ?: return@mapNotNull null
+            val at = until.atZone(BrazilDay.ZONE)
+            val today = BrazilDay.of(now)
+            val hour = at.format(hourFormat)
+            val day =
+                when (at.toLocalDate()) {
+                    today -> hour
+                    today.plusDays(1) -> "amanhã às $hour"
+                    else -> "${at.format(dayFormat)} às $hour"
+                }
+            val reason = if (resting.reason == "unavailable") "fora do ar" else "sem cota"
+            GeminiRestingLine(resting.model, "$reason até $day")
+        }
+
+    private fun countLabel(count: Int, label: String): String? = if (count > 0) "$count × $label" else null
+
+    private fun secondsLabel(ms: Long): String {
+        val tenths = (ms + 50) / 100
+        return "${tenths / 10},${tenths % 10} s"
     }
 
     /**

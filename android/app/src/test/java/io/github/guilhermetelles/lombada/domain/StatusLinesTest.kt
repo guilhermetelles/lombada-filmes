@@ -3,6 +3,8 @@ package io.github.guilhermetelles.lombada.domain
 import io.github.guilhermetelles.lombada.data.model.CallCount
 import io.github.guilhermetelles.lombada.data.model.GeminiInfo
 import io.github.guilhermetelles.lombada.data.model.GeminiModelUsage
+import io.github.guilhermetelles.lombada.data.model.GeminiPurposeUsage
+import io.github.guilhermetelles.lombada.data.model.GeminiResting
 import io.github.guilhermetelles.lombada.data.model.SourceUsage
 import io.github.guilhermetelles.lombada.data.model.StatusUsageDay
 import io.github.guilhermetelles.lombada.data.model.UsageDay
@@ -92,5 +94,79 @@ class StatusLinesTest {
         val days = StatusLines.fillDays(read, today, 3)
         assertEquals(listOf(17, 18, 19), days.map { it.day.dayOfMonth })
         assertEquals(listOf(4, 0, 0), days.map { it.totalCalls })
+    }
+
+    @Test
+    fun `resumo e detalhe de um modelo, com erros por tipo e tempo medio`() {
+        val line =
+            GeminiModelLine(
+                model = "flash",
+                calls = 7,
+                errors = 5,
+                quota = 1,
+                answered = 2,
+                unavailable = 2,
+                timeout = 1,
+                format = 0,
+                latencyMs = 3_600
+            )
+        assertEquals("2 de 7 respondidos", StatusLines.geminiModelSummary(line))
+        assertEquals(
+            "média 1,8 s · 1 × sem cota · 2 × fora do ar · 1 × sem resposta · 1 × outro erro",
+            StatusLines.geminiModelDetail(line)
+        )
+        // Backend antigo, sem respostas: só os pedidos.
+        val old = GeminiModelLine("pro", calls = 3, errors = 0, quota = null)
+        assertEquals("3 pedidos", StatusLines.geminiModelSummary(old))
+        assertEquals("", StatusLines.geminiModelDetail(old))
+        assertEquals("nenhum pedido", StatusLines.geminiModelSummary(GeminiModelLine("x", 0, 0, null)))
+    }
+
+    @Test
+    fun `usos do Gemini de hoje na ordem fixa, com respondidos e falhas`() {
+        val usage =
+            listOf(
+                StatusUsageDay(
+                    "2026-10-19",
+                    geminiPurposes =
+                        mapOf(
+                            "quiz" to GeminiPurposeUsage(1, 1, 0),
+                            "search" to GeminiPurposeUsage(10, 8, 2),
+                            "retro" to GeminiPurposeUsage(0, 0, 0),
+                            "novo" to GeminiPurposeUsage(1, 0, 1)
+                        )
+                ),
+                StatusUsageDay("2026-10-18", geminiPurposes = mapOf("recs" to GeminiPurposeUsage(5, 5, 0)))
+            )
+        val lines = StatusLines.geminiPurposesToday(usage, LocalDate.of(2026, 10, 19))
+        assertEquals(listOf("Busca em texto livre", "Quiz", "novo"), lines.map { it.label })
+        assertEquals("8 de 10 respondidos · 2 falharam", StatusLines.geminiPurposeLabel(lines[0]))
+        assertEquals("1 de 1 respondido", StatusLines.geminiPurposeLabel(lines[1]))
+        assertEquals("0 de 1 respondido · 1 falhou", StatusLines.geminiPurposeLabel(lines[2]))
+    }
+
+    @Test
+    fun `modelos pulados com o motivo e o horario de Brasilia`() {
+        // 19/10/2026, 15h de Brasília.
+        val now = Instant.parse("2026-10-19T18:00:00Z")
+        val gemini =
+            GeminiInfo(
+                resting =
+                    listOf(
+                        GeminiResting("velho", "2026-10-19T17:00:00Z", "quota"),
+                        GeminiResting("lite", "2026-10-19T18:05:00Z", "unavailable"),
+                        GeminiResting("flash", "2026-10-20T07:00:00Z", "quota"),
+                        GeminiResting("pro", "2026-10-22T07:00:00Z", "quota")
+                    )
+            )
+        assertEquals(
+            listOf(
+                GeminiRestingLine("lite", "fora do ar até 15:05"),
+                GeminiRestingLine("flash", "sem cota até amanhã às 04:00"),
+                GeminiRestingLine("pro", "sem cota até 22/10 às 04:00")
+            ),
+            StatusLines.geminiResting(gemini, now)
+        )
+        assertEquals(emptyList<GeminiRestingLine>(), StatusLines.geminiResting(null, now))
     }
 }
