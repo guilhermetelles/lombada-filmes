@@ -118,7 +118,7 @@ export const UnregisterDeviceBody = z.object({ token: deviceToken });
 /** PUT /api/me/notify */
 export const NotifyPrefsBody = NotifyPrefsSchema;
 
-/** GET /api/discover?listId=&mood=&dur=&dec=&genre=&theme=&svc=&fit=&page= (listas separadas por vírgula). */
+/** GET /api/discover?listId=&mood=&dur=&dec=&genre=&theme=&svc=&fit=&page=&sort= (listas separadas por vírgula). */
 export const DiscoverQuery = z.object({
   listId: ListParams.shape.listId.optional(),
   mood: commaList(MoodSchema),
@@ -142,6 +142,7 @@ export const DiscoverQuery = z.object({
     .pipe(z.number().max(500, 'page deve ser um número de 1 a 500'))
     .optional()
     .transform((page) => page ?? 1),
+  sort: z.enum(['relevance', 'compat'], "sort deve ser 'relevance' ou 'compat'").optional(),
   lang: TitleLanguageQuery,
 });
 

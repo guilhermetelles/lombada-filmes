@@ -47,8 +47,11 @@ export type DiscoverItem = {
   reason: string;
   trending: boolean;
   inListEntryId: string | null; // entrada da lista, quando o filme já está nela
-  matchedKeywords: number[]; // ids de `kw` que o filme tem (só nos resultados detalhados)
+  matchedKeywords: number[]; // ids de `kw` que o filme tem
 };
+
+/** Ordem da busca: `relevance` mistura a posição no TMDb e a compatibilidade; `compat` usa só a compatibilidade. */
+export type DiscoverSort = 'relevance' | 'compat';
 
 /** Saída de GET /api/discover. */
 export type DiscoverPage = {

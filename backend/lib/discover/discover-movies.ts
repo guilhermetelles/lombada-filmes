@@ -1,12 +1,13 @@
 import type { Firestore } from 'firebase-admin/firestore';
 import { SourceUnavailableError } from '../errors/app-errors.js';
 import { logger } from '../logging/logger.js';
-import type { DiscoverItem, DiscoverPage, Filters } from '../types/discover.js';
+import type { DiscoverItem, DiscoverPage, DiscoverSort, Filters } from '../types/discover.js';
 import type { RecsModel } from '../types/recs.js';
 import type { TmdbLanguage } from '../types/sources.js';
 import type { UsageRecorder } from '../types/usage.js';
 import { buildDiscoverParams } from './build-discover-params.js';
 import { findEntryIdsByTmdbIds, readRecsModel, readTopGenres } from './discover-repository.js';
+import { orderResults } from './order-results.js';
 import {
   buildGenreTaste,
   type Compat,
@@ -18,40 +19,46 @@ import {
 } from './score-candidates.js';
 import type { CandidateExtras, DiscoverCandidate, TmdbDiscoverClient } from './tmdb-discover-client.js';
 
-/** Quantos dos primeiros resultados ganham detalhes (duração, streaming e palavras-chave). */
-export const DETAILED_RESULTS = 10;
-
-/** Com palavras-chave do texto, mais resultados ganham detalhes, para a ordem por palavras valer. */
-export const DETAILED_RESULTS_WITH_KEYWORDS = 20;
-
 /** Compatibilidade mínima para "Só o que combina com vocês". */
 export const FIT_MIN_SCORE = 60;
 
 /** O que a busca usa de fora. */
 type DiscoverDependencies = { db: Firestore; tmdb: TmdbDiscoverClient; usage: UsageRecorder };
 
-/** Pedido da busca: filtros, página, idioma dos títulos e, se houver, a lista (já conferido que a pessoa é membro). */
-type DiscoverRequest = { filters: Filters; page: number; listId?: string | undefined; language?: TmdbLanguage };
+/**
+ * Pedido da busca: filtros, página, ordem, idioma dos títulos e, se houver, a lista (já conferido
+ * que a pessoa é membro).
+ */
+type DiscoverRequest = {
+  filters: Filters;
+  page: number;
+  sort?: DiscoverSort | undefined;
+  listId?: string | undefined;
+  language?: TmdbLanguage;
+};
 
 /** Como pontuar os filmes desta busca. */
 type Scorer = (candidate: DiscoverCandidate, extras?: CandidateExtras) => Compat;
 
 /**
  * Busca avançada: uma página do /discover/movie do TMDb (região BR) com os filtros, pontuada pela
- * compatibilidade com a lista e ordenada por ela. Com o modelo de recs/current, a nota vem dos pesos
- * aplicados às variáveis que o /discover traz (gêneros, ano, nota, popularidade; palavras-chave nos
- * 10 primeiros); sem modelo, dos gêneros mais frequentes nos 20 primeiros da lista; sem lista, da
- * nota do TMDb. Marca os filmes em alta na semana e os que já estão na lista. Falha nos filmes em
- * alta ou nos detalhes não derruba a busca: o filme só fica sem a marca ou sem os detalhes.
+ * compatibilidade com a lista. Com o modelo de recs/current, a nota vem dos pesos aplicados às
+ * variáveis do filme (gêneros, ano, nota, popularidade e palavras-chave); sem modelo, dos gêneros
+ * mais frequentes nos 20 primeiros da lista; sem lista, da nota do TMDb. Todos os filmes da página
+ * ganham detalhes (duração, streaming e palavras-chave), para serem pontuados do mesmo jeito. A
+ * ordem é a de orderResults: palavras da frase primeiro e, depois, a mistura da posição no TMDb com
+ * a compatibilidade (`relevance`, o padrão) ou só a compatibilidade (`compat`). Marca os filmes em
+ * alta na semana e os que já estão na lista. Falha nos filmes em alta ou nos detalhes não derruba a
+ * busca: o filme só fica sem a marca ou sem os detalhes.
  *
  * @param dependencies - Banco, cliente do TMDb e medidor de consumo.
- * @param request - Filtros, página, lista e idioma dos títulos (en-US com `lang=en`).
+ * @param request - Filtros, página, ordem, lista e idioma dos títulos (en-US com `lang=en`).
  * @returns A página de resultados.
  * @throws {SourceUnavailableError} Se o /discover do TMDb falhar.
  */
 async function discoverMovies(
   { db, tmdb, usage }: DiscoverDependencies,
-  { filters, page, listId, language = 'pt-BR' }: DiscoverRequest,
+  { filters, page, sort = 'relevance', listId, language = 'pt-BR' }: DiscoverRequest,
 ): Promise<DiscoverPage> {
   const plan = buildDiscoverParams(filters, page, language);
   const [found, trendingIds, scorer] = await Promise.all([
@@ -63,49 +70,39 @@ async function discoverMovies(
   const candidates = found.results.filter((candidate) =>
     plan.requiredGenreGroups.every((group) => group.some((id) => candidate.genreIds.includes(id))),
   );
-  const entryIds = listId
-    ? await findEntryIdsByTmdbIds(
-        db,
-        listId,
-        candidates.map((candidate) => candidate.tmdbId),
-      )
-    : new Map<number, string>();
+  const [entryIds, extras] = await Promise.all([
+    listId
+      ? findEntryIdsByTmdbIds(
+          db,
+          listId,
+          candidates.map((candidate) => candidate.tmdbId),
+        )
+      : Promise.resolve(new Map<number, string>()),
+    readExtras(
+      tmdb,
+      usage,
+      candidates.map((candidate) => candidate.tmdbId),
+    ),
+  ]);
 
-  let scored = sortByScore(candidates.map((candidate) => ({ candidate, compat: scorer(candidate) })));
   const keywordIds = filters.kw ?? [];
-  const detailed = keywordIds.length > 0 ? DETAILED_RESULTS_WITH_KEYWORDS : DETAILED_RESULTS;
-  const extras = await readExtras(
-    tmdb,
-    usage,
-    scored.slice(0, detailed).map(({ candidate }) => candidate.tmdbId),
-  );
-  scored = sortByScore(
-    scored.map(({ candidate, compat }) => {
-      const detail = extras.get(candidate.tmdbId);
-      return { candidate, compat: detail ? scorer(candidate, detail) : compat };
-    }),
-  );
-  // O filtro de duração do TMDb deixa passar filmes que, nos detalhes, ficam fora da faixa.
-  const { min, max } = plan.runtimeRange;
-  scored = scored.filter(({ candidate }) => {
-    const runtime = extras.get(candidate.tmdbId)?.runtime;
-    return !runtime || ((min === null || runtime >= min) && (max === null || runtime <= max));
-  });
-  if (filters.fit && listId) scored = scored.filter(({ compat }) => compat.score >= FIT_MIN_SCORE);
-
-  // Palavras do texto: quem tem mais delas vem antes; no empate, a compatibilidade decide.
   const matchesOf = (tmdbId: number) => {
     const ids = extras.get(tmdbId)?.keywordIds ?? [];
     return keywordIds.filter((id) => ids.includes(id));
   };
-  if (keywordIds.length > 0) {
-    scored = [...scored].sort(
-      (a, b) =>
-        matchesOf(b.candidate.tmdbId).length - matchesOf(a.candidate.tmdbId).length || b.compat.score - a.compat.score,
-    );
-  }
+  // O filtro de duração do TMDb deixa passar filmes que, nos detalhes, ficam fora da faixa.
+  const { min, max } = plan.runtimeRange;
+  let scored = found.results.flatMap((candidate, tmdbIndex) => {
+    if (!candidates.includes(candidate)) return [];
+    const detail = extras.get(candidate.tmdbId);
+    const runtime = detail?.runtime;
+    if (runtime && ((min !== null && runtime < min) || (max !== null && runtime > max))) return [];
+    const compat = scorer(candidate, detail);
+    return [{ candidate, compat, tmdbIndex, score: compat.score, matches: matchesOf(candidate.tmdbId).length }];
+  });
+  if (filters.fit && listId) scored = scored.filter(({ compat }) => compat.score >= FIT_MIN_SCORE);
 
-  const results = scored.map(({ candidate, compat }): DiscoverItem => {
+  const results = orderResults(scored, sort, found.results.length).map(({ candidate, compat }): DiscoverItem => {
     const detail = extras.get(candidate.tmdbId);
     return {
       tmdbId: candidate.tmdbId,
@@ -184,16 +181,6 @@ async function readExtras(
       logger.warn('detalhes do filme indisponíveis', { tmdbId, error: result.reason });
   });
   return extras;
-}
-
-/**
- * Ordena pela compatibilidade, da maior para a menor; no empate, mantém a ordem do TMDb.
- *
- * @param scored - Filmes pontuados.
- * @returns Uma cópia ordenada.
- */
-function sortByScore<T extends { compat: Compat }>(scored: readonly T[]): T[] {
-  return [...scored].sort((a, b) => b.compat.score - a.compat.score);
 }
 
 export { discoverMovies };

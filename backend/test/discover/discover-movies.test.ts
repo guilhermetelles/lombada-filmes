@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, test } from 'node:test';
 import type { Firestore } from 'firebase-admin/firestore';
-import { DETAILED_RESULTS, discoverMovies } from '../../lib/discover/discover-movies.js';
+import { discoverMovies } from '../../lib/discover/discover-movies.js';
 import { createTmdbDiscoverClient, type TmdbDiscoverClient } from '../../lib/discover/tmdb-discover-client.js';
 import type { SourceName } from '../../lib/types/sources.js';
 import type { UsageOutcome, UsageRecorder } from '../../lib/types/usage.js';
@@ -87,7 +87,7 @@ describe('discoverMovies sem lista', () => {
 
     const page = await discoverMovies(
       { db: noDatabase, tmdb: client, usage },
-      { filters: { genre: ['Comédia'], theme: ['lgbt'] }, page: 1 },
+      { filters: { genre: ['Comédia'], theme: ['lgbt'] }, page: 1, sort: 'compat' },
     );
 
     assert.equal(page.page, 1);
@@ -113,13 +113,14 @@ describe('discoverMovies sem lista', () => {
       inListEntryId: null,
       matchedKeywords: [],
     });
-    assert.equal(page.results.filter((item) => item.runtime !== null).length, DETAILED_RESULTS);
+    // Todos os filmes da página ganham detalhes, para serem pontuados do mesmo jeito.
+    assert.equal(page.results.filter((item) => item.runtime !== null).length, 20);
 
     const discoverUrl = tmdb.urls.find((url) => url.pathname === '/3/discover/movie');
     assert.equal(discoverUrl?.searchParams.get('with_genres'), '35');
     assert.equal(discoverUrl?.searchParams.get('with_keywords'), '158718|264386|250606|290527|363345');
-    // 1 /discover + 1 em alta + 10 detalhes
-    assert.deepEqual(usage.counts, { tmdb: { calls: 12 } });
+    // 1 /discover + 1 em alta + 20 detalhes
+    assert.deepEqual(usage.counts, { tmdb: { calls: 22 } });
   });
 
   test('marca os filmes em alta; falha nos em alta ou nos detalhes não derruba a busca', async () => {
@@ -146,7 +147,7 @@ describe('discoverMovies sem lista', () => {
     const degraded = await discoverMovies({ db: noDatabase, tmdb: real, usage }, { filters: {}, page: 1 });
     assert.equal(degraded.results.length, 20);
     assert.ok(degraded.results.every((item) => !item.trending && item.runtime === null && item.providers.length === 0));
-    assert.deepEqual(usage.counts, { tmdb: { calls: 12, errors: 11 } });
+    assert.deepEqual(usage.counts, { tmdb: { calls: 22, errors: 21 } });
   });
 
   test('duração: tira os filmes cujos detalhes ficam fora da faixa pedida', async () => {
@@ -156,7 +157,7 @@ describe('discoverMovies sem lista', () => {
       { db: noDatabase, tmdb: client, usage: new CountingUsage() },
       { filters: { dur: ['ate90'] }, page: 1 },
     );
-    // Dos 10 com detalhes, só ficam os de até 90 min; os outros 10 não têm duração conhecida e ficam.
+    // Com os detalhes de todos, só ficam os de até 90 min.
     assert.ok(page.results.every((item) => item.runtime === null || item.runtime <= 90));
     assert.ok(page.results.length < 20);
   });

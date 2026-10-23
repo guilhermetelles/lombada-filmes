@@ -8,9 +8,10 @@ import { DiscoverQuery } from '../lib/schemas/route-inputs.js';
 import type { Dependencies } from '../lib/types/dependencies.js';
 
 /**
- * GET /api/discover?listId=&mood=&dur=&dec=&genre=&theme=&svc=&fit=&page=&lang=: busca avançada no
- * TMDb (região BR), ordenada pela compatibilidade com a lista; com `lang=en`, títulos em inglês. Com `listId`, só membros da lista; sem
- * ele, a nota de cada filme é a do TMDb.
+ * GET /api/discover?listId=&mood=&dur=&dec=&genre=&theme=&svc=&fit=&page=&sort=&lang=: busca avançada
+ * no TMDb (região BR), pontuada pela compatibilidade com a lista. `sort=relevance` (o padrão) mistura
+ * a posição no TMDb com a compatibilidade; `sort=compat` ordena só por ela. Com `lang=en`, títulos em
+ * inglês. Com `listId`, só membros da lista; sem ele, a nota de cada filme é a do TMDb.
  *
  * Responde 200 `{ results, page, totalPages }`, 400 se a query for inválida, 401 sem token válido,
  * 403 se a pessoa não for membro da lista, 404 se a lista não existir e 502 se o TMDb falhar.
@@ -22,14 +23,14 @@ export const discoverRouteWith = (
   getTmdb: (dependencies: Dependencies) => TmdbDiscoverClient = (dependencies) => dependencies.sources.tmdbDiscover,
 ) =>
   authenticatedRoute(async ({ request, uid, dependencies, usage }) => {
-    const { listId, page, lang, ...filters } = parseInput(
+    const { listId, page, sort, lang, ...filters } = parseInput(
       DiscoverQuery,
       Object.fromEntries(new URL(request.url).searchParams),
     );
     if (listId) requireMember((await listDocument(dependencies.db, listId).get()).data(), uid);
     const result = await discoverMovies(
       { db: dependencies.db, tmdb: getTmdb(dependencies), usage },
-      { filters, page, listId, language: lang },
+      { filters, page, sort, listId, language: lang },
     );
     return Response.json(result);
   });

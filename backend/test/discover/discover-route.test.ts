@@ -105,7 +105,18 @@ describe('GET /api/discover', () => {
     assert.equal(page.results.length, 20);
     assert.equal(page.results[0]?.reason, 'Nota do TMDb');
     const usage = await dependencies.db.doc(`usage/${usageDay(NOW)}`).get();
-    assert.deepEqual(usage.get('tmdb'), { calls: 12 });
+    assert.deepEqual(usage.get('tmdb'), { calls: 22 });
+  });
+
+  test('sort=compat ordena só pela compatibilidade; sort inválido é 400', async () => {
+    const page = (await (await discover('genre=Comédia&theme=lgbt&sort=compat')).json()) as DiscoverPage;
+    const scores = page.results.map((item) => item.score);
+    assert.deepEqual(
+      scores,
+      [...scores].sort((a, b) => b - a),
+    );
+    const invalid = await discover('sort=nota');
+    assert.equal(invalid.status, 400);
   });
 
   test('com lista sem modelo: gêneros dos 20 primeiros e o filme da lista marcado', async () => {
