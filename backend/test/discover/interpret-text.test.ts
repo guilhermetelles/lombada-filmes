@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { describe, test } from 'node:test';
-import { interpretText } from '../../lib/discover/interpret-text.js';
+import { INTERPRET_BUDGET_MS, INTERPRET_MODEL_TIMEOUT_MS, interpretText } from '../../lib/discover/interpret-text.js';
 import { SourceUnavailableError } from '../../lib/errors/app-errors.js';
 import { createGeminiClient } from '../../lib/sources/gemini/gemini-client.js';
 import { GEMINI_MODELS } from '../../lib/sources/gemini/gemini-models.js';
@@ -30,6 +30,8 @@ describe('interpretText', () => {
 
     const [request] = gemini.requests;
     assert.equal(request?.model, GEMINI_MODELS.interpret);
+    assert.equal(request?.timeoutMs, INTERPRET_MODEL_TIMEOUT_MS);
+    assert.equal(request?.budgetMs, INTERPRET_BUDGET_MS);
     assert.equal(request?.prompt, 'qualquer coisa');
     for (const value of ['ruim-divertido', 'mais120', 'antes70', 'Ficção científica', 'zumbis-vampiros', 'Globoplay']) {
       assert.ok(request?.system?.includes(value), `instrução sem ${value}`);
@@ -60,5 +62,17 @@ describe('interpretText', () => {
   test('Gemini indisponível: o erro sobe', async () => {
     const gemini = createFakeGemini();
     await assert.rejects(interpretText(gemini.client, 'terror curto'), SourceUnavailableError);
+  });
+
+  test('duração e década ditas no pedido valem mesmo quando o modelo as perde', async () => {
+    const gemini = createFakeGemini();
+    gemini.replies.push({
+      filters: { mood: ['leve'], genre: ['Comédia'], dur: ['90a120'] },
+      explanation: 'Comédias leves.',
+    });
+
+    const reply = await interpretText(gemini.client, 'comédia curta dos anos 90');
+
+    assert.deepEqual(reply.filters, { mood: ['leve'], dur: ['ate90'], dec: ['1990'], genre: ['Comédia'] });
   });
 });

@@ -189,6 +189,8 @@ export type GeminiRequest<T> = {
   prompt: string;
   schema: z.ZodType<T>; // formato da resposta; vira o JSON Schema pedido ao modelo e valida o que volta
   usage?: UsageRecorder | undefined; // conta os pedidos por modelo e diz quais ficaram sem cota hoje
+  timeoutMs?: number | undefined; // tempo máximo de cada modelo; sem ele, GEMINI_TIMEOUT_MS
+  budgetMs?: number | undefined; // tempo máximo do pedido inteiro, somando os modelos tentados
 };
 
 /** Cliente do Gemini: gera JSON validado. Os comentários vão só como texto, sem nomes. */

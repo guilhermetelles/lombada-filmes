@@ -4,7 +4,7 @@ import { describe, test } from 'node:test';
 import * as z from 'zod';
 import { SourceUnavailableError } from '../../lib/errors/app-errors.js';
 import { InterpretReplySchema } from '../../lib/schemas/discover.js';
-import { createGeminiClient } from '../../lib/sources/gemini/gemini-client.js';
+import { createGeminiClient, GEMINI_UNAVAILABLE_REST_MS } from '../../lib/sources/gemini/gemini-client.js';
 import { GEMINI_MODELS } from '../../lib/sources/gemini/gemini-models.js';
 import type { Fetch } from '../../lib/types/sources.js';
 import { GEMINI_QUOTA_DOC, UsageMeter } from '../../lib/usage/usage-meter.js';
@@ -31,6 +31,36 @@ function geminiFetch(body: string, status = 200): { fetch: Fetch; seen: SeenRequ
     const request = input instanceof Request ? input : new Request(input, init);
     seen.push({ url: request.url, headers: request.headers, body: JSON.parse(await request.text()) });
     return new Response(body, { status, headers: { 'content-type': 'application/json' } });
+  };
+  return { fetch, seen };
+}
+
+/**
+ * Fetch falso que responde por modelo: um status com erro, "hang" (fica sem responder até o SDK
+ * desistir), "network" (falha de rede) ou, sem entrada, a resposta gravada.
+ *
+ * @param byModel - O que cada modelo faz.
+ * @returns O fetch e os modelos pedidos, na ordem.
+ */
+function modelFetch(byModel: Record<string, number | 'hang' | 'network'>): { fetch: Fetch; seen: string[] } {
+  const seen: string[] = [];
+  const fetch: Fetch = async (input, init) => {
+    const request = input instanceof Request ? input : new Request(input, init);
+    const model = String(JSON.parse(await request.text()).model);
+    seen.push(model);
+    const behavior = byModel[model];
+    if (behavior === 'network') throw new TypeError('fetch failed');
+    if (behavior === 'hang') {
+      const signal = init?.signal ?? request.signal;
+      return new Promise<Response>((_, reject) => {
+        signal?.addEventListener('abort', () => reject(signal.reason));
+      });
+    }
+    if (behavior === undefined) return new Response(recorded, { headers: { 'content-type': 'application/json' } });
+    return new Response(`{"error":{"code":${behavior},"message":"falha ${behavior}"}}`, {
+      status: behavior,
+      headers: { 'content-type': 'application/json' },
+    });
   };
   return { fetch, seen };
 }
@@ -211,5 +241,76 @@ describe('createGeminiClient', () => {
       seen.map((request) => request.body.model),
       [GEMINI_MODELS.interpret[0]],
     );
+  });
+
+  test('modelo fora do ar (503): vai ao próximo e fica pulado por alguns minutos', async () => {
+    const [first, second] = GEMINI_MODELS.interpret;
+    const { fetch, seen } = modelFetch({ [first]: 503 });
+    const clock = new Date();
+    const usage = new UsageMeter();
+
+    const result = await createGeminiClient({ apiKey: 'chave-de-teste', fetch, now: () => clock }).generateJson({
+      ...interpretRequest,
+      usage,
+    });
+
+    assert.equal(result.explanation, 'Comédias leves e curtas dos anos 1990 na Netflix.');
+    assert.deepEqual(seen, [first, second]);
+    assert.deepEqual(usage.geminiQuotaHits(), []);
+    assert.deepEqual([...(await usage.geminiModelsToSkip())], [first]);
+    usage.skipGeminiModel(first, new Date(clock.getTime() + GEMINI_UNAVAILABLE_REST_MS - 1));
+    assert.ok((await usage.geminiModelsToSkip()).has(first));
+  });
+
+  test('modelo que não responde no tempo limite: vai ao próximo', async () => {
+    const [first, second] = GEMINI_MODELS.interpret;
+    const { fetch, seen } = modelFetch({ [first]: 'hang' });
+    const started = Date.now();
+
+    const result = await createGeminiClient({ apiKey: 'chave-de-teste', fetch }).generateJson({
+      ...interpretRequest,
+      timeoutMs: 50,
+    });
+
+    assert.equal(result.explanation, 'Comédias leves e curtas dos anos 1990 na Netflix.');
+    assert.deepEqual(seen, [first, second]);
+    assert.ok(Date.now() - started < 5_000, 'esperou demais pelo modelo parado');
+  });
+
+  test('falha de rede: vai ao próximo', async () => {
+    const [first, second] = GEMINI_MODELS.interpret;
+    const { fetch, seen } = modelFetch({ [first]: 'network' });
+
+    await createGeminiClient({ apiKey: 'chave-de-teste', fetch }).generateJson(interpretRequest);
+
+    assert.deepEqual(seen, [first, second]);
+  });
+
+  test('prazo total esgotado: para sem tentar os outros modelos', async () => {
+    const { fetch, seen } = modelFetch(Object.fromEntries(GEMINI_MODELS.interpret.map((model) => [model, 'hang'])));
+    const started = Date.now();
+
+    await assert.rejects(
+      createGeminiClient({ apiKey: 'chave-de-teste', fetch }).generateJson({
+        ...interpretRequest,
+        timeoutMs: 10_000,
+        budgetMs: 2_500,
+      }),
+      (error) => error instanceof SourceUnavailableError && /timed out/i.test(error.message),
+    );
+
+    assert.deepEqual(seen, [GEMINI_MODELS.interpret[0]]);
+    assert.ok(Date.now() - started < 5_000, 'passou do prazo total');
+  });
+
+  test('erro que não é de disponibilidade (400): não tenta outro modelo', async () => {
+    const { fetch, seen } = modelFetch({ [GEMINI_MODELS.interpret[0]]: 400 });
+
+    await assert.rejects(
+      createGeminiClient({ apiKey: 'chave-de-teste', fetch }).generateJson(interpretRequest),
+      SourceUnavailableError,
+    );
+
+    assert.deepEqual(seen, [GEMINI_MODELS.interpret[0]]);
   });
 });

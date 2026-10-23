@@ -4,6 +4,7 @@ import type { Filters, InterpretReply } from '../types/discover.js';
 import type { GeminiClient } from '../types/sources.js';
 import type { UsageRecorder } from '../types/usage.js';
 import { genreIdByName, STREAMING_SERVICES, streamingServiceByName, TMDB_GENRES } from './discover-vocabulary.js';
+import { filtersFromWords } from './filters-from-words.js';
 
 /** Instrução de sistema: o vocabulário fechado dos filtros e como explicar o que foi entendido. */
 const SYSTEM_INSTRUCTION = `Você transforma um pedido em português sobre que filme ver em filtros de uma busca de filmes.
@@ -40,8 +41,22 @@ explanation: uma frase curta em português, dirigida a quem pediu, dizendo o que
 e diga isso na explanation.`;
 
 /**
+ * Prazo de cada modelo na busca: o 3.8 Flash costuma responder em 3 a 11 s, e um modelo que passa
+ * disso em geral está sobrecarregado (em 2026-10-23 o 3.7 Flash ficou 30 s sem responder).
+ */
+export const INTERPRET_MODEL_TIMEOUT_MS = 10_000;
+
+/**
+ * Prazo do Gemini na busca, somando os modelos tentados. Cabe nos 30 s que o app espera pela
+ * resposta, com folga para o limite diário e as palavras-chave do TMDb.
+ */
+export const INTERPRET_BUDGET_MS = 22_000;
+
+/**
  * Pede ao Gemini os filtros da busca avançada para um texto livre e limpa a resposta: gêneros e
  * serviços ficam só se forem conhecidos (com o nome do TMDb), sem repetidos, e grupos vazios saem.
+ * Duração e década ditas com as palavras fixas da instrução ("curto", "anos 90") valem pelo texto,
+ * no lugar do que o modelo devolveu nesses grupos.
  *
  * @param gemini - Cliente do Gemini.
  * @param text - Frase digitada (2 a 200 caracteres, já validada).
@@ -56,9 +71,11 @@ async function interpretText(gemini: GeminiClient, text: string, usage?: UsageRe
     prompt: text,
     schema: InterpretReplySchema,
     usage,
+    timeoutMs: INTERPRET_MODEL_TIMEOUT_MS,
+    budgetMs: INTERPRET_BUDGET_MS,
   });
   return {
-    filters: cleanFilters(reply.filters),
+    filters: cleanFilters({ ...reply.filters, ...filtersFromWords(text) }),
     explanation: reply.explanation.trim(),
     keywords: reply.keywords.filter((keyword) => keyword.term.trim() !== ''),
   };

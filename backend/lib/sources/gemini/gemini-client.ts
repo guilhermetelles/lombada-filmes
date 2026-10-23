@@ -6,18 +6,32 @@ import { parseSourceData } from '../shared/fetch-json.js';
 import { toGeminiJsonSchema } from './gemini-json-schema.js';
 import { quotaRetryAt } from './quota-retry.js';
 
-/** Tempo máximo de um pedido ao Gemini; acima disso a rota responde 502 em vez de esperar. */
+/** Tempo máximo de um pedido a um modelo, quando quem pede não diz outro. */
 export const GEMINI_TIMEOUT_MS = 30_000;
+
+/** Quanto um modelo fora do ar (5xx, 404, tempo limite, rede) fica pulado antes de ser tentado de novo. */
+export const GEMINI_UNAVAILABLE_REST_MS = 5 * 60_000;
+
+/** Tempo mínimo que ainda vale gastar num modelo; com menos que isso do prazo total, o pedido para. */
+const MIN_ATTEMPT_MS = 2_000;
+
+/** Status HTTP de modelo fora do ar, que pedem o próximo da lista. */
+const UNAVAILABLE_STATUSES = new Set([404, 500, 502, 503, 504]);
+
+/** Erros do SDK sem resposta HTTP: tempo limite ou falha de rede. */
+const CONNECTION_ERRORS = new Set(['APIConnectionTimeoutError', 'APIConnectionError']);
 
 /**
  * Cria o cliente do Gemini: API de Interações do @google/genai, sempre com `store: false` (nada fica
  * guardado no Google além do pedido), resposta em JSON no formato do schema zod, validada ao voltar.
  * Os modelos vêm de GEMINI_MODELS (versões fixas, em ordem de preferência): com a cota de um
- * esgotada, o pedido vai ao próximo. Sem nova tentativa no mesmo modelo. Com o medidor de consumo no
- * pedido, cada modelo tem os pedidos, erros e 429 contados em usage/{dia}.geminiModels, e o modelo
- * que respondeu 429 fica pulado até quando o próprio erro diz que a cota volta (quotaRetryAt): um
- * limite por minuto tira o modelo por segundos, a cota diária até ela zerar. Se todos estão no
- * prazo, tenta só o primeiro, para notar quando a cota voltar.
+ * esgotada (429) ou ele fora do ar (5xx, 404, tempo limite, rede), o pedido vai ao próximo. Sem nova
+ * tentativa no mesmo modelo. Cada modelo tem `timeoutMs` para responder, e `budgetMs` limita o pedido
+ * inteiro: o modelo seguinte só recebe o que sobrou do prazo. Com o medidor de consumo no pedido,
+ * cada modelo tem os pedidos, erros e 429 contados em usage/{dia}.geminiModels, e o modelo que
+ * falhou fica pulado: no 429, até quando o próprio erro diz que a cota volta (quotaRetryAt); fora do
+ * ar, por GEMINI_UNAVAILABLE_REST_MS. Se todos estão no prazo, tenta só o primeiro, para notar
+ * quando ele voltar.
  *
  * @param options - Chave da API (opcional), o fetch a usar e o relógio.
  * @returns Cliente que gera JSON validado.
@@ -43,7 +57,7 @@ function createGeminiClient({
      * @throws {SourceUnavailableError} Sem GEMINI_API_KEY (sem fazer pedido), se o pedido falhar,
      *   passar do tempo limite, não terminar ou voltar fora do formato.
      */
-    async generateJson({ model, system, prompt, schema, usage }) {
+    async generateJson({ model, system, prompt, schema, usage, timeoutMs = GEMINI_TIMEOUT_MS, budgetMs }) {
       if (!apiKey) throw new SourceUnavailableError('gemini', 'GEMINI_API_KEY não configurada');
       sdk ??= new GoogleGenAI({ apiKey, httpOptions: { fetch, timeout: GEMINI_TIMEOUT_MS } });
       const client = sdk;
@@ -51,20 +65,33 @@ function createGeminiClient({
       const resting = usage ? await usage.geminiModelsToSkip() : new Set<string>();
       const available = models.filter((candidate) => !resting.has(candidate));
       const candidates = available.length > 0 ? available : models.slice(0, 1);
+      const deadline = budgetMs === undefined ? undefined : Date.now() + budgetMs;
 
-      // Cota diária esgotada (429) ou modelo indisponível (404, 503): tenta o próximo da lista.
+      // Cota esgotada (429) ou modelo fora do ar: tenta o próximo da lista, dentro do prazo total.
       let lastError: SourceUnavailableError | undefined;
       for (const candidate of candidates) {
+        const remaining = deadline === undefined ? Number.POSITIVE_INFINITY : deadline - Date.now();
+        if (lastError && remaining < MIN_ATTEMPT_MS) break;
         usage?.countGeminiModel(candidate, 'calls');
         try {
-          return await requestJson(client, { model: candidate, system, prompt, schema });
+          return await requestJson(client, {
+            model: candidate,
+            system,
+            prompt,
+            schema,
+            timeoutMs: Math.min(timeoutMs, Math.max(MIN_ATTEMPT_MS, remaining)),
+          });
         } catch (error) {
           usage?.countGeminiModel(candidate, 'errors');
-          if (error instanceof SourceUnavailableError && statusOf(error.cause) === 429) {
+          if (!(error instanceof SourceUnavailableError)) throw error;
+          if (statusOf(error.cause) === 429) {
             usage?.countGeminiModel(candidate, 'quota');
             usage?.skipGeminiModel(candidate, quotaRetryAt(error.cause, now()));
+          } else if (isUnavailable(error.cause)) {
+            usage?.skipGeminiModel(candidate, new Date(now().getTime() + GEMINI_UNAVAILABLE_REST_MS));
+          } else {
+            throw error;
           }
-          if (!(error instanceof SourceUnavailableError) || !isFallbackStatus(error.cause)) throw error;
           lastError = error;
         }
       }
@@ -77,7 +104,7 @@ function createGeminiClient({
  * Faz um pedido a um modelo e valida o JSON que volta.
  *
  * @param sdk - SDK já montado com a chave.
- * @param request - Modelo, instrução de sistema, texto e schema da resposta.
+ * @param request - Modelo, instrução de sistema, texto, schema da resposta e tempo máximo.
  * @returns A resposta validada pelo schema.
  * @throws {SourceUnavailableError} Se o pedido falhar, passar do tempo limite, não terminar ou voltar
  *   fora do formato; a causa guarda o erro do SDK (com o status HTTP, quando houve resposta).
@@ -89,7 +116,8 @@ async function requestJson<T>(
     system,
     prompt,
     schema,
-  }: { model: string; system?: string | undefined; prompt: string; schema: z.ZodType<T> },
+    timeoutMs,
+  }: { model: string; system?: string | undefined; prompt: string; schema: z.ZodType<T>; timeoutMs: number },
 ): Promise<T> {
   let interaction: Awaited<ReturnType<GoogleGenAI['interactions']['create']>>;
   try {
@@ -102,7 +130,7 @@ async function requestJson<T>(
         generation_config: { thinking_level: 'low' },
         response_format: { type: 'text', mime_type: 'application/json', schema: toGeminiJsonSchema(schema) },
       },
-      { maxRetries: 0 },
+      { maxRetries: 0, timeout: timeoutMs },
     );
   } catch (cause) {
     throw new SourceUnavailableError('gemini', `${model}: ${describeFailure(cause)}`, { cause });
@@ -124,14 +152,15 @@ async function requestJson<T>(
 }
 
 /**
- * Diz se a falha do SDK pede outro modelo: cota esgotada (429) ou modelo fora do ar (404, 503).
+ * Diz se a falha do SDK é de modelo fora do ar: 5xx, 404 (versão retirada), tempo limite ou rede.
  *
  * @param cause - Causa guardada no SourceUnavailableError.
- * @returns true para esses status.
+ * @returns true para essas falhas; false para 429 e para resposta fora do formato.
  */
-function isFallbackStatus(cause: unknown): boolean {
+function isUnavailable(cause: unknown): boolean {
   const status = statusOf(cause);
-  return status === 429 || status === 404 || status === 503;
+  if (typeof status === 'number') return UNAVAILABLE_STATUSES.has(status);
+  return cause instanceof Error && CONNECTION_ERRORS.has(cause.name);
 }
 
 /**
