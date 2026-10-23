@@ -22,6 +22,9 @@ export type Theme =
   | 'serial-killer'
   | 'livro';
 
+/** Filtros que a interpretação do texto preenche: todos menos os ids de palavras-chave. */
+export type InterpretedFilters = Omit<Filters, 'kw'>;
+
 /** Filtros da busca avançada. */
 export type Filters = {
   mood?: Mood[] | undefined;
@@ -81,7 +84,7 @@ export type InterpretTerm = {
 
 /** Resposta pedida ao Gemini na interpretação: filtros, explicação e termos para palavras-chave. */
 export type InterpretReply = {
-  filters: Filters;
+  filters: InterpretedFilters;
   explanation: string;
   keywords: InterpretTerm[];
 };

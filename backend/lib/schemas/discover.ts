@@ -5,6 +5,7 @@ import type {
   DiscoverPage,
   Dur,
   Filters,
+  InterpretedFilters,
   InterpretReply,
   InterpretResult,
   Mood,
@@ -47,8 +48,8 @@ export const DecSchema: z.ZodType<Dec> = z.enum(DECS);
 /** Tema. */
 export const ThemeSchema: z.ZodType<Theme> = z.enum(THEMES);
 
-/** Filtros da busca avançada (também o formato pedido ao Gemini na interpretação). */
-export const FiltersSchema: z.ZodType<Filters> = z.object({
+/** Campos dos filtros que a interpretação do texto pode preencher. */
+const interpretedFilterFields = {
   mood: z.array(MoodSchema).optional(),
   dur: z.array(DurSchema).optional(),
   dec: z.array(DecSchema).optional(),
@@ -56,8 +57,19 @@ export const FiltersSchema: z.ZodType<Filters> = z.object({
   theme: z.array(ThemeSchema).optional(),
   svc: z.array(z.string()).optional(),
   fit: z.boolean().optional(),
+};
+
+/** Filtros da busca avançada. */
+export const FiltersSchema: z.ZodType<Filters> = z.object({
+  ...interpretedFilterFields,
   kw: z.array(z.number().int().positive()).max(5).optional(),
 });
+
+/**
+ * Filtros no formato pedido ao modelo na interpretação: sem `kw`, cujos ids vêm do TMDb a partir dos
+ * termos (o Qwen chegou a preencher `kw` com 0, e a resposta caía fora do formato).
+ */
+export const InterpretedFiltersSchema: z.ZodType<InterpretedFilters> = z.object(interpretedFilterFields);
 
 /** Um resultado da busca avançada. */
 export const DiscoverItemSchema: z.ZodType<DiscoverItem> = z.object({
@@ -89,9 +101,9 @@ export const InterpretResultSchema: z.ZodType<InterpretResult> = z.object({
   keywords: z.array(z.object({ id: z.number().int().positive(), label: z.string() })),
 });
 
-/** Resposta do Gemini na interpretação do texto livre. */
+/** Resposta do modelo na interpretação do texto livre. */
 export const InterpretReplySchema: z.ZodType<InterpretReply> = z.object({
-  filters: FiltersSchema,
+  filters: InterpretedFiltersSchema,
   explanation: z.string(),
   keywords: z
     .array(z.object({ term: z.string(), label: z.string() }))

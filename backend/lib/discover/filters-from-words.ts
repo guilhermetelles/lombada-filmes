@@ -9,6 +9,13 @@ const LONG_WORDS = /\b(?:longos?|epic[oa]s?)\b/;
 /** "anos 90", "anos 1990", "década de 80", "anos 2000": o número da década, já sem acento. */
 const DECADE_WORDS = /\b(?:anos|decada de)\s+(\d{2,4})\b/g;
 
+/**
+ * Palavras que falam da época de lançamento, já sem acento: sem nenhuma delas, a década que o
+ * modelo mandar é inventada ("romance futuro" voltava com 2000 a 2020).
+ */
+const RELEASE_ERA_WORDS =
+  /\b(?:anos\s+\d+|decadas?|antig[oa]s?|classic[oa]s?|velh[oa]s?|recentes?|nov[oa]s?|lancad[oa]s?|lancamentos?|atua(?:l|is)|modern[oa]s?|ultimos\s+anos|(?:19|20)\d{2})\b/;
+
 /** Década dita no pedido → valor do filtro `dec`. Anos 20 a 60 caem em "antes70". */
 const DECADES: Record<string, Dec> = {
   '20': 'antes70',
@@ -41,10 +48,7 @@ const DECADES: Record<string, Dec> = {
  * @returns Só os grupos `dur` e `dec` encontrados (vazio se nenhum).
  */
 function filtersFromWords(text: string): Pick<Filters, 'dur' | 'dec'> {
-  const plain = text
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/\p{Diacritic}/gu, '');
+  const plain = plainText(text);
   const found: Pick<Filters, 'dur' | 'dec'> = {};
   const dur: Dur[] = [
     ...(SHORT_WORDS.test(plain) ? ['ate90' as const] : []),
@@ -56,4 +60,28 @@ function filtersFromWords(text: string): Pick<Filters, 'dur' | 'dec'> {
   return found;
 }
 
-export { filtersFromWords };
+/**
+ * Diz se o pedido fala da época de lançamento ("anos 90", "antigo", "recente", "de 1995"). Sem
+ * isso, a década do modelo é descartada: "futuro" ou "passado" falam da história, não do lançamento.
+ *
+ * @param text - Frase digitada.
+ * @returns true se alguma palavra de época aparece.
+ */
+function mentionsReleaseEra(text: string): boolean {
+  return RELEASE_ERA_WORDS.test(plainText(text));
+}
+
+/**
+ * Minúsculas e sem acento, para as palavras serem achadas de qualquer jeito que forem digitadas.
+ *
+ * @param text - Frase digitada.
+ * @returns A frase sem acento e em minúsculas.
+ */
+function plainText(text: string): string {
+  return text
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '');
+}
+
+export { filtersFromWords, mentionsReleaseEra };

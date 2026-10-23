@@ -80,7 +80,6 @@ describe('modelos da Groq no cliente de texto', () => {
         dur: ['ate90'],
         fit: false,
         genre: ['Comédia'],
-        kw: [],
         mood: ['leve'],
         svc: ['Netflix'],
         theme: [],
@@ -99,18 +98,22 @@ describe('modelos da Groq no cliente de texto', () => {
       { role: 'user', content: 'comédia curta dos anos 90 na Netflix' },
     ]);
     const format = sent?.body.response_format as {
-      json_schema: { strict: boolean; schema: { properties: { filters: Record<string, unknown> } } };
+      json_schema: {
+        strict: boolean;
+        schema: { properties: { filters: Record<string, unknown>; keywords: Record<string, unknown> } };
+      };
     };
     assert.equal(format.json_schema.strict, true);
     const filters = format.json_schema.schema.properties.filters as {
       required: string[];
       additionalProperties: boolean;
-      properties: { mood: { type: unknown }; kw: Record<string, unknown> };
+      properties: { mood: { type: unknown } };
     };
-    assert.deepEqual(filters.required, ['mood', 'dur', 'dec', 'genre', 'theme', 'svc', 'fit', 'kw']);
+    // Sem `kw`: os ids das palavras-chave vêm do TMDb, nunca do modelo.
+    assert.deepEqual(filters.required, ['mood', 'dur', 'dec', 'genre', 'theme', 'svc', 'fit']);
     assert.equal(filters.additionalProperties, false);
     assert.deepEqual(filters.properties.mood.type, ['array', 'null']);
-    assert.equal(filters.properties.kw.maxItems, undefined);
+    assert.equal(format.json_schema.schema.properties.keywords.maxItems, undefined);
   });
 
   test('429 da Groq: o próximo modelo (gpt-oss, com raciocínio baixo) responde e o Qwen fica pulado', async () => {

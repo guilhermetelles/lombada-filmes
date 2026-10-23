@@ -75,4 +75,16 @@ describe('interpretText', () => {
 
     assert.deepEqual(reply.filters, { mood: ['leve'], dur: ['ate90'], dec: ['1990'], genre: ['Comédia'] });
   });
+
+  test('década sem palavra de época no pedido sai; com ela, fica', async () => {
+    const gemini = createFakeGemini();
+    gemini.replies.push({ filters: { genre: ['Romance'], dec: ['2020'] }, explanation: 'Romances no futuro.' });
+    gemini.replies.push({ filters: { genre: ['Romance'], dec: ['2020'] }, explanation: 'Romances recentes.' });
+
+    assert.deepEqual((await interpretText(gemini.client, 'romance futuro')).filters, { genre: ['Romance'] });
+    assert.deepEqual((await interpretText(gemini.client, 'romance recente')).filters, {
+      genre: ['Romance'],
+      dec: ['2020'],
+    });
+  });
 });

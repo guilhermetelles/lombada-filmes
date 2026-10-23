@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, test } from 'node:test';
-import { filtersFromWords } from '../../lib/discover/filters-from-words.js';
+import { filtersFromWords, mentionsReleaseEra } from '../../lib/discover/filters-from-words.js';
 
 describe('filtersFromWords', () => {
   test('palavras de curto e de longo, com e sem acento', () => {
@@ -26,5 +26,27 @@ describe('filtersFromWords', () => {
 
   test('sem palavra fixa, nada', () => {
     assert.deepEqual(filtersFromWords('quero ver algo bom, faz uns 10 anos que não vejo'), {});
+  });
+});
+
+describe('mentionsReleaseEra', () => {
+  test('palavras de época de lançamento, com e sem acento', () => {
+    for (const text of [
+      'comédia dos anos 90',
+      'um clássico',
+      'algo antigo',
+      'terror recente',
+      'lançamentos de 2024',
+      'filme de 1995',
+      'da década de 80',
+    ]) {
+      assert.ok(mentionsReleaseEra(text), text);
+    }
+  });
+
+  test('futuro, passado e assunto não são época de lançamento', () => {
+    for (const text of ['romance futuro', 'filme sobre o passado', 'drama medieval', 'romance com robô']) {
+      assert.ok(!mentionsReleaseEra(text), text);
+    }
   });
 });
