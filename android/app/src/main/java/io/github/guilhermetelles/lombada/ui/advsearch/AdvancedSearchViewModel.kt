@@ -10,6 +10,7 @@ import io.github.guilhermetelles.lombada.data.model.Filters
 import io.github.guilhermetelles.lombada.domain.DiscoverFilters
 import io.github.guilhermetelles.lombada.domain.DiscoverKeywords
 import io.github.guilhermetelles.lombada.domain.DiscoverResults
+import io.github.guilhermetelles.lombada.domain.DiscoverSort
 import io.github.guilhermetelles.lombada.domain.FilterOption
 import io.github.guilhermetelles.lombada.domain.Keyword
 import kotlinx.coroutines.Job
@@ -37,6 +38,7 @@ const val INTERPRET_MAX_LENGTH = 200
  * @property interpretedText Frase que o Gemini interpretou por último; null antes de interpretar.
  * @property explanation O que o Gemini disse que entendeu.
  * @property notice Aviso sobre o texto livre (limite do dia, Gemini fora); os filtros continuam.
+ * @property sort Ordem dos resultados: relevância (o padrão) ou compatibilidade.
  * @property results Resultados carregados, página a página.
  * @property loading Se a primeira página está carregando.
  * @property loadingMore Se a próxima página está carregando.
@@ -52,6 +54,7 @@ data class AdvancedSearchUiState(
     val interpretedText: String? = null,
     val explanation: String? = null,
     val notice: String? = null,
+    val sort: DiscoverSort = DiscoverSort.Relevance,
     val results: List<DiscoverItem> = emptyList(),
     val loading: Boolean = true,
     val loadingMore: Boolean = false,
@@ -74,7 +77,7 @@ data class AdvancedSearchUiState(
 /**
  * Busca avançada: texto livre interpretado pelo `POST /api/search/interpret` em filtros e
  * palavras-chave, somados ao que já estava ligado, e os resultados de `GET /api/discover` (os de
- * mais palavras-chave primeiro, depois pela compatibilidade). Sem Gemini (limite do dia, chave
+ * mais palavras-chave primeiro, depois pela relevância ou pela compatibilidade, no seletor). Sem Gemini (limite do dia, chave
  * ausente, sem rede), os filtros manuais continuam valendo.
  *
  * @param container Dependências do app.
@@ -178,6 +181,17 @@ class AdvancedSearchViewModel(private val container: AppContainer, private val l
         search(debounceMs = 0)
     }
 
+    /**
+     * Troca a ordem dos resultados e busca de novo a primeira página.
+     *
+     * @param sort Ordem escolhida.
+     */
+    fun setSort(sort: DiscoverSort) {
+        if (mutableState.value.sort == sort) return
+        mutableState.update { it.copy(sort = sort) }
+        search(debounceMs = 0)
+    }
+
     /** Busca de novo a primeira página, depois de uma falha. */
     fun retry() {
         search(debounceMs = 0)
@@ -189,12 +203,13 @@ class AdvancedSearchViewModel(private val container: AppContainer, private val l
         if (!current.canLoadMore || current.loadingMore) return
         val filters = current.filters
         val keywords = DiscoverKeywords.param(current.keywords)
+        val sort = current.sort.apiParam
         val next = current.page + 1
         mutableState.update { it.copy(loadingMore = true, error = null) }
         searchJob =
             viewModelScope.launch {
                 try {
-                    val response = container.backend.discover(listId, filters, keywords, next, lang())
+                    val response = container.backend.discover(listId, filters, keywords, next, sort, lang())
                     mutableState.update {
                         it.copy(
                             results = DiscoverResults.append(it.results, response.results),
@@ -217,8 +232,9 @@ class AdvancedSearchViewModel(private val container: AppContainer, private val l
                 if (debounceMs > 0) delay(debounceMs)
                 val filters = mutableState.value.filters
                 val keywords = DiscoverKeywords.param(mutableState.value.keywords)
+                val sort = mutableState.value.sort.apiParam
                 try {
-                    val response = container.backend.discover(listId, filters, keywords, 1, lang())
+                    val response = container.backend.discover(listId, filters, keywords, 1, sort, lang())
                     mutableState.update {
                         it.copy(
                             results = DiscoverResults.append(emptyList(), response.results),

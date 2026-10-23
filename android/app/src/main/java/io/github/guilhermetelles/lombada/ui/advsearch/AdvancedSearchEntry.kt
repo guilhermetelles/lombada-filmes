@@ -157,6 +157,7 @@ fun AdvancedSearchEntry(context: ScreenContext) {
                 onToggle = { viewModel.toggle(FilterOption(null, "fit", DiscoverFilters.FIT_LABEL)) }
             )
         }
+        item { DiscoverSortBar(state.sort, onSortChange = viewModel::setSort) }
         item {
             val count =
                 if (state.loading) {
@@ -167,7 +168,7 @@ fun AdvancedSearchEntry(context: ScreenContext) {
                         "filme",
                         "filmes"
                     )} ${DiscoverFilters.filtersLabel(state.filters, state.keywords.size)}, " +
-                        "pela compatibilidade"
+                        state.sort.summary
                 }
             Text(
                 count,

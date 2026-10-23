@@ -87,6 +87,7 @@ interface BackendApi {
         @Query("fit") fit: Boolean?,
         @Query("kw") kw: String?,
         @Query("page") page: Int?,
+        @Query("sort") sort: String?,
         @Query("lang") lang: String?
     ): DiscoverResponse
 

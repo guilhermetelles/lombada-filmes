@@ -168,6 +168,7 @@ class BackendClient(private val api: BackendApi) {
      * @param filters Filtros; listas vazias não vão no pedido.
      * @param keywords Parâmetro `kw` (ids de palavras-chave do TMDb separados por vírgula), ou null.
      * @param page Página, a partir de 1.
+     * @param sort `relevance` ou `compat`; null para o padrão do backend (relevância).
      * @param lang `en` para títulos em inglês; null para o padrão (português).
      * @return Os filmes e a paginação.
      * @throws BackendException Em qualquer falha.
@@ -177,6 +178,7 @@ class BackendClient(private val api: BackendApi) {
         filters: Filters,
         keywords: String? = null,
         page: Int = 1,
+        sort: String? = null,
         lang: String? = null
     ): DiscoverResponse = call {
         api.discover(
@@ -190,6 +192,7 @@ class BackendClient(private val api: BackendApi) {
             fit = filters.fit.takeIf { it },
             kw = keywords,
             page = page,
+            sort = sort,
             lang = lang
         )
     }
