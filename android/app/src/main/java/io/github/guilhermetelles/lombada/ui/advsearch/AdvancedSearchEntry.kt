@@ -306,7 +306,7 @@ private fun Understood(
                 tint = LombadaColors.Sticker,
                 modifier = Modifier.size(18.dp)
             )
-            Text("O Gemini entendeu", style = MaterialTheme.typography.titleSmall)
+            Text("A IA entendeu", style = MaterialTheme.typography.titleSmall)
         }
         explanation?.let {
             Text(

@@ -251,7 +251,7 @@ class AdvancedSearchViewModel(private val container: AppContainer, private val l
         error.code == BackendErrorCode.INVALID_INPUT ->
             "A frase precisa ter de 2 a $INTERPRET_MAX_LENGTH caracteres."
 
-        else -> "O Gemini não respondeu agora. Use os filtros abaixo."
+        else -> "A IA não respondeu agora. Use os filtros abaixo."
     }
 
     // Títulos dos resultados no idioma escolhido em "Opções".
