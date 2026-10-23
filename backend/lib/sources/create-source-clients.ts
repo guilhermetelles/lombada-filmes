@@ -9,19 +9,28 @@ import { createWikidataClient } from './wikidata/wikidata-client.js';
 import { createWikipediaClient } from './wikipedia/wikipedia-client.js';
 
 /**
- * Token do TMDb, chave da OMDb e chave do Gemini, que é opcional (Letterboxd, bechdeltest.com,
- * Wikidata e Wikipedia não pedem credencial).
+ * Token do TMDb, chave da OMDb e as chaves do Gemini e da Groq, que são opcionais (Letterboxd,
+ * bechdeltest.com, Wikidata e Wikipedia não pedem credencial).
  */
-type SourceCredentials = { tmdbToken: string; omdbKey: string; geminiApiKey?: string | undefined };
+type SourceCredentials = {
+  tmdbToken: string;
+  omdbKey: string;
+  geminiApiKey?: string | undefined;
+  groqApiKey?: string | undefined;
+};
 
 /**
  * Monta os clientes das fontes com as mesmas credenciais e o mesmo fetch.
  *
- * @param credentials - Token do TMDb, chave da OMDb e, se houver, chave do Gemini.
+ * @param credentials - Token do TMDb, chave da OMDb e, se houver, as chaves do Gemini e da Groq.
  * @param fetch - fetch injetado (o global em produção, um falso nos testes).
- * @returns Clientes do TMDb, da OMDb, do Letterboxd, do bechdeltest.com, do Wikidata, da Wikipedia e do Gemini.
+ * @returns Clientes do TMDb, da OMDb, do Letterboxd, do bechdeltest.com, do Wikidata, da Wikipedia e
+ *   dos modelos de texto (Gemini e Groq).
  */
-function createSourceClients({ tmdbToken, omdbKey, geminiApiKey }: SourceCredentials, fetch: Fetch): SourceClients {
+function createSourceClients(
+  { tmdbToken, omdbKey, geminiApiKey, groqApiKey }: SourceCredentials,
+  fetch: Fetch,
+): SourceClients {
   return {
     tmdb: createTmdbClient({ token: tmdbToken, fetch }),
     tmdbDiscover: createTmdbDiscoverClient({ token: tmdbToken, fetch }),
@@ -30,7 +39,7 @@ function createSourceClients({ tmdbToken, omdbKey, geminiApiKey }: SourceCredent
     bechdel: createBechdelClient({ fetch }),
     wikidata: createWikidataClient({ fetch }),
     wikipedia: createWikipediaClient({ fetch }),
-    gemini: createGeminiClient({ apiKey: geminiApiKey, fetch }),
+    gemini: createGeminiClient({ apiKey: geminiApiKey, groqApiKey, fetch }),
   };
 }
 

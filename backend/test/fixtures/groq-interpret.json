@@ -1,0 +1,12 @@
+{
+  "choices": [
+    {
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": "{\"explanation\": \"Comédias curtas dos anos 90 na Netflix.\", \"filters\": {\"dec\": [\"1990\"], \"dur\": [\"ate90\"], \"fit\": false, \"genre\": [\"Comédia\"], \"kw\": [], \"mood\": [\"leve\"], \"svc\": [\"Netflix\"], \"theme\": []}, \"keywords\": []}"
+      },
+      "finish_reason": "stop"
+    }
+  ]
+}

@@ -59,16 +59,14 @@ async function generateSynopsisQuiz({
 
   let synopsis: string;
   try {
-    const reply = await usage.track('gemini', () =>
-      gemini.generateJson({
-        model: GEMINI_MODELS.text,
-        purpose: 'quiz',
-        system: SYSTEM_INSTRUCTION,
-        prompt: original,
-        schema: NamelessSynopsisSchema,
-        usage,
-      }),
-    );
+    const reply = await gemini.generateJson({
+      model: GEMINI_MODELS.text,
+      purpose: 'quiz',
+      system: SYSTEM_INSTRUCTION,
+      prompt: original,
+      schema: NamelessSynopsisSchema,
+      usage,
+    });
     synopsis = reply.synopsis.trim();
   } catch (error) {
     logger.warn('Gemini falhou na sinopse sem nomes do quiz', { listId: material.listId, error });

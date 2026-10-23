@@ -8,6 +8,7 @@ export const EnvSchema: z.ZodType<Env> = z
     CRON_SECRET: z.string().min(16, 'deve ter pelo menos 16 caracteres'),
     OMDB_KEY: z.string().min(1),
     GEMINI_API_KEY: z.string().min(1).optional(),
+    GROQ_API_KEY: z.string().min(1).optional(),
     FIREBASE_SERVICE_ACCOUNT: z.string().min(1).optional(),
     FIRESTORE_EMULATOR_HOST: z.string().min(1).optional(),
     GCLOUD_PROJECT: z.string().min(1).default('demo-lombada'),

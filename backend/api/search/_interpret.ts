@@ -18,7 +18,7 @@ import type { InterpretResult } from '../../lib/types/discover.js';
 export const interpretRoute = authenticatedRoute(async ({ request, uid, dependencies, usage }) => {
   const { text } = await readJsonBody(request, InterpretBody);
   await consumeInterpretQuota(dependencies.db, uid, dependencies.now());
-  const reply = await usage.track('gemini', () => interpretText(dependencies.sources.gemini, text, usage));
+  const reply = await interpretText(dependencies.sources.gemini, text, usage);
   const keywords = await resolveKeywords(
     { db: dependencies.db, tmdb: dependencies.sources.tmdbDiscover, usage, now: dependencies.now },
     reply.keywords,

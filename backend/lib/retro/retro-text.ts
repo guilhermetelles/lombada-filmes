@@ -43,16 +43,14 @@ async function writeRetroText(
   const prompt = `Filmes vistos no mês (${monthEntries.length}):\n${lines.join('\n')}`;
 
   try {
-    const reply = await usage.track('gemini', () =>
-      gemini.generateJson({
-        model: GEMINI_MODELS.text,
-        purpose: 'retro',
-        system: SYSTEM_INSTRUCTION,
-        prompt,
-        schema: RetroTextSchema,
-        usage,
-      }),
-    );
+    const reply = await gemini.generateJson({
+      model: GEMINI_MODELS.text,
+      purpose: 'retro',
+      system: SYSTEM_INSTRUCTION,
+      prompt,
+      schema: RetroTextSchema,
+      usage,
+    });
     const text = reply.text.trim();
     if (text && text.length <= MAX_TEXT_LENGTH && !text.includes(NAME_PLACEHOLDER)) return text;
     logger.warn('texto da retrospectiva fora do formato, sem texto', context);

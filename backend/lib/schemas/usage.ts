@@ -12,6 +12,7 @@ export const SOURCE_NAMES = [
   'wikidata',
   'wikipedia',
   'gemini',
+  'groq',
 ] as const satisfies readonly SourceName[];
 
 /** Contador gravado com FieldValue.increment; ausente ou fora do formato conta 0. */

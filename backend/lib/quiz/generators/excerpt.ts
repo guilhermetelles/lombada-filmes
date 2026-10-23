@@ -33,16 +33,14 @@ async function askExcerpt(
   const scrubbed = scrubNames(comment, material.memberNames);
   let positions: { start: number; end: number };
   try {
-    positions = await usage.track('gemini', () =>
-      gemini.generateJson({
-        model: GEMINI_MODELS.text,
-        purpose: 'quiz',
-        system: SYSTEM_INSTRUCTION,
-        prompt: scrubbed,
-        schema: ExcerptPositionsSchema,
-        usage,
-      }),
-    );
+    positions = await gemini.generateJson({
+      model: GEMINI_MODELS.text,
+      purpose: 'quiz',
+      system: SYSTEM_INSTRUCTION,
+      prompt: scrubbed,
+      schema: ExcerptPositionsSchema,
+      usage,
+    });
   } catch (error) {
     logger.warn('Gemini falhou no trecho do quiz; vale a regra simples', { listId: material.listId, error });
     return undefined;

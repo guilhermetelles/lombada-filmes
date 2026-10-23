@@ -4,6 +4,7 @@ export type Env = {
   CRON_SECRET: string; // a Vercel manda como Bearer nas chamadas do cron
   OMDB_KEY: string;
   GEMINI_API_KEY?: string | undefined; // opcional: sem ela, o cliente do Gemini responde fonte indisponível
+  GROQ_API_KEY?: string | undefined; // opcional: sem ela, os modelos da Groq ficam de fora da lista
   FIREBASE_SERVICE_ACCOUNT?: string | undefined; // JSON da conta de serviço; obrigatória fora dos emuladores
   FIRESTORE_EMULATOR_HOST?: string | undefined; // definida por `firebase emulators:exec`
   GCLOUD_PROJECT: string;

@@ -33,7 +33,12 @@ function createProductionDependencies(): Dependencies {
     db: getFirestore(app),
     auth: getAuth(app),
     sources: createSourceClients(
-      { tmdbToken: env.TMDB_TOKEN, omdbKey: env.OMDB_KEY, geminiApiKey: env.GEMINI_API_KEY },
+      {
+        tmdbToken: env.TMDB_TOKEN,
+        omdbKey: env.OMDB_KEY,
+        geminiApiKey: env.GEMINI_API_KEY,
+        groqApiKey: env.GROQ_API_KEY,
+      },
       fetch,
     ),
     messaging: getMessaging(app),

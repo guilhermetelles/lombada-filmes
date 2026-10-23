@@ -48,7 +48,7 @@ async function interpret(body: unknown, client: GeminiClient = gemini.client, to
 const reply = { filters: { genre: ['Terror'], dur: ['ate90'] }, explanation: 'Terror de até 90 minutos.' };
 
 describe('POST /api/search/interpret', () => {
-  test('devolve filtros e explicação, conta o pedido ao Gemini e o uso do dia de Brasília', async () => {
+  test('devolve filtros e explicação e conta o uso do dia de Brasília', async () => {
     gemini.replies.push(reply);
     const { response, dependencies } = await interpret({ text: '  terror curto  ' });
 
@@ -58,18 +58,20 @@ describe('POST /api/search/interpret', () => {
     const counter = await dependencies.db.doc(`rateLimits/${uid}_2026-10-17`).get();
     assert.equal(brazilDay(clock), '2026-10-17');
     assert.equal(counter.get('interpret'), 1);
-    assert.deepEqual((await dependencies.db.doc(`usage/${usageDay(clock)}`).get()).get('gemini'), { calls: 1 });
   });
 
-  test('com a resposta real gravada do Gemini', async () => {
+  test('com a resposta real gravada do Gemini: conta o pedido à fonte e à busca', async () => {
     const recorded = readFileSync(new URL('../fixtures/gemini-interpret.json', import.meta.url), 'utf8');
     const real = createGeminiClient({
       apiKey: 'chave-de-teste',
       fetch: async () => new Response(recorded, { headers: { 'content-type': 'application/json' } }),
     });
-    const { response } = await interpret({ text: 'comédia curta dos anos 90 na Netflix' }, real);
+    const { response, dependencies } = await interpret({ text: 'comédia curta dos anos 90 na Netflix' }, real);
 
     assert.equal(response.status, 200);
+    const usage = (await dependencies.db.doc(`usage/${usageDay(clock)}`).get()).data();
+    assert.deepEqual(usage?.gemini, { calls: 1 });
+    assert.deepEqual(usage?.geminiPurposes, { search: { requests: 1, answered: 1 } });
     assert.deepEqual(await response.json(), {
       filters: { mood: ['leve'], dur: ['ate90'], dec: ['1990'], genre: ['Comédia'], svc: ['Netflix'] },
       explanation: 'Comédias leves e curtas dos anos 1990 na Netflix.',

@@ -5,13 +5,21 @@ import * as z from 'zod';
 import { SourceUnavailableError } from '../../lib/errors/app-errors.js';
 import { InterpretReplySchema } from '../../lib/schemas/discover.js';
 import { createGeminiClient, GEMINI_UNAVAILABLE_REST_MS } from '../../lib/sources/gemini/gemini-client.js';
-import { GEMINI_MODELS } from '../../lib/sources/gemini/gemini-models.js';
+import { GEMINI_MODELS, modelProvider } from '../../lib/sources/gemini/gemini-models.js';
 import type { Fetch } from '../../lib/types/sources.js';
 import { usageDay } from '../../lib/usage/usage-day.js';
 import { GEMINI_QUOTA_DOC, UsageMeter } from '../../lib/usage/usage-meter.js';
 import { createTestDependencies } from '../support/dependencies.js';
 import { resetEmulators } from '../support/emulators.js';
 import { fakeSources } from '../support/fake-sources.js';
+
+/** Modelos da busca que vão ao Gemini: sem chave da Groq, os dela ficam de fora. */
+const GEMINI_ONLY = GEMINI_MODELS.interpret.filter((model) => modelProvider(model) === 'gemini') as [
+  string,
+  string,
+  string,
+  ...string[],
+];
 
 /** Resposta real da API de Interações (gemini-3.8-flash, 2026-10-18) à frase "comédia curta dos anos 90 na Netflix". */
 const recorded = readFileSync(new URL('../fixtures/gemini-interpret.json', import.meta.url), 'utf8');
@@ -115,7 +123,7 @@ describe('createGeminiClient', () => {
     );
     assert.deepEqual(
       seen.map((request) => request.body.model),
-      [...GEMINI_MODELS.interpret],
+      [...GEMINI_ONLY],
     );
   });
 
@@ -125,7 +133,7 @@ describe('createGeminiClient', () => {
       const request = input instanceof Request ? input : new Request(input, init);
       const model = String(JSON.parse(await request.text()).model);
       seen.push(model);
-      const quota = model === GEMINI_MODELS.interpret[0];
+      const quota = model === GEMINI_ONLY[0];
       return new Response(quota ? '{"error":{"code":429,"message":"quota"}}' : recorded, {
         status: quota ? 429 : 200,
         headers: { 'content-type': 'application/json' },
@@ -133,7 +141,7 @@ describe('createGeminiClient', () => {
     };
     const result = await createGeminiClient({ apiKey: 'chave-de-teste', fetch }).generateJson(interpretRequest);
     assert.equal(result.explanation, 'Comédias leves e curtas dos anos 1990 na Netflix.');
-    assert.deepEqual(seen, GEMINI_MODELS.interpret.slice(0, 2));
+    assert.deepEqual(seen, GEMINI_ONLY.slice(0, 2));
   });
 
   test('um modelo só (texto): 429 não tenta outro', async () => {
@@ -180,7 +188,7 @@ describe('createGeminiClient', () => {
       const request = input instanceof Request ? input : new Request(input, init);
       const model = String(JSON.parse(await request.text()).model);
       seen.push(model);
-      const quota = model === GEMINI_MODELS.interpret[0];
+      const quota = model === GEMINI_ONLY[0];
       return new Response(quota ? '{"error":{"code":429,"message":"quota"}}' : recorded, {
         status: quota ? 429 : 200,
         headers: { 'content-type': 'application/json' },
@@ -192,7 +200,7 @@ describe('createGeminiClient', () => {
     await client.generateJson({ ...interpretRequest, usage });
     await client.generateJson({ ...interpretRequest, usage });
 
-    const [first, second] = GEMINI_MODELS.interpret;
+    const [first, second] = GEMINI_ONLY;
     assert.deepEqual(seen, [first, second, second]);
     assert.deepEqual(usage.geminiQuotaHits(), [first]);
   });
@@ -209,8 +217,8 @@ describe('createGeminiClient', () => {
     const fetch: Fetch = async (input, init) => {
       const request = input instanceof Request ? input : new Request(input, init);
       const model = String(JSON.parse(await request.text()).model);
-      return new Response(model === GEMINI_MODELS.interpret[0] ? body : recorded, {
-        status: model === GEMINI_MODELS.interpret[0] ? 429 : 200,
+      return new Response(model === GEMINI_ONLY[0] ? body : recorded, {
+        status: model === GEMINI_ONLY[0] ? 429 : 200,
         headers: { 'content-type': 'application/json' },
       });
     };
@@ -225,15 +233,15 @@ describe('createGeminiClient', () => {
     await usage.save(db, clock);
 
     const stored = (await db.doc(GEMINI_QUOTA_DOC).get()).get('skipUntil');
-    assert.deepEqual(Object.keys(stored), [GEMINI_MODELS.interpret[0]]);
-    assert.equal(stored[GEMINI_MODELS.interpret[0]].toMillis(), clock.getTime() + 6711_000);
+    assert.deepEqual(Object.keys(stored), [GEMINI_ONLY[0]]);
+    assert.equal(stored[GEMINI_ONLY[0]].toMillis(), clock.getTime() + 6711_000);
   });
 
   test('todos os modelos no prazo: tenta só o primeiro', async () => {
     const { fetch, seen } = geminiFetch('{"error":{"code":429,"message":"quota"}}', 429);
     const usage = new UsageMeter();
     const later = new Date(Date.now() + 60_000);
-    for (const model of GEMINI_MODELS.interpret) usage.skipGeminiModel(model, later, 'quota');
+    for (const model of GEMINI_ONLY) usage.skipGeminiModel(model, later, 'quota');
 
     await assert.rejects(
       createGeminiClient({ apiKey: 'chave-de-teste', fetch }).generateJson({ ...interpretRequest, usage }),
@@ -241,12 +249,12 @@ describe('createGeminiClient', () => {
     );
     assert.deepEqual(
       seen.map((request) => request.body.model),
-      [GEMINI_MODELS.interpret[0]],
+      [GEMINI_ONLY[0]],
     );
   });
 
   test('modelo fora do ar (503): vai ao próximo e fica pulado por alguns minutos', async () => {
-    const [first, second] = GEMINI_MODELS.interpret;
+    const [first, second] = GEMINI_ONLY;
     const { fetch, seen } = modelFetch({ [first]: 503 });
     const clock = new Date();
     const usage = new UsageMeter();
@@ -265,7 +273,7 @@ describe('createGeminiClient', () => {
   });
 
   test('modelo que não responde no tempo limite: vai ao próximo', async () => {
-    const [first, second] = GEMINI_MODELS.interpret;
+    const [first, second] = GEMINI_ONLY;
     const { fetch, seen } = modelFetch({ [first]: 'hang' });
     const started = Date.now();
 
@@ -280,7 +288,7 @@ describe('createGeminiClient', () => {
   });
 
   test('falha de rede: vai ao próximo', async () => {
-    const [first, second] = GEMINI_MODELS.interpret;
+    const [first, second] = GEMINI_ONLY;
     const { fetch, seen } = modelFetch({ [first]: 'network' });
 
     await createGeminiClient({ apiKey: 'chave-de-teste', fetch }).generateJson(interpretRequest);
@@ -289,7 +297,7 @@ describe('createGeminiClient', () => {
   });
 
   test('prazo total esgotado: para sem tentar os outros modelos', async () => {
-    const { fetch, seen } = modelFetch(Object.fromEntries(GEMINI_MODELS.interpret.map((model) => [model, 'hang'])));
+    const { fetch, seen } = modelFetch(Object.fromEntries(GEMINI_ONLY.map((model) => [model, 'hang'])));
     const started = Date.now();
 
     await assert.rejects(
@@ -301,23 +309,23 @@ describe('createGeminiClient', () => {
       (error) => error instanceof SourceUnavailableError && /timed out/i.test(error.message),
     );
 
-    assert.deepEqual(seen, [GEMINI_MODELS.interpret[0]]);
+    assert.deepEqual(seen, [GEMINI_ONLY[0]]);
     assert.ok(Date.now() - started < 5_000, 'passou do prazo total');
   });
 
   test('erro que não é de disponibilidade (400): não tenta outro modelo', async () => {
-    const { fetch, seen } = modelFetch({ [GEMINI_MODELS.interpret[0]]: 400 });
+    const { fetch, seen } = modelFetch({ [GEMINI_ONLY[0]]: 400 });
 
     await assert.rejects(
       createGeminiClient({ apiKey: 'chave-de-teste', fetch }).generateJson(interpretRequest),
       SourceUnavailableError,
     );
 
-    assert.deepEqual(seen, [GEMINI_MODELS.interpret[0]]);
+    assert.deepEqual(seen, [GEMINI_ONLY[0]]);
   });
 
   test('com o medidor: tipo de cada erro, respostas, tempo, motivo do prazo e o resultado do uso', async () => {
-    const [first, second, third] = GEMINI_MODELS.interpret;
+    const [first, second, third] = GEMINI_ONLY;
     const { fetch } = modelFetch({ [first]: 'hang', [second]: 503, 'gemini-x': 400 });
     const clock = new Date();
     const { db } = createTestDependencies(fakeSources().fetch);

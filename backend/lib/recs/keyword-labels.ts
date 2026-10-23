@@ -62,16 +62,14 @@ async function keywordLabels(
   for (let start = 0; start < missing.length; start += BATCH_SIZE) {
     const batch = missing.slice(start, start + BATCH_SIZE);
     try {
-      const reply = await usage.track('gemini', () =>
-        gemini.generateJson({
-          model: GEMINI_MODELS.text,
-          purpose: 'recs',
-          system: SYSTEM,
-          prompt: JSON.stringify(batch),
-          schema: KeywordLabelsReplySchema,
-          usage,
-        }),
-      );
+      const reply = await gemini.generateJson({
+        model: GEMINI_MODELS.text,
+        purpose: 'recs',
+        system: SYSTEM,
+        prompt: JSON.stringify(batch),
+        schema: KeywordLabelsReplySchema,
+        usage,
+      });
       const translated = new Map(reply.labels.map((item) => [item.name, item.label.trim()]));
       const writer = db.batch();
       for (const name of batch) {

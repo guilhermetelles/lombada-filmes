@@ -11,7 +11,7 @@ import type { CastMember, Director, Person, PersonDepartment } from './person.js
 import type { GeminiPurpose, UsageRecorder } from './usage.js';
 
 /** Fontes externas, também usadas como chave do consumo em usage/{dia}. */
-export type SourceName = 'tmdb' | 'omdb' | 'letterboxd' | 'bechdel' | 'wikidata' | 'wikipedia' | 'gemini';
+export type SourceName = 'tmdb' | 'omdb' | 'letterboxd' | 'bechdel' | 'wikidata' | 'wikipedia' | 'gemini' | 'groq';
 
 /** Fontes com prazo de 7 dias por filme: o TMDb e as notas (as outras têm prazos próprios). */
 export type WeeklySource = Extract<SourceName, 'tmdb' | 'omdb' | 'letterboxd'>;

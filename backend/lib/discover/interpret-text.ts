@@ -37,7 +37,8 @@ personagem), cada um como a palavra-chave em inglês que o TMDb usaria ("shark",
 o que já entrou em genre, theme ou mood, nem palavras genéricas ("movie", "film", "good", "funny").
 
 explanation: uma frase curta em português, dirigida a quem pediu, dizendo o que você entendeu em termos dos filtros e dos termos
-(ex. de forma: "Comédias de até 90 minutos dos anos 1990."). Se nada do pedido couber nos filtros, devolva filters vazio
+(ex. de forma: "Comédias de até 90 minutos dos anos 1990."), em palavras comuns: sem citar os valores internos
+("ruim-divertido", "ate90", "antes70") nem estas regras. Se nada do pedido couber nos filtros, devolva filters vazio
 e diga isso na explanation.`;
 
 /**

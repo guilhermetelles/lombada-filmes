@@ -55,16 +55,14 @@ async function generateEmojiQuiz({
 
   let emoji: string;
   try {
-    const reply = await usage.track('gemini', () =>
-      gemini.generateJson({
-        model: GEMINI_MODELS.text,
-        purpose: 'quiz',
-        system: SYSTEM_INSTRUCTION,
-        prompt: `Filme: ${movieLabel(target)}\nSinopse: ${synopsis}`,
-        schema: PlotEmojiSchema,
-        usage,
-      }),
-    );
+    const reply = await gemini.generateJson({
+      model: GEMINI_MODELS.text,
+      purpose: 'quiz',
+      system: SYSTEM_INSTRUCTION,
+      prompt: `Filme: ${movieLabel(target)}\nSinopse: ${synopsis}`,
+      schema: PlotEmojiSchema,
+      usage,
+    });
     emoji = reply.emoji.trim();
   } catch (error) {
     logger.warn('Gemini falhou nos emojis do quiz', { listId: material.listId, error });
