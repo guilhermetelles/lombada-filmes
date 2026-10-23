@@ -76,9 +76,10 @@ data class AdvancedSearchUiState(
 
 /**
  * Busca avançada: texto livre interpretado pelo `POST /api/search/interpret` em filtros e
- * palavras-chave, somados ao que já estava ligado, e os resultados de `GET /api/discover` (os de
- * mais palavras-chave primeiro, depois pela relevância ou pela compatibilidade, no seletor). Sem Gemini (limite do dia, chave
- * ausente, sem rede), os filtros manuais continuam valendo.
+ * palavras-chave, que substituem os que estavam ligados (cada frase é uma busca nova), e os resultados de `GET /api/discover` na ordem
+ * do backend (os de mais palavras-chave primeiro, depois pela relevância ou pela compatibilidade,
+ * no seletor). Sem a IA (limite do dia, chave ausente, sem rede), os filtros manuais continuam
+ * valendo.
  *
  * @param container Dependências do app.
  * @param listId Lista ativa, para a compatibilidade e a marca dos filmes que já estão nela.
@@ -105,8 +106,8 @@ class AdvancedSearchViewModel(private val container: AppContainer, private val l
     }
 
     /**
-     * Interpreta o texto livre e soma o que o Gemini entendeu (filtros e palavras-chave) ao que
-     * já estava ligado. Numa falha, o que estava ligado fica como estava.
+     * Interpreta o texto livre e troca os filtros e as palavras-chave ligados pelo que a IA entendeu:
+     * cada frase é uma busca nova. Numa falha, o que estava ligado fica como estava.
      */
     fun interpret() {
         val current = mutableState.value
@@ -128,8 +129,9 @@ class AdvancedSearchViewModel(private val container: AppContainer, private val l
                         interpreting = false,
                         interpretedText = text,
                         explanation = result.explanation.trim().ifEmpty { null },
-                        filters = DiscoverFilters.union(it.filters, filters),
-                        keywords = DiscoverKeywords.merge(it.keywords, keywords),
+                        // Cada frase é uma busca nova: o que a anterior (ou a mão) ligou sai.
+                        filters = filters,
+                        keywords = keywords,
                         notice =
                             if (nothing) {
                                 "Não achei filtros nessa frase. Tente falar de duração, gênero, década, humor, " +

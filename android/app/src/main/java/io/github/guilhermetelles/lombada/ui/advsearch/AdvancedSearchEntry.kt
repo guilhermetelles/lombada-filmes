@@ -85,9 +85,10 @@ import kotlin.math.roundToInt
 
 /**
  * Busca avançada, aberta pela busca da lista e pela aba Sugestões: texto livre interpretado pelo
- * Gemini em filtros e palavras-chave somados aos já ligados (mostrados como chips que dá para
- * tirar), os grupos de filtros e os resultados do TMDb (mais palavras-chave primeiro, depois pela
- * compatibilidade), com os filmes da lista marcados com a posição. Cada resultado abre
+ * IA em filtros e palavras-chave que substituem os já ligados (mostrados como chips que dá para
+ * tirar), os grupos de filtros, o seletor de ordem e os resultados do TMDb na ordem do backend
+ * (mais palavras-chave primeiro, depois a relevância ou a compatibilidade), com os filmes da lista
+ * marcados com a posição. Cada resultado abre
  * a página do filme. Ponto de entrada do pacote, registrado no `MainScreen`.
  *
  * @param context Lista, pessoa logada e navegação.

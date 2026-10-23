@@ -79,37 +79,13 @@ class DiscoverFiltersTest {
     }
 
     @Test
-    fun `página nova entra ordenada, sem repetir e sem mexer nas anteriores`() {
+    fun `página nova entra na ordem do backend, sem repetir e sem mexer nas anteriores`() {
         fun item(id: Int, score: Double) = DiscoverItem(tmdbId = id, title = "Filme $id", score = score)
+        // O backend já ordena (relevância ou compatibilidade): a nota mais alta não passa à frente.
         val first = DiscoverResults.append(emptyList(), listOf(item(1, 50.0), item(2, 90.0)))
-        assertEquals(listOf(2, 1), first.map { it.tmdbId })
+        assertEquals(listOf(1, 2), first.map { it.tmdbId })
         val second = DiscoverResults.append(first, listOf(item(3, 40.0), item(1, 99.0), item(4, 95.0)))
-        assertEquals(listOf(2, 1, 4, 3), second.map { it.tmdbId })
-    }
-
-    @Test
-    fun `página com palavras-chave entra com as que têm mais palavras primeiro`() {
-        fun item(id: Int, score: Double, matched: List<Int>) =
-            DiscoverItem(tmdbId = id, title = "Filme $id", score = score, matchedKeywords = matched)
-        val page = listOf(item(1, 90.0, emptyList()), item(2, 40.0, listOf(7, 8)), item(3, 80.0, listOf(7)))
-        assertEquals(listOf(2, 3, 1), DiscoverResults.append(emptyList(), page).map { it.tmdbId })
-    }
-
-    @Test
-    fun `filtros do texto somam aos ligados, sem repetir, e o fit fica se qualquer um tiver`() {
-        val manual = Filters(genre = listOf("Comédia"), dec = listOf("1990"), fit = true)
-        val understood = Filters(genre = listOf("Terror", "Comédia"), svc = listOf("Netflix"), fit = false)
-        assertEquals(
-            Filters(
-                genre = listOf("Comédia", "Terror"),
-                dec = listOf("1990"),
-                svc = listOf("Netflix"),
-                fit = true
-            ),
-            DiscoverFilters.union(manual, understood)
-        )
-        assertTrue(DiscoverFilters.union(Filters(), Filters(fit = true)).fit)
-        assertEquals(manual, DiscoverFilters.union(manual, Filters()))
+        assertEquals(listOf(1, 2, 3, 4), second.map { it.tmdbId })
     }
 
     @Test

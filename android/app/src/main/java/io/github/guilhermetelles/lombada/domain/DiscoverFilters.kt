@@ -175,19 +175,6 @@ object DiscoverFilters {
     }
 
     /**
-     * Soma os filtros entendidos no texto livre aos que já estavam ligados: união por grupo, sem
-     * repetir, com os de antes primeiro; `fit` fica ligado se estava em qualquer um.
-     *
-     * @param current Filtros já ligados.
-     * @param added Filtros novos.
-     * @return Os dois juntos.
-     */
-    fun union(current: Filters, added: Filters): Filters =
-        FilterGroup.entries.fold(current.copy(fit = current.fit || added.fit)) { acc, group ->
-            replace(acc, group, (selected(current, group) + selected(added, group)).distinct())
-        }
-
-    /**
      * Valores ligados, na ordem dos grupos, com `fit` por último: os chips do que foi entendido.
      *
      * @param filters Filtros.
@@ -227,9 +214,9 @@ object DiscoverFilters {
 /** Montagem dos resultados da busca avançada, página a página. */
 object DiscoverResults {
     /**
-     * Junta uma página nova às anteriores: a página entra com os filmes de mais palavras-chave
-     * primeiro e depois pela compatibilidade (no empate, na ordem do backend), sem repetir filmes
-     * já mostrados, e as anteriores não mudam de lugar.
+     * Junta uma página nova às anteriores, na ordem em que o backend mandou (palavras-chave da frase
+     * primeiro, depois a relevância ou a compatibilidade, conforme o seletor), sem repetir filmes já
+     * mostrados; as anteriores não mudam de lugar.
      *
      * @param shown Resultados já mostrados.
      * @param page Resultados da página nova.
@@ -237,8 +224,7 @@ object DiscoverResults {
      */
     fun append(shown: List<DiscoverItem>, page: List<DiscoverItem>): List<DiscoverItem> {
         val seen = shown.map { it.tmdbId }.toMutableSet()
-        val order = compareByDescending<DiscoverItem> { it.matchedKeywords.size }.thenByDescending { it.score }
-        return shown + page.sortedWith(order).filter { seen.add(it.tmdbId) }
+        return shown + page.filter { seen.add(it.tmdbId) }
     }
 
     /**
