@@ -58,6 +58,7 @@ async function generateEmojiQuiz({
     const reply = await usage.track('gemini', () =>
       gemini.generateJson({
         model: GEMINI_MODELS.text,
+        purpose: 'quiz',
         system: SYSTEM_INSTRUCTION,
         prompt: `Filme: ${movieLabel(target)}\nSinopse: ${synopsis}`,
         schema: PlotEmojiSchema,

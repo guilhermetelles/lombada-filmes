@@ -62,6 +62,7 @@ async function generateSynopsisQuiz({
     const reply = await usage.track('gemini', () =>
       gemini.generateJson({
         model: GEMINI_MODELS.text,
+        purpose: 'quiz',
         system: SYSTEM_INSTRUCTION,
         prompt: original,
         schema: NamelessSynopsisSchema,

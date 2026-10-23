@@ -36,6 +36,7 @@ async function askExcerpt(
     positions = await usage.track('gemini', () =>
       gemini.generateJson({
         model: GEMINI_MODELS.text,
+        purpose: 'quiz',
         system: SYSTEM_INSTRUCTION,
         prompt: scrubbed,
         schema: ExcerptPositionsSchema,

@@ -68,7 +68,14 @@ async function writeGeminiReasons(
   let reply: z.output<typeof RecReasonsReplySchema>;
   try {
     reply = await usage.track('gemini', () =>
-      gemini.generateJson({ model: GEMINI_MODELS.text, system: SYSTEM, prompt, schema: RecReasonsReplySchema, usage }),
+      gemini.generateJson({
+        model: GEMINI_MODELS.text,
+        purpose: 'recs',
+        system: SYSTEM,
+        prompt,
+        schema: RecReasonsReplySchema,
+        usage,
+      }),
     );
   } catch (error) {
     if (!(error instanceof SourceUnavailableError)) throw error;

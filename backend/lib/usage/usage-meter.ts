@@ -1,7 +1,14 @@
 import { FieldValue, type Firestore, Timestamp } from 'firebase-admin/firestore';
 import { logger } from '../logging/logger.js';
 import type { SourceName } from '../types/sources.js';
-import type { GeminiModelOutcome, UsageOutcome, UsageRecorder } from '../types/usage.js';
+import type {
+  GeminiModelOutcome,
+  GeminiPurpose,
+  GeminiPurposeOutcome,
+  GeminiSkipReason,
+  UsageOutcome,
+  UsageRecorder,
+} from '../types/usage.js';
 import { usageDay } from './usage-day.js';
 
 /** Cota diária documentada de cada fonte, gravada junto com o consumo para a tela de consumo. */
@@ -10,28 +17,34 @@ const DAILY_LIMITS: Partial<Record<SourceName, number>> = { omdb: 1000 };
 /** Incrementos de uma fonte em usage/{dia}, com a cota diária quando houver. */
 type SourceIncrements = Partial<Record<UsageOutcome, FieldValue>> & { dailyLimit?: number };
 
-/** Campos gravados em usage/{dia}: um mapa por fonte e, se houve Gemini, um por modelo. */
+/** Campos gravados em usage/{dia}: um mapa por fonte e, se houve Gemini, um por modelo e um por uso. */
 type UsageIncrements = Partial<Record<SourceName, SourceIncrements>> & {
   geminiModels?: Record<string, Partial<Record<GeminiModelOutcome, FieldValue>>>;
+  geminiPurposes?: Partial<Record<GeminiPurpose, Partial<Record<GeminiPurposeOutcome, FieldValue>>>>;
 };
+
+/** Até quando pular um modelo do Gemini, e por quê. */
+type GeminiSkip = { until: Date; reason: GeminiSkipReason };
 
 /** Onde ler os prazos já gravados dos modelos do Gemini sem cota, e o relógio. */
 type UsageStore = { db: Firestore; now: () => Date };
 
-/** Documento com até quando pular cada modelo do Gemini (`skipUntil.{modelo}`). Só o backend lê. */
+/** Documento com até quando pular cada modelo do Gemini (`skipUntil.{modelo}`) e o motivo (`skipReason.{modelo}`). */
 export const GEMINI_QUOTA_DOC = 'quotas/gemini';
 
 /**
  * Conta o consumo das fontes durante um pedido e grava tudo no fim, numa gravação só. Também conta
- * os pedidos a cada modelo do Gemini (`geminiModels.{modelo}.{calls,errors,quota}`) e lembra até
- * quando pular os modelos que responderam 429 (em quotas/gemini, que atravessa a virada do dia),
- * para o cliente do Gemini ir direto ao próximo.
+ * os pedidos a cada modelo do Gemini (`geminiModels.{modelo}`: pedidos, respostas, erros por tipo e
+ * tempo das respostas) e a cada uso (`geminiPurposes.{uso}`: pedidos, respondidos e falhos), e lembra
+ * até quando pular os modelos sem cota ou fora do ar (em quotas/gemini, que atravessa a virada do
+ * dia), para o cliente do Gemini ir direto ao próximo.
  */
 export class UsageMeter implements UsageRecorder {
   readonly #counts = new Map<SourceName, Map<UsageOutcome, number>>();
   readonly #models = new Map<string, Map<GeminiModelOutcome, number>>();
+  readonly #purposes = new Map<GeminiPurpose, Map<GeminiPurposeOutcome, number>>();
   readonly #quotaHits = new Set<string>();
-  readonly #skips = new Map<string, Date>();
+  readonly #skips = new Map<string, GeminiSkip>();
   readonly #store: UsageStore | undefined;
   #storedSkips: Promise<ReadonlyMap<string, Date>> | undefined;
 
@@ -74,27 +87,41 @@ export class UsageMeter implements UsageRecorder {
   }
 
   /**
-   * Soma 1 a um contador de um modelo do Gemini. `quota` conta os 429.
+   * Soma a um contador de um modelo do Gemini. `quota` conta os 429.
    *
    * @param model - Versão do modelo (ex.: gemini-3.8-flash).
-   * @param outcome - Pedido, erro ou cota esgotada (429).
+   * @param outcome - Pedido, resposta, erro (e o tipo dele) ou tempo de resposta.
+   * @param amount - Quanto somar: 1, ou os milissegundos em `latencyMs`.
    */
-  countGeminiModel(model: string, outcome: GeminiModelOutcome): void {
+  countGeminiModel(model: string, outcome: GeminiModelOutcome, amount = 1): void {
     const outcomes = this.#models.get(model) ?? new Map<GeminiModelOutcome, number>();
-    outcomes.set(outcome, (outcomes.get(outcome) ?? 0) + 1);
+    outcomes.set(outcome, (outcomes.get(outcome) ?? 0) + amount);
     this.#models.set(model, outcomes);
     if (outcome === 'quota') this.#quotaHits.add(model);
   }
 
   /**
-   * Pula um modelo do Gemini até o momento dado; o prazo mais longo vale.
+   * Soma 1 a um contador de um uso do Gemini.
+   *
+   * @param purpose - Busca, sugestões, quiz ou retrospectiva.
+   * @param outcome - Pedido, respondido ou falho (depois de tentar os modelos).
+   */
+  countGeminiPurpose(purpose: GeminiPurpose, outcome: GeminiPurposeOutcome): void {
+    const outcomes = this.#purposes.get(purpose) ?? new Map<GeminiPurposeOutcome, number>();
+    outcomes.set(outcome, (outcomes.get(outcome) ?? 0) + 1);
+    this.#purposes.set(purpose, outcomes);
+  }
+
+  /**
+   * Pula um modelo do Gemini até o momento dado; o prazo mais longo vale, com o motivo dele.
    *
    * @param model - Versão do modelo.
    * @param until - Quando o modelo pode ser tentado de novo.
+   * @param reason - Sem cota (429) ou fora do ar.
    */
-  skipGeminiModel(model: string, until: Date): void {
+  skipGeminiModel(model: string, until: Date, reason: GeminiSkipReason): void {
     const current = this.#skips.get(model);
-    if (!current || until > current) this.#skips.set(model, until);
+    if (!current || until > current.until) this.#skips.set(model, { until, reason });
   }
 
   /**
@@ -107,7 +134,10 @@ export class UsageMeter implements UsageRecorder {
   async geminiModelsToSkip(): Promise<ReadonlySet<string>> {
     this.#storedSkips ??= this.#readStoredSkips();
     const now = this.#store?.now() ?? new Date();
-    const all = [...(await this.#storedSkips), ...this.#skips];
+    const all = [
+      ...(await this.#storedSkips),
+      ...[...this.#skips].map(([model, { until }]) => [model, until] as const),
+    ];
     return new Set(all.flatMap(([model, until]) => (until > now ? [model] : [])));
   }
 
@@ -133,13 +163,15 @@ export class UsageMeter implements UsageRecorder {
     if (skips.size > 0) {
       // Com set() e merge, as chaves dos mapas são nomes de campo: o ponto de "gemini-3.8-flash" não
       // vira caminho.
-      const skipUntil = Object.fromEntries([...skips].map(([model, until]) => [model, Timestamp.fromDate(until)]));
-      await db.doc(GEMINI_QUOTA_DOC).set({ skipUntil }, { merge: true });
+      const skipUntil = Object.fromEntries([...skips].map(([model, { until }]) => [model, Timestamp.fromDate(until)]));
+      const skipReason = Object.fromEntries([...skips].map(([model, { reason }]) => [model, reason]));
+      await db.doc(GEMINI_QUOTA_DOC).set({ skipUntil, skipReason }, { merge: true });
     }
-    if (this.#counts.size === 0 && this.#models.size === 0) return;
+    if (this.#counts.size === 0 && this.#models.size === 0 && this.#purposes.size === 0) return;
     const increments = this.#toIncrements();
     this.#counts.clear();
     this.#models.clear();
+    this.#purposes.clear();
     await db.doc(`usage/${usageDay(now)}`).set(increments, { merge: true });
   }
 
@@ -167,7 +199,7 @@ export class UsageMeter implements UsageRecorder {
   /**
    * Converte os contadores em incrementos do Firestore, com a cota diária das fontes que têm uma.
    *
-   * @returns Campos a gravar, agrupados por fonte e por modelo do Gemini.
+   * @returns Campos a gravar, agrupados por fonte, por modelo e por uso do Gemini.
    */
   #toIncrements(): UsageIncrements {
     const increments: UsageIncrements = {};
@@ -182,6 +214,14 @@ export class UsageMeter implements UsageRecorder {
       increments.geminiModels = Object.fromEntries(
         [...this.#models].map(([model, outcomes]) => [
           model,
+          Object.fromEntries([...outcomes].map(([outcome, amount]) => [outcome, FieldValue.increment(amount)])),
+        ]),
+      );
+    }
+    if (this.#purposes.size > 0) {
+      increments.geminiPurposes = Object.fromEntries(
+        [...this.#purposes].map(([purpose, outcomes]) => [
+          purpose,
           Object.fromEntries([...outcomes].map(([outcome, amount]) => [outcome, FieldValue.increment(amount)])),
         ]),
       );

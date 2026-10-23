@@ -57,45 +57,68 @@ function createGeminiClient({
      * @throws {SourceUnavailableError} Sem GEMINI_API_KEY (sem fazer pedido), se o pedido falhar,
      *   passar do tempo limite, não terminar ou voltar fora do formato.
      */
-    async generateJson({ model, system, prompt, schema, usage, timeoutMs = GEMINI_TIMEOUT_MS, budgetMs }) {
-      if (!apiKey) throw new SourceUnavailableError('gemini', 'GEMINI_API_KEY não configurada');
-      sdk ??= new GoogleGenAI({ apiKey, httpOptions: { fetch, timeout: GEMINI_TIMEOUT_MS } });
-      const client = sdk;
-      const models: readonly string[] = typeof model === 'string' ? [model] : model;
-      const resting = usage ? await usage.geminiModelsToSkip() : new Set<string>();
-      const available = models.filter((candidate) => !resting.has(candidate));
-      const candidates = available.length > 0 ? available : models.slice(0, 1);
-      const deadline = budgetMs === undefined ? undefined : Date.now() + budgetMs;
-
-      // Cota esgotada (429) ou modelo fora do ar: tenta o próximo da lista, dentro do prazo total.
-      let lastError: SourceUnavailableError | undefined;
-      for (const candidate of candidates) {
-        const remaining = deadline === undefined ? Number.POSITIVE_INFINITY : deadline - Date.now();
-        if (lastError && remaining < MIN_ATTEMPT_MS) break;
-        usage?.countGeminiModel(candidate, 'calls');
-        try {
-          return await requestJson(client, {
-            model: candidate,
-            system,
-            prompt,
-            schema,
-            timeoutMs: Math.min(timeoutMs, Math.max(MIN_ATTEMPT_MS, remaining)),
-          });
-        } catch (error) {
-          usage?.countGeminiModel(candidate, 'errors');
-          if (!(error instanceof SourceUnavailableError)) throw error;
-          if (statusOf(error.cause) === 429) {
-            usage?.countGeminiModel(candidate, 'quota');
-            usage?.skipGeminiModel(candidate, quotaRetryAt(error.cause, now()));
-          } else if (isUnavailable(error.cause)) {
-            usage?.skipGeminiModel(candidate, new Date(now().getTime() + GEMINI_UNAVAILABLE_REST_MS));
-          } else {
-            throw error;
-          }
-          lastError = error;
-        }
+    async generateJson({ model, purpose, system, prompt, schema, usage, timeoutMs = GEMINI_TIMEOUT_MS, budgetMs }) {
+      usage?.countGeminiPurpose(purpose, 'requests');
+      try {
+        const reply = await tryModels();
+        usage?.countGeminiPurpose(purpose, 'answered');
+        return reply;
+      } catch (error) {
+        usage?.countGeminiPurpose(purpose, 'failed');
+        throw error;
       }
-      throw lastError ?? new SourceUnavailableError('gemini', 'nenhum modelo configurado');
+
+      /**
+       * Tenta os modelos na ordem até um responder, dentro do prazo total.
+       *
+       * @returns A resposta validada pelo schema.
+       * @throws {SourceUnavailableError} Sem chave, ou se o último modelo tentado falhar.
+       */
+      async function tryModels() {
+        if (!apiKey) throw new SourceUnavailableError('gemini', 'GEMINI_API_KEY não configurada');
+        sdk ??= new GoogleGenAI({ apiKey, httpOptions: { fetch, timeout: GEMINI_TIMEOUT_MS } });
+        const client = sdk;
+        const models: readonly string[] = typeof model === 'string' ? [model] : model;
+        const resting = usage ? await usage.geminiModelsToSkip() : new Set<string>();
+        const available = models.filter((candidate) => !resting.has(candidate));
+        const candidates = available.length > 0 ? available : models.slice(0, 1);
+        const deadline = budgetMs === undefined ? undefined : Date.now() + budgetMs;
+
+        // Cota esgotada (429) ou modelo fora do ar: tenta o próximo da lista, dentro do prazo total.
+        let lastError: SourceUnavailableError | undefined;
+        for (const candidate of candidates) {
+          const remaining = deadline === undefined ? Number.POSITIVE_INFINITY : deadline - Date.now();
+          if (lastError && remaining < MIN_ATTEMPT_MS) break;
+          usage?.countGeminiModel(candidate, 'calls');
+          const startedAt = Date.now();
+          try {
+            const reply = await requestJson(client, {
+              model: candidate,
+              system,
+              prompt,
+              schema,
+              timeoutMs: Math.min(timeoutMs, Math.max(MIN_ATTEMPT_MS, remaining)),
+            });
+            usage?.countGeminiModel(candidate, 'answered');
+            usage?.countGeminiModel(candidate, 'latencyMs', Date.now() - startedAt);
+            return reply;
+          } catch (error) {
+            usage?.countGeminiModel(candidate, 'errors');
+            if (!(error instanceof SourceUnavailableError)) throw error;
+            const kind = failureKind(error.cause);
+            if (kind) usage?.countGeminiModel(candidate, kind);
+            if (kind === 'quota') {
+              usage?.skipGeminiModel(candidate, quotaRetryAt(error.cause, now()), 'quota');
+            } else if (kind === 'unavailable' || kind === 'timeout') {
+              usage?.skipGeminiModel(candidate, new Date(now().getTime() + GEMINI_UNAVAILABLE_REST_MS), 'unavailable');
+            } else {
+              throw error;
+            }
+            lastError = error;
+          }
+        }
+        throw lastError ?? new SourceUnavailableError('gemini', 'nenhum modelo configurado');
+      }
     },
   };
 }
@@ -152,15 +175,19 @@ async function requestJson<T>(
 }
 
 /**
- * Diz se a falha do SDK é de modelo fora do ar: 5xx, 404 (versão retirada), tempo limite ou rede.
+ * Classifica a falha de um modelo: 429 é cota; 5xx e 404 (versão retirada), fora do ar; erro do SDK
+ * sem resposta, tempo limite ou rede; sem status nem erro de conexão, resposta fora do formato
+ * (JSON inválido, schema, interação que não terminou). Outro status HTTP (como 400) não tem tipo.
  *
  * @param cause - Causa guardada no SourceUnavailableError.
- * @returns true para essas falhas; false para 429 e para resposta fora do formato.
+ * @returns O tipo, ou undefined para os erros que não pedem outro modelo nem têm contador próprio.
  */
-function isUnavailable(cause: unknown): boolean {
+function failureKind(cause: unknown): 'quota' | 'unavailable' | 'timeout' | 'format' | undefined {
   const status = statusOf(cause);
-  if (typeof status === 'number') return UNAVAILABLE_STATUSES.has(status);
-  return cause instanceof Error && CONNECTION_ERRORS.has(cause.name);
+  if (status === 429) return 'quota';
+  if (typeof status === 'number') return UNAVAILABLE_STATUSES.has(status) ? 'unavailable' : undefined;
+  if (cause instanceof Error && CONNECTION_ERRORS.has(cause.name)) return 'timeout';
+  return 'format';
 }
 
 /**

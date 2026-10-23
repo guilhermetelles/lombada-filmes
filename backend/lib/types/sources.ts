@@ -8,7 +8,7 @@ import type * as z from 'zod';
 import type { AwardItem } from './awards.js';
 import type { MovieRecInfo, MovieTrailer } from './movie.js';
 import type { CastMember, Director, Person, PersonDepartment } from './person.js';
-import type { UsageRecorder } from './usage.js';
+import type { GeminiPurpose, UsageRecorder } from './usage.js';
 
 /** Fontes externas, também usadas como chave do consumo em usage/{dia}. */
 export type SourceName = 'tmdb' | 'omdb' | 'letterboxd' | 'bechdel' | 'wikidata' | 'wikipedia' | 'gemini';
@@ -185,6 +185,7 @@ export type WikipediaClient = {
 /** Pedido de texto estruturado ao Gemini. */
 export type GeminiRequest<T> = {
   model: string | readonly string[]; // versões fixas de GEMINI_MODELS, em ordem de preferência
+  purpose: GeminiPurpose; // para que é o pedido; conta em usage/{dia}.geminiPurposes
   system?: string | undefined;
   prompt: string;
   schema: z.ZodType<T>; // formato da resposta; vira o JSON Schema pedido ao modelo e valida o que volta

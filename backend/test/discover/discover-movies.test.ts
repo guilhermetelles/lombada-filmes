@@ -54,6 +54,9 @@ class CountingUsage implements UsageRecorder {
   /** A busca não usa o Gemini: não conta nada. */
   countGeminiModel(): void {}
 
+  /** A busca não usa o Gemini: não conta nada. */
+  countGeminiPurpose(): void {}
+
   /** A busca não usa o Gemini: nada a pular. */
   skipGeminiModel(): void {}
 

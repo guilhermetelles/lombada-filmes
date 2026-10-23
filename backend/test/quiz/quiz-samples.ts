@@ -289,6 +289,7 @@ export function countingUsage(): CountingUsage {
       return call();
     },
     countGeminiModel() {},
+    countGeminiPurpose() {},
     skipGeminiModel() {},
     geminiModelsToSkip: async () => new Set<string>(),
     geminiQuotaHits: () => [],

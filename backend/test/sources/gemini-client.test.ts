@@ -7,6 +7,7 @@ import { InterpretReplySchema } from '../../lib/schemas/discover.js';
 import { createGeminiClient, GEMINI_UNAVAILABLE_REST_MS } from '../../lib/sources/gemini/gemini-client.js';
 import { GEMINI_MODELS } from '../../lib/sources/gemini/gemini-models.js';
 import type { Fetch } from '../../lib/types/sources.js';
+import { usageDay } from '../../lib/usage/usage-day.js';
 import { GEMINI_QUOTA_DOC, UsageMeter } from '../../lib/usage/usage-meter.js';
 import { createTestDependencies } from '../support/dependencies.js';
 import { resetEmulators } from '../support/emulators.js';
@@ -67,6 +68,7 @@ function modelFetch(byModel: Record<string, number | 'hang' | 'network'>): { fet
 
 const interpretRequest = {
   model: GEMINI_MODELS.interpret,
+  purpose: 'search' as const,
   system: 'instrução de teste',
   prompt: 'comédia curta dos anos 90 na Netflix',
   schema: InterpretReplySchema,
@@ -231,7 +233,7 @@ describe('createGeminiClient', () => {
     const { fetch, seen } = geminiFetch('{"error":{"code":429,"message":"quota"}}', 429);
     const usage = new UsageMeter();
     const later = new Date(Date.now() + 60_000);
-    for (const model of GEMINI_MODELS.interpret) usage.skipGeminiModel(model, later);
+    for (const model of GEMINI_MODELS.interpret) usage.skipGeminiModel(model, later, 'quota');
 
     await assert.rejects(
       createGeminiClient({ apiKey: 'chave-de-teste', fetch }).generateJson({ ...interpretRequest, usage }),
@@ -258,7 +260,7 @@ describe('createGeminiClient', () => {
     assert.deepEqual(seen, [first, second]);
     assert.deepEqual(usage.geminiQuotaHits(), []);
     assert.deepEqual([...(await usage.geminiModelsToSkip())], [first]);
-    usage.skipGeminiModel(first, new Date(clock.getTime() + GEMINI_UNAVAILABLE_REST_MS - 1));
+    usage.skipGeminiModel(first, new Date(clock.getTime() + GEMINI_UNAVAILABLE_REST_MS - 1), 'unavailable');
     assert.ok((await usage.geminiModelsToSkip()).has(first));
   });
 
@@ -312,5 +314,28 @@ describe('createGeminiClient', () => {
     );
 
     assert.deepEqual(seen, [GEMINI_MODELS.interpret[0]]);
+  });
+
+  test('com o medidor: tipo de cada erro, respostas, tempo, motivo do prazo e o resultado do uso', async () => {
+    const [first, second, third] = GEMINI_MODELS.interpret;
+    const { fetch } = modelFetch({ [first]: 'hang', [second]: 503, 'gemini-x': 400 });
+    const clock = new Date();
+    const { db } = createTestDependencies(fakeSources().fetch);
+    await resetEmulators();
+    const usage = new UsageMeter({ db, now: () => clock });
+    const client = createGeminiClient({ apiKey: 'chave-de-teste', fetch, now: () => clock });
+
+    await client.generateJson({ ...interpretRequest, usage, timeoutMs: 50 });
+    await assert.rejects(client.generateJson({ ...interpretRequest, purpose: 'quiz', model: 'gemini-x', usage }));
+    await usage.save(db, clock);
+
+    const day = (await db.doc(`usage/${usageDay(clock)}`).get()).data();
+    assert.equal(day?.geminiModels[first].timeout, 1);
+    assert.equal(day?.geminiModels[second].unavailable, 1);
+    assert.equal(day?.geminiModels[third].answered, 1);
+    assert.ok(day?.geminiModels[third].latencyMs >= 0);
+    assert.deepEqual(day?.geminiPurposes, { search: { requests: 1, answered: 1 }, quiz: { requests: 1, failed: 1 } });
+    const quotas = (await db.doc(GEMINI_QUOTA_DOC).get()).data();
+    assert.deepEqual(quotas?.skipReason, { [first]: 'unavailable', [second]: 'unavailable' });
   });
 });

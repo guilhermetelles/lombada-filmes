@@ -65,6 +65,7 @@ async function keywordLabels(
       const reply = await usage.track('gemini', () =>
         gemini.generateJson({
           model: GEMINI_MODELS.text,
+          purpose: 'recs',
           system: SYSTEM,
           prompt: JSON.stringify(batch),
           schema: KeywordLabelsReplySchema,

@@ -46,6 +46,7 @@ async function writeRetroText(
     const reply = await usage.track('gemini', () =>
       gemini.generateJson({
         model: GEMINI_MODELS.text,
+        purpose: 'retro',
         system: SYSTEM_INSTRUCTION,
         prompt,
         schema: RetroTextSchema,

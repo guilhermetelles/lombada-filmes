@@ -67,6 +67,7 @@ export const INTERPRET_BUDGET_MS = 22_000;
 async function interpretText(gemini: GeminiClient, text: string, usage?: UsageRecorder): Promise<InterpretReply> {
   const reply = await gemini.generateJson({
     model: GEMINI_MODELS.interpret,
+    purpose: 'search',
     system: SYSTEM_INSTRUCTION,
     prompt: text,
     schema: InterpretReplySchema,

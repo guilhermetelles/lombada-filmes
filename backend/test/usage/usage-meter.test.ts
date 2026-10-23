@@ -89,6 +89,30 @@ describe('UsageMeter', () => {
     });
   });
 
+  test('tipos de erro, respostas e tempo por modelo; pedidos, respondidos e falhos por uso', async () => {
+    const usage = new UsageMeter();
+    usage.countGeminiModel('gemini-3.8-flash', 'calls');
+    usage.countGeminiModel('gemini-3.8-flash', 'errors');
+    usage.countGeminiModel('gemini-3.8-flash', 'timeout');
+    usage.countGeminiModel('gemini-3.5-flash-lite', 'calls');
+    usage.countGeminiModel('gemini-3.5-flash-lite', 'answered');
+    usage.countGeminiModel('gemini-3.5-flash-lite', 'latencyMs', 1_800);
+    usage.countGeminiPurpose('search', 'requests');
+    usage.countGeminiPurpose('search', 'answered');
+    usage.countGeminiPurpose('quiz', 'requests');
+    usage.countGeminiPurpose('quiz', 'failed');
+
+    await usage.save(db, now);
+
+    assert.deepEqual(await readToday(), {
+      geminiModels: {
+        'gemini-3.8-flash': { calls: 1, errors: 1, timeout: 1 },
+        'gemini-3.5-flash-lite': { calls: 1, answered: 1, latencyMs: 1_800 },
+      },
+      geminiPurposes: { search: { requests: 1, answered: 1 }, quiz: { requests: 1, failed: 1 } },
+    });
+  });
+
   test('modelos a pular: os prazos gravados que não passaram e os desta execução', async () => {
     const later = (minutes: number) => new Date(now.getTime() + minutes * 60_000);
     await db.doc(GEMINI_QUOTA_DOC).set({
@@ -101,7 +125,7 @@ describe('UsageMeter', () => {
     assert.deepEqual([...(await usage.geminiModelsToSkip())], ['gemini-3.8-flash']);
 
     usage.countGeminiModel('gemini-3.7-flash', 'quota');
-    usage.skipGeminiModel('gemini-3.7-flash', later(1));
+    usage.skipGeminiModel('gemini-3.7-flash', later(1), 'quota');
     assert.deepEqual([...(await usage.geminiModelsToSkip())].sort(), ['gemini-3.7-flash', 'gemini-3.8-flash']);
     assert.deepEqual(usage.geminiQuotaHits(), ['gemini-3.7-flash']);
 
@@ -113,12 +137,13 @@ describe('UsageMeter', () => {
     const until = new Date('2026-10-17T07:00:00Z');
     const usage = new UsageMeter({ db, now: () => now });
     usage.countGeminiModel('gemini-3.8-flash', 'quota');
-    usage.skipGeminiModel('gemini-3.8-flash', new Date(now.getTime() + 60_000));
-    usage.skipGeminiModel('gemini-3.8-flash', until);
+    usage.skipGeminiModel('gemini-3.8-flash', new Date(now.getTime() + 60_000), 'unavailable');
+    usage.skipGeminiModel('gemini-3.8-flash', until, 'quota');
     await usage.save(db, now);
 
-    const stored = (await db.doc(GEMINI_QUOTA_DOC).get()).get('skipUntil');
-    assert.equal(stored['gemini-3.8-flash'].toMillis(), until.getTime(), 'vale o prazo mais longo');
+    const stored = (await db.doc(GEMINI_QUOTA_DOC).get()).data();
+    assert.equal(stored?.skipUntil['gemini-3.8-flash'].toMillis(), until.getTime(), 'vale o prazo mais longo');
+    assert.equal(stored?.skipReason['gemini-3.8-flash'], 'quota', 'com o motivo dele');
     // No dia seguinte, um medidor novo ainda pula o modelo até o prazo gravado.
     const nextDay = new UsageMeter({ db, now: () => new Date('2026-10-17T05:00:00Z') });
     assert.deepEqual([...(await nextDay.geminiModelsToSkip())], ['gemini-3.8-flash']);

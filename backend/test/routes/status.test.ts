@@ -1,16 +1,30 @@
 import assert from 'node:assert/strict';
 import { beforeEach, describe, test } from 'node:test';
+import { Timestamp } from 'firebase-admin/firestore';
 import { statusRoute } from '../../api/_status.js';
 import { createListRoute } from '../../api/lists/index.js';
 import { recordJobHealth } from '../../lib/jobs/job-health.js';
 import { GEMINI_MODELS } from '../../lib/sources/gemini/gemini-models.js';
-import type { StatusResponse } from '../../lib/types/status.js';
+import type { GeminiModelUsage, StatusResponse } from '../../lib/types/status.js';
+import { GEMINI_QUOTA_DOC } from '../../lib/usage/usage-meter.js';
 import { createTestDependencies } from '../support/dependencies.js';
 import { resetEmulators, signUp } from '../support/emulators.js';
 import { fakeSources } from '../support/fake-sources.js';
 import { getRequest, jsonRequest, readErrorCode, withBearer } from '../support/requests.js';
 
 type Person = { uid: string; idToken: string };
+
+/** Modelo sem nenhum contador. */
+const emptyModel: GeminiModelUsage = {
+  calls: 0,
+  answered: 0,
+  errors: 0,
+  quota: 0,
+  unavailable: 0,
+  timeout: 0,
+  format: 0,
+  latencyMs: 0,
+};
 
 /** 19/10/2026, 15h de Brasília. */
 const clock = new Date('2026-10-19T18:00:00Z');
@@ -44,7 +58,20 @@ describe('GET /api/status', () => {
       tmdb: { calls: 120, errors: 2, cacheHits: 30 },
       omdb: { calls: 10, dailyLimit: 1000 },
       gemini: { calls: 3, errors: 1 },
-      geminiModels: { 'gemini-3.8-flash': { calls: 2, errors: 1, quota: 1 }, 'gemini-3.7-flash': { calls: 1 } },
+      geminiModels: {
+        'gemini-3.8-flash': { calls: 2, errors: 1, quota: 1 },
+        'gemini-3.7-flash': { calls: 1 },
+        'gemini-3.5-flash-lite': { calls: 3, answered: 2, errors: 1, timeout: 1, latencyMs: 3_000 },
+      },
+      geminiPurposes: { search: { requests: 2, answered: 1, failed: 1 }, quiz: { requests: 1, answered: 1 } },
+    });
+    await dependencies.db.doc(GEMINI_QUOTA_DOC).set({
+      skipUntil: {
+        'gemini-3.8-flash': Timestamp.fromDate(new Date('2026-10-20T07:00:00Z')),
+        'gemini-3.7-flash': Timestamp.fromDate(new Date('2026-10-19T18:05:00Z')),
+        'gemini-3.1-flash-lite': Timestamp.fromDate(new Date('2026-10-19T17:00:00Z')),
+      },
+      skipReason: { 'gemini-3.8-flash': 'quota', 'gemini-3.7-flash': 'unavailable' },
     });
     await dependencies.db.doc('usage/2026-10-13').set({ tmdb: { calls: 5 } });
     await dependencies.db.doc('usage/2026-10-12').set({ tmdb: { calls: 99 } });
@@ -71,15 +98,26 @@ describe('GET /api/status', () => {
       day: '2026-10-19',
       sources: { tmdb: { calls: 120, errors: 2 }, omdb: { calls: 10, errors: 0 }, gemini: { calls: 3, errors: 1 } },
       geminiModels: {
-        'gemini-3.8-flash': { calls: 2, errors: 1, quota: 1 },
-        'gemini-3.7-flash': { calls: 1, errors: 0, quota: 0 },
+        // Dias antigos, sem `answered`: as respostas são os pedidos menos os erros.
+        'gemini-3.8-flash': { ...emptyModel, calls: 2, answered: 1, errors: 1, quota: 1 },
+        'gemini-3.7-flash': { ...emptyModel, calls: 1, answered: 1 },
+        'gemini-3.5-flash-lite': { ...emptyModel, calls: 3, answered: 2, errors: 1, timeout: 1, latencyMs: 3_000 },
+      },
+      geminiPurposes: {
+        search: { requests: 2, answered: 1, failed: 1 },
+        quiz: { requests: 1, answered: 1, failed: 0 },
       },
     });
-    assert.deepEqual(status.usage[1], { day: '2026-10-18', sources: {}, geminiModels: {} });
+    assert.deepEqual(status.usage[1], { day: '2026-10-18', sources: {}, geminiModels: {}, geminiPurposes: {} });
     assert.deepEqual(status.usage[6]?.sources, { tmdb: { calls: 5, errors: 0 } });
     assert.deepEqual(status.gemini.interpret, [...GEMINI_MODELS.interpret]);
     assert.deepEqual(status.gemini.text, [...GEMINI_MODELS.text]);
     assert.match(status.gemini.dailyLimitNote, /20 pedidos por dia/);
+    // Do que volta antes para o que volta depois; prazo vencido fica de fora; sem motivo gravado, cota.
+    assert.deepEqual(status.gemini.resting, [
+      { model: 'gemini-3.7-flash', until: '2026-10-19T18:05:00.000Z', reason: 'unavailable' },
+      { model: 'gemini-3.8-flash', until: '2026-10-20T07:00:00.000Z', reason: 'quota' },
+    ]);
   });
 
   test('quem não participa de nenhuma lista: 403; sem token: 401', async () => {
