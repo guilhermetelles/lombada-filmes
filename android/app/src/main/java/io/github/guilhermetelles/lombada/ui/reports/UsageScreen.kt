@@ -92,9 +92,15 @@ private val SOURCES =
             "Indicações e vitórias na Framboesa de Ouro, pelas categorias da Wikipedia. Sem cota documentada."
         ),
         Triple(
+            "groq",
+            "Groq",
+            "Primeira opção da busca em texto livre (Qwen 3.8 27B e gpt-oss-120b). Cota grátis por modelo: " +
+                "1.000 pedidos e 200 mil tokens por dia, 8 mil tokens por minuto (cerca de 5 buscas)."
+        ),
+        Triple(
             "gemini",
             "Gemini",
-            "Motivos das sugestões, textos do quiz, retrospectiva do mês e busca em texto livre. " +
+            "Motivos das sugestões, textos do quiz, retrospectiva do mês e reserva da busca em texto livre. " +
                 "Os modelos e o limite estão no bloco abaixo."
         )
     )
@@ -104,7 +110,7 @@ private const val USAGE_DAYS = 30
 
 /**
  * Consumo das APIs, lendo `usage/`: um card por fonte com o dia de hoje, o medidor da cota da OMDb,
- * os modelos do Gemini (de `GET /api/status`) e as colunas de pedidos por dia.
+ * os modelos de IA, do Gemini e da Groq (de `GET /api/status`), e as colunas de pedidos por dia.
  *
  * @param onBack Volta para os relatórios.
  * @param onOpenStatus Abre "Status do app".
@@ -180,7 +186,7 @@ fun UsageScreen(onBack: () -> Unit, onOpenStatus: () -> Unit = {}) {
     }
 }
 
-// Modelos do Gemini: o texto fixo do limite vale sempre; ordem e consumo por modelo só com /api/status.
+// Modelos de IA: o texto fixo do limite vale sempre; ordem e consumo por modelo só com /api/status.
 @Composable
 private fun GeminiCard(status: StatusState) {
     Column(
@@ -192,7 +198,7 @@ private fun GeminiCard(status: StatusState) {
                 .padding(horizontal = 16.dp, vertical = 14.dp)
     ) {
         Text(
-            "Modelos do Gemini",
+            "Modelos de IA",
             style = MaterialTheme.typography.titleMedium,
             modifier = Modifier.semantics { heading() }
         )

@@ -120,7 +120,7 @@ private fun Loaded(status: AppStatus) {
     val lines = remember(status) { StatusLines.geminiToday(status.gemini, status.usage, BrazilDay.today()) }
     val purposes = remember(status) { StatusLines.geminiPurposesToday(status.usage, BrazilDay.today()) }
     val resting = remember(status, now) { StatusLines.geminiResting(status.gemini, now) }
-    SectionCard(title = "Gemini", subtitle = GEMINI_LIMIT_TEXT) {
+    SectionCard(title = "Modelos de IA", subtitle = GEMINI_LIMIT_TEXT) {
         GeminiModels(status.gemini, lines, purposes, resting)
     }
 }

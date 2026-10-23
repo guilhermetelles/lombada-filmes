@@ -169,4 +169,18 @@ class StatusLinesTest {
         )
         assertEquals(emptyList<GeminiRestingLine>(), StatusLines.geminiResting(null, now))
     }
+
+    @Test
+    fun `Groq aparece como fonte antes do Gemini`() {
+        val usage =
+            listOf(
+                StatusUsageDay(
+                    "2026-10-23",
+                    sources = mapOf("gemini" to CallCount(2, 1), "groq" to CallCount(5, 1))
+                )
+            )
+        val table = StatusLines.usageTable(usage)
+        assertEquals(listOf("groq", "gemini"), table.rows.map { it.source })
+        assertEquals(listOf("Groq", "Gemini"), table.rows.map { it.name })
+    }
 }

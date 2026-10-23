@@ -119,6 +119,7 @@ object StatusLines {
             "bechdel" to "Bechdel Test",
             "wikidata" to "Wikidata",
             "wikipedia" to "Wikipedia",
+            "groq" to "Groq",
             "gemini" to "Gemini"
         )
 

@@ -19,13 +19,14 @@ import io.github.guilhermetelles.lombada.domain.GeminiRestingLine
 import io.github.guilhermetelles.lombada.domain.StatusLines
 import io.github.guilhermetelles.lombada.ui.theme.LombadaColors
 
-/** Explicação fixa do limite do Gemini, que vale mesmo quando `/api/status` não responde. */
+/** Explicação fixa dos limites dos modelos de IA, que vale mesmo quando `/api/status` não responde. */
 const val GEMINI_LIMIT_TEXT =
-    "O plano grátis do Gemini tem limite baixo: cerca de 20 pedidos por dia para cada modelo Flash. " +
-        "Quando a cota de um modelo acaba ou ele sai do ar, o backend passa para o seguinte da ordem."
+    "A busca em texto livre começa pela Groq; os textos e a reserva da busca vão ao Gemini, cujo plano grátis " +
+        "dá cerca de 20 pedidos por dia a cada modelo Flash. Quando a cota de um modelo acaba ou ele sai do ar, " +
+        "o backend passa para o seguinte da ordem."
 
 /**
- * Ordem dos modelos do Gemini, o resultado de hoje de cada uso, os modelos pulados agora e o
+ * Ordem dos modelos de IA (Gemini e Groq), o resultado de hoje de cada uso, os modelos pulados agora e o
  * consumo de hoje de cada modelo.
  *
  * @param gemini Ordem dos modelos, ou null quando o backend não mandou.
