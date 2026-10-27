@@ -6,8 +6,8 @@ import { readRecs, recsDocument } from './recs-repository.js';
 const FAILED_PRECONDITION = 9;
 
 /**
- * Avisa o motor de sugestões que filmes entraram na lista: tira esses filmes de `items` e de
- * `trending` em recs/current, mantendo a ordem, as notas e os motivos dos outros. Lê um documento
+ * Avisa o motor de sugestões que filmes entraram na lista: tira esses filmes de `items`, de
+ * `trending` e de `scores` em recs/current, mantendo a ordem, as notas e os motivos dos outros. Lê um documento
  * só (recs/current); reajustar o modelo pedia a lista inteira e todos os filmes dela (centenas de
  * leituras por lote), então o reajuste pelo ranking novo fica com a rotina recs, uma vez por dia.
  * Sem filme novo ou sem recs/current (lista nova, antes da primeira rotina), não faz nada. Se a
@@ -25,13 +25,20 @@ async function onListChanged(db: Firestore, listId: string, entered: readonly nu
     const stored = await readRecs(db, listId);
     if (!stored) return;
     const inList = new Set(entered);
-    const { items, trending } = stored.recs;
+    const { items, trending, scores = {} } = stored.recs;
     const nextItems = items.filter((item) => !inList.has(item.tmdbId));
     const nextTrending = trending.filter((item) => !inList.has(item.tmdbId));
-    if (nextItems.length === items.length && nextTrending.length === trending.length) return;
+    const nextScores = Object.fromEntries(Object.entries(scores).filter(([tmdbId]) => !inList.has(Number(tmdbId))));
+    if (
+      nextItems.length === items.length &&
+      nextTrending.length === trending.length &&
+      Object.keys(nextScores).length === Object.keys(scores).length
+    ) {
+      return;
+    }
 
     await recsDocument(db, listId).update(
-      { items: nextItems, trending: nextTrending },
+      { items: nextItems, trending: nextTrending, ...(stored.recs.scores ? { scores: nextScores } : {}) },
       { lastUpdateTime: stored.updateTime },
     );
   } catch (error) {

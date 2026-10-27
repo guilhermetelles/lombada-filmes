@@ -25,62 +25,125 @@ const DIRECTOR_WEIGHT = 0.8;
 /** De quantas sagas começadas pela lista buscar o próximo filme (as dos filmes mais altos primeiro). */
 const MAX_SAGAS = 10;
 
+/** Quantos filmes da fila "Quero ver" (os mais recentes) dão as recomendações do TMDb. */
+export const SEED_QUEUE_FILMS = 15;
+
+/** Peso de uma recomendação de um filme da fila, abaixo das do topo da lista. */
+const QUEUE_WEIGHT = 0.7;
+
+/** Peso de um filme achado pela palavra-chave de maior peso no modelo. */
+const KEYWORD_WEIGHT = 0.6;
+
+/** Vagas guardadas para os candidatos vindos da fila, para não perderem para as recomendações do topo. */
+const QUEUE_SLOTS = 15;
+
+/** Vagas guardadas para os candidatos vindos das palavras-chave. */
+const KEYWORD_SLOTS = 15;
+
 /** Quantos dias para trás contam como "em cartaz". */
 const NOW_PLAYING_DAYS = 40;
+
+/** De que fonte veio um candidato. */
+export type CandidateSource = 'saga' | 'list' | 'director' | 'queue' | 'keyword';
+
+/** Filmes achados por uma palavra-chave do modelo, do mais popular para o menos. */
+export type KeywordSeed = { keywordId: number; weight: number; tmdbIds: number[] }; // weight: 0 a 1, relativo à maior
+
+/** O que dá candidatos além da lista: a fila e as palavras-chave. */
+export type ExtraSeeds = { queued: readonly number[]; keywords: readonly KeywordSeed[] };
+
+/** Candidatos escolhidos, com a origem de cada um e quantos vieram de cada fonte. */
+export type ChosenCandidates = {
+  ids: number[]; // da escolha mais forte para a mais fraca
+  origins: Map<number, string>; // grupo da origem de maior peso, como `origin:seed:603`
+  sources: Record<CandidateSource, number>;
+};
 
 /** Um filme em alta ou em cartaz, com a origem. */
 export type TrendingCandidate = { candidate: DiscoverCandidate; source: Extract<RecSource, 'trending' | 'nowPlaying'> };
 
 /**
- * Garante o documento dos filmes do topo da lista que ainda não têm as recomendações do TMDb
- * (`recs`), buscando só no TMDb (fetchMovieFeatures), dentro do limite da execução.
+ * Garante o documento dos filmes do topo da lista e dos mais recentes da fila que ainda não têm as
+ * recomendações do TMDb (`recs`), buscando só no TMDb (fetchMovieFeatures), dentro do limite da
+ * execução (os da lista primeiro).
  *
  * @param run - Execução.
  * @param films - Filmes da lista, do topo para baixo.
+ * @param queued - Filmes da fila, do mais recente para o mais antigo.
  * @param movies - Documentos já lidos, por id; recebe os buscados.
  */
 export async function completeSeedMovies(
   run: RecsRun,
   films: readonly ListFilm[],
+  queued: readonly number[],
   movies: Map<number, Movie>,
 ): Promise<void> {
-  const missing = films
-    .slice(0, SEED_TOP_FILMS)
-    .map((film) => film.tmdbId)
-    .filter((tmdbId) => movies.get(tmdbId)?.recs === undefined);
+  const missing = [
+    ...films.slice(0, SEED_TOP_FILMS).map((film) => film.tmdbId),
+    ...queued.slice(0, SEED_QUEUE_FILMS),
+  ].filter((tmdbId) => movies.get(tmdbId)?.recs === undefined);
   const fetched = await fetchMovies(run, missing, movies);
   for (const [tmdbId, movie] of fetched) movies.set(tmdbId, movie);
 }
 
 /**
- * Escolhe os candidatos da lista: o próximo filme de cada saga começada pela lista (na frente dos
- * outros), as recomendações do TMDb dos 25 primeiros (pesando mais as do topo e as primeiras de
- * cada filme) e a filmografia dos diretores que aparecem em 2 ou mais filmes da lista (das fichas
- * já guardadas em people/). Tira os excluídos (lista, fila e "Não quero") e fica com os de maior
- * peso, até o limite de candidatos da execução.
+ * Escolhe os candidatos da lista. Fontes: o próximo filme de cada saga começada pela lista, as
+ * recomendações do TMDb dos 25 primeiros (pesando mais as do topo e as primeiras de cada filme), a
+ * filmografia dos diretores que aparecem em 2 ou mais filmes da lista (das fichas já guardadas em
+ * people/), as recomendações dos 15 mais recentes da fila e os filmes das palavras-chave do modelo.
+ * O peso de um candidato é a soma do que cada fonte dá a ele. Corte: as sagas na frente, depois até
+ * 15 vagas para os da fila e 15 para os das palavras-chave (os de maior peso dentro de cada uma,
+ * para as recomendações do topo não tomarem tudo), e o resto pelo peso, até o limite de candidatos
+ * da execução. Tira os excluídos (lista, fila e "Não quero").
  *
  * @param run - Execução (banco e limites).
  * @param films - Filmes da lista, do topo para baixo.
- * @param movies - Documentos dos filmes da lista, por id.
+ * @param movies - Documentos dos filmes da lista e da fila, por id.
  * @param excluded - Ids que não podem ser sugeridos.
- * @returns Os ids dos candidatos, do maior peso para o menor.
+ * @param extra - Fila e filmes das palavras-chave.
+ * @returns Os candidatos, a origem de cada um e quantos vieram de cada fonte.
  */
 export async function chooseCandidateIds(
   run: RecsRun,
   films: readonly ListFilm[],
   movies: ReadonlyMap<number, Movie>,
   excluded: ReadonlySet<number>,
-): Promise<number[]> {
+  extra: ExtraSeeds = { queued: [], keywords: [] },
+): Promise<ChosenCandidates> {
   const weights = new Map<number, number>();
-  const add = (tmdbId: number, weight: number) => {
-    if (!excluded.has(tmdbId)) weights.set(tmdbId, (weights.get(tmdbId) ?? 0) + weight);
+  const bySource = new Map<CandidateSource, Map<number, number>>();
+  const best = new Map<number, { weight: number; origin: string; source: CandidateSource }>();
+  const add = (tmdbId: number, weight: number, source: CandidateSource, origin: string) => {
+    if (excluded.has(tmdbId)) return;
+    weights.set(tmdbId, (weights.get(tmdbId) ?? 0) + weight);
+    const sourceWeights = bySource.get(source) ?? new Map<number, number>();
+    sourceWeights.set(tmdbId, (sourceWeights.get(tmdbId) ?? 0) + weight);
+    bySource.set(source, sourceWeights);
+    const current = best.get(tmdbId);
+    if (!current || weight > current.weight) best.set(tmdbId, { weight, origin, source });
   };
   const quality = (position: number) => (films.length <= 1 ? 1 : 1 - (position - 1) / films.length);
+  const addRecs = (seedId: number, factor: number, source: CandidateSource, origin: string) => {
+    const recs = movies.get(seedId)?.recs ?? [];
+    recs.forEach((tmdbId, rank) => {
+      add(tmdbId, factor * (1 - rank / (2 * recs.length)), source, origin);
+    });
+  };
 
   for (const film of films.slice(0, SEED_TOP_FILMS)) {
-    const recs = movies.get(film.tmdbId)?.recs ?? [];
-    recs.forEach((tmdbId, rank) => {
-      add(tmdbId, quality(film.position) * (1 - rank / (2 * recs.length)));
+    addRecs(film.tmdbId, quality(film.position), 'list', `origin:seed:${film.tmdbId}`);
+  }
+  for (const tmdbId of extra.queued.slice(0, SEED_QUEUE_FILMS)) {
+    addRecs(tmdbId, QUEUE_WEIGHT, 'queue', `origin:queue:${tmdbId}`);
+  }
+  for (const { keywordId, weight, tmdbIds } of extra.keywords) {
+    tmdbIds.forEach((tmdbId, rank) => {
+      add(
+        tmdbId,
+        KEYWORD_WEIGHT * weight * (1 - rank / (2 * tmdbIds.length)),
+        'keyword',
+        `origin:keyword:${keywordId}`,
+      );
     });
   }
 
@@ -91,15 +154,36 @@ export async function chooseCandidateIds(
     } catch (error) {
       logger.warn('ficha de diretor fora do formato, sem filmografia', { personId, error });
     }
-    for (const { tmdbId } of directed) add(tmdbId, DIRECTOR_WEIGHT * quality(bestPosition));
+    for (const { tmdbId } of directed) {
+      add(tmdbId, DIRECTOR_WEIGHT * quality(bestPosition), 'director', `origin:director:${personId}`);
+    }
   }
 
-  const sagaIds = await nextInSagas(run, films, movies, excluded);
-  const weighted = [...weights]
-    .sort((a, b) => b[1] - a[1] || a[0] - b[0])
-    .map(([tmdbId]) => tmdbId)
-    .filter((tmdbId) => !sagaIds.includes(tmdbId));
-  return [...sagaIds, ...weighted].slice(0, run.limits.maxCandidates);
+  const chosen: ChosenCandidates = {
+    ids: [],
+    origins: new Map(),
+    sources: { saga: 0, list: 0, director: 0, queue: 0, keyword: 0 },
+  };
+  const take = (tmdbId: number, origin: string, source: CandidateSource) => {
+    if (chosen.ids.length >= run.limits.maxCandidates || chosen.origins.has(tmdbId)) return;
+    chosen.ids.push(tmdbId);
+    chosen.origins.set(tmdbId, origin);
+    chosen.sources[source] += 1;
+  };
+  const strongest = (map: ReadonlyMap<number, number> | undefined) =>
+    [...(map ?? [])].sort((a, b) => b[1] - a[1] || a[0] - b[0]).map(([tmdbId]) => tmdbId);
+  const takeBest = (tmdbId: number, fallback?: CandidateSource) => {
+    const origin = best.get(tmdbId);
+    if (origin) take(tmdbId, origin.origin, fallback ?? origin.source);
+  };
+
+  for (const { tmdbId, collectionId } of await nextInSagas(run, films, movies, excluded)) {
+    take(tmdbId, `origin:saga:${collectionId}`, 'saga');
+  }
+  for (const tmdbId of strongest(bySource.get('queue')).slice(0, QUEUE_SLOTS)) takeBest(tmdbId, 'queue');
+  for (const tmdbId of strongest(bySource.get('keyword')).slice(0, KEYWORD_SLOTS)) takeBest(tmdbId, 'keyword');
+  for (const tmdbId of strongest(weights)) takeBest(tmdbId);
+  return chosen;
 }
 
 /**
@@ -111,21 +195,21 @@ export async function chooseCandidateIds(
  * @param films - Filmes da lista, do topo para baixo.
  * @param movies - Documentos dos filmes da lista, por id.
  * @param excluded - Ids que não podem ser sugeridos (lista, fila e "Não quero").
- * @returns Um id por saga, na ordem das sagas.
+ * @returns Um filme por saga, com o id da saga, na ordem das sagas.
  */
 async function nextInSagas(
   run: RecsRun,
   films: readonly ListFilm[],
   movies: ReadonlyMap<number, Movie>,
   excluded: ReadonlySet<number>,
-): Promise<number[]> {
+): Promise<{ tmdbId: number; collectionId: number }[]> {
   const collectionIds = [...new Set(films.flatMap((film) => movies.get(film.tmdbId)?.collection?.id ?? []))].slice(
     0,
     MAX_SAGAS,
   );
   const watched = new Set(films.map((film) => film.tmdbId));
   const today = brazilDay(run.startedAt);
-  const picks: number[] = [];
+  const picks: { tmdbId: number; collectionId: number }[] = [];
 
   for (const collectionId of collectionIds) {
     if (!run.canFetch()) break;
@@ -133,7 +217,9 @@ async function nextInSagas(
       const { tmdb } = run.dependencies.sources;
       const collection = await run.usage.track('tmdb', () => tmdb.getCollection(collectionId));
       const next = nextUnwatchedPart(collection.parts, watched, today);
-      if (next !== null && !excluded.has(next) && !picks.includes(next)) picks.push(next);
+      if (next !== null && !excluded.has(next) && !picks.some((pick) => pick.tmdbId === next)) {
+        picks.push({ tmdbId: next, collectionId });
+      }
     } catch (error) {
       logger.warn('saga indisponível no TMDb, fora das sugestões', { collectionId, error });
     }
@@ -277,7 +363,7 @@ function recurringDirectors(
  * @param read - Leitura.
  * @returns Os filmes, ou vazio.
  */
-async function readOrEmpty(read: () => Promise<DiscoverCandidate[]>): Promise<DiscoverCandidate[]> {
+export async function readOrEmpty(read: () => Promise<DiscoverCandidate[]>): Promise<DiscoverCandidate[]> {
   try {
     return await read();
   } catch (error) {

@@ -1,8 +1,10 @@
 import assert from 'node:assert/strict';
 import { beforeEach, describe, test } from 'node:test';
 import { recsCronRoute } from '../../api/cron/_recs.js';
+import { addDays } from '../../lib/daily/day-math.js';
 import { onListChanged } from '../../lib/recs/on-list-changed.js';
 import { DEFAULT_RECS_LIMITS } from '../../lib/recs/recs-run.js';
+import { isOnTurn } from '../../lib/recs/rotate.js';
 import { runRecs } from '../../lib/recs/run-recs.js';
 import { RecsDocSchema } from '../../lib/schemas/recs.js';
 import type { RecsDoc } from '../../lib/types/recs.js';
@@ -149,6 +151,49 @@ describe('runRecs', () => {
   test('respeita o limite de pedidos ao TMDb da execução', async () => {
     await runRecs(dependencies, new UsageMeter(), { ...DEFAULT_RECS_LIMITS, tmdbCalls: 3, batchSize: 1 });
     assert.ok(tmdb.movieCalls.length <= 3, `pedidos: ${tmdb.movieCalls.length}`);
+  });
+
+  test('recomendação de um filme da fila vira candidato', async () => {
+    tmdb = fakeTmdb({ 202: { genres: ['Terror'], recs: [220] }, 220: { genres: ['Terror'], year: 1983 } });
+    dependencies = createTestDependencies(tmdb.fetch, () => clock, { gemini: gemini.client });
+    const report = await runRecs(dependencies, new UsageMeter());
+
+    assert.equal(report.lists[0]?.sources.queue, 1);
+    const recs = await readRecsDoc();
+    const ids = [...recs.items.map((item) => item.tmdbId), ...Object.keys(recs.scores ?? {}).map(Number)];
+    assert.ok(ids.includes(220));
+    assert.ok(!ids.includes(202));
+  });
+
+  test('só os filmes da vez entram; os outros ficam em scores, e a lista muda no dia seguinte', async () => {
+    // 10 recomendações novas em cada um de 4 filmes da lista, para haver bem mais que 10 filmes da vez por dia.
+    for (const [index, tmdbId] of [103, 104, 105, 106].entries()) {
+      const recs = Array.from({ length: 10 }, (_, rank) => 301 + index * 10 + rank);
+      await dependencies.db.doc(`movies/${tmdbId}`).update({ recs });
+    }
+    await runRecs(dependencies, new UsageMeter());
+    const first = await readRecsDoc();
+    const today = '2026-10-18';
+    assert.ok(first.items.length >= 10);
+    for (const item of first.items) assert.ok(isOnTurn(item.tmdbId, today), `${item.tmdbId}`);
+    const offTurn = Object.keys(first.scores ?? {}).map(Number);
+    assert.ok(offTurn.length > 0);
+    for (const tmdbId of offTurn) {
+      assert.ok(!first.items.some((item) => item.tmdbId === tmdbId));
+      assert.ok((first.scores?.[String(tmdbId)]?.reason ?? '').length > 0);
+    }
+
+    const tomorrow = new Date(clock.getTime() + 24 * 60 * 60 * 1000);
+    dependencies = createTestDependencies(tmdb.fetch, () => tomorrow, { gemini: gemini.client });
+    await runRecs(dependencies, new UsageMeter());
+    const second = await readRecsDoc();
+    for (const item of second.items) assert.ok(isOnTurn(item.tmdbId, addDays(today, 1)), `${item.tmdbId}`);
+    assert.notDeepEqual(
+      second.items.map((item) => item.tmdbId),
+      first.items.map((item) => item.tmdbId),
+    );
+    // As 5 primeiras do "Em alta" também são da vez.
+    for (const item of second.trending.slice(0, 5)) assert.ok(isOnTurn(item.tmdbId, addDays(today, 1)));
   });
 
   test('lista sem filmes fica sem documento', async () => {

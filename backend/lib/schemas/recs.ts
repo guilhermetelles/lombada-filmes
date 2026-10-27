@@ -1,5 +1,5 @@
 import * as z from 'zod';
-import type { RecItem, RecKind, RecSource, RecsDoc, RecsModel } from '../types/recs.js';
+import type { RecItem, RecKind, RecScore, RecSource, RecsDoc, RecsModel } from '../types/recs.js';
 import { firestoreDate } from './firestore.js';
 
 /** Origem de uma sugestão. */
@@ -35,6 +35,12 @@ export const RecsModelSchema: z.ZodType<RecsModel> = z.object({
   labels: z.record(z.string(), z.string()).optional(),
 });
 
+/** Nota e motivo de um candidato fora de items e trending. */
+export const RecScoreSchema: z.ZodType<RecScore> = z.object({
+  score: z.number().min(0).max(100),
+  reason: z.string(),
+});
+
 /** lists/{listId}/recs/current, validado ao ler. */
 export const RecsDocSchema: z.ZodType<RecsDoc> = z.object({
   computedAt: firestoreDate,
@@ -42,6 +48,7 @@ export const RecsDocSchema: z.ZodType<RecsDoc> = z.object({
   model: RecsModelSchema,
   items: z.array(RecItemSchema).max(30),
   trending: z.array(RecItemSchema).max(15),
+  scores: z.record(z.string(), RecScoreSchema).optional(),
 });
 
 /** Resposta pedida ao Gemini nos motivos das sugestões: um motivo por filme. */

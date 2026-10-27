@@ -12,7 +12,8 @@ type CompatRequest = { uid: string; listId: string; tmdbId: number; movie: Movie
 
 /**
  * Compatibilidade de um filme com a lista, para GET /api/movies/{tmdbId}?listId=. Se o filme está
- * entre as sugestões guardadas, devolve a nota e o motivo de lá (os mesmos da aba Sugestões); senão,
+ * entre as sugestões guardadas, devolve a nota e o motivo de lá (os mesmos da aba Sugestões); se foi
+ * pontuado pela rotina mas está fora da vez na rotação, a nota e o motivo guardados em `scores`; senão,
  * pontua com o modelo de recs/current (mesmas variáveis da busca avançada), com o motivo pelas
  * variáveis que mais pesam. Sem modelo guardado, não há compatibilidade.
  *
@@ -33,6 +34,8 @@ async function movieCompat(
   const { recs } = stored;
   const item = [...recs.items, ...recs.trending].find((rec) => rec.tmdbId === tmdbId);
   if (item) return { score: Math.round(item.score), reason: item.reason };
+  const scored = recs.scores?.[String(tmdbId)];
+  if (scored) return { score: Math.round(scored.score), reason: scored.reason };
   return scoreWithModel(recs.model, movieFeatures(movie));
 }
 

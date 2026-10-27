@@ -36,6 +36,10 @@ export type RecsDoc = {
   computedAt: Date;
   modelVersion: string;
   model: RecsModel;
-  items: RecItem[]; // até 30, da maior compatibilidade para a menor
-  trending: RecItem[]; // até 15, em alta e em cartaz no Brasil, fora da lista
+  items: RecItem[]; // até 30, só os filmes da vez na rotação; os 10 primeiros com variedade
+  trending: RecItem[]; // até 15, em alta e em cartaz no Brasil, fora da lista; os 5 primeiros da vez
+  scores?: Record<string, RecScore> | undefined; // os outros candidatos pontuados, por tmdbId (página do filme)
 };
+
+/** Nota e motivo de um candidato que ficou fora de items e trending (fora da vez na rotação). */
+export type RecScore = { score: number; reason: string };

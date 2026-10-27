@@ -4,7 +4,13 @@ import { diversify } from '../../lib/recs/diversify.js';
 import { fallbackReason } from '../../lib/recs/fallback-reason.js';
 import { similarityTags, tagSimilarity } from '../../lib/recs/movie-features.js';
 import { combineScores, findNeighbors, neighborScore } from '../../lib/recs/neighbors.js';
-import { buildListIndex, type ListFilmWithMovie, scoreMovie, toRecItem } from '../../lib/recs/score-recs.js';
+import {
+  buildListIndex,
+  feedbackAdjustment,
+  type ListFilmWithMovie,
+  scoreMovie,
+  toRecItem,
+} from '../../lib/recs/score-recs.js';
 import type { RecsModel } from '../../lib/types/recs.js';
 import { makeMovie } from './synthetic-movies.js';
 
@@ -155,16 +161,86 @@ describe('scoreMovie', () => {
 });
 
 describe('diversify', () => {
+  const item = (tmdbId: number, score: number, groups: string[]) => ({
+    tmdbId,
+    score,
+    groups,
+    tags: new Map(groups.map((g) => [g, 1])),
+  });
+
   test('no máximo 1 por saga e por diretor entre os 10 primeiros', () => {
-    const item = (score: number, groups: string[]) => ({ score, groups, tags: new Map(groups.map((g) => [g, 1])) });
     const items = [
-      item(95, ['collection:1']),
-      item(94, ['collection:1']),
-      item(93, ['director:7']),
-      item(92, ['director:7', 'collection:2']),
-      item(60, ['director:8']),
+      item(1, 95, ['collection:1']),
+      item(2, 94, ['collection:1']),
+      item(3, 93, ['director:7']),
+      item(4, 92, ['director:7', 'collection:2']),
+      item(5, 60, ['director:8']),
     ];
     const ordered = diversify(items).map((i) => i.score);
     assert.deepEqual(ordered, [95, 93, 60, 94, 92]);
+  });
+
+  test('no máximo 2 da mesma origem entre os 10 primeiros', () => {
+    const items = [
+      item(1, 95, ['origin:seed:10']),
+      item(2, 94, ['origin:seed:10']),
+      item(3, 93, ['origin:seed:10']),
+      item(4, 50, ['origin:queue:20']),
+    ];
+    assert.deepEqual(
+      diversify(items).map((i) => i.tmdbId),
+      [1, 2, 4, 3],
+    );
+  });
+
+  test('empate de nota desempata pelo id, em qualquer ordem de entrada', () => {
+    const items = [item(30, 80, []), item(10, 80, []), item(20, 80, [])];
+    assert.deepEqual(
+      diversify(items).map((i) => i.tmdbId),
+      [10, 20, 30],
+    );
+    assert.deepEqual(
+      diversify([...items].reverse()).map((i) => i.tmdbId),
+      [10, 20, 30],
+    );
+  });
+});
+
+describe('ajuste pela fila e pelos dispensados', () => {
+  const zombie = makeMovie({
+    genres: ['Terror'],
+    keywords: ['zombie', 'mall'],
+    directors: [{ id: 10, name: 'Diretora A' }],
+    year: 1978,
+  });
+  // Com o número de palavras-chave de um filme de verdade (o TMDb costuma trazer de 10 a 20).
+  const filler = (prefix: string) => Array.from({ length: 8 }, (_, index) => `${prefix} ${index}`);
+  const candidate = makeMovie({
+    genres: ['Terror'],
+    keywords: ['zombie', 'mall', ...filler('candidato')],
+    directors: [{ id: 10, name: 'Diretora A' }],
+    year: 1979,
+  });
+  const onlyGenre = makeMovie({ genres: ['Terror'], keywords: ['space', 'robot', ...filler('outro')], year: 2015 });
+  const plain = scoreMovie(BASELINE, index, 95, candidate, 'model');
+
+  test('dispensado parecido baixa a nota e não vira vizinho nem justificativa', () => {
+    const withDismissed = buildListIndex(films, films.length, { queued: [], dismissed: [zombie] });
+    const rec = scoreMovie(BASELINE, withDismissed, 95, candidate, 'model');
+    assert.ok(rec.score < plain.score, `${rec.score} < ${plain.score}`);
+    assert.deepEqual(rec.neighbors, plain.neighbors);
+    assert.deepEqual(rec.reasonFrom, plain.reasonFrom);
+    assert.ok(Number.isInteger(rec.score));
+  });
+
+  test('da fila parecido sobe a nota', () => {
+    const withQueued = buildListIndex(films, films.length, { queued: [zombie], dismissed: [] });
+    const rec = scoreMovie(BASELINE, withQueued, 95, candidate, 'model');
+    assert.ok(rec.score > plain.score, `${rec.score} > ${plain.score}`);
+  });
+
+  test('parecido só no gênero e na década não mexe na nota', () => {
+    const tags = similarityTags(candidate);
+    assert.equal(feedbackAdjustment(tags, { queued: [], dismissed: [similarityTags(onlyGenre)] }), 0);
   });
 });

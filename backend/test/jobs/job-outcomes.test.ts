@@ -10,6 +10,8 @@ const listReport = (listId: string, reasonsFallback: string | null): ListRecsRep
   status: 'written',
   films: 10,
   candidates: 40,
+  sources: { saga: 1, list: 25, director: 4, queue: 5, keyword: 5 },
+  keywords: [],
   items: 30,
   trending: 15,
   alpha: 0.5,

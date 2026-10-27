@@ -16,6 +16,9 @@ export type FakeMovie = {
 /** Uma saga falsa: os filmes dela, com a data de estreia. */
 export type FakeCollection = { parts: { id: number; title: string; release_date: string }[] };
 
+/** Uma palavra-chave falsa: o id no TMDb e os filmes que o /discover devolve com ela. */
+export type FakeKeyword = { id: number; movies: number[] };
+
 /** O fetch falso do TMDb e o que ele registra. */
 export type FakeTmdb = {
   fetch: Fetch;
@@ -41,15 +44,18 @@ const fixtures = {
  * Abyss com id, título, gêneros, palavras-chave, recomendações, saga, diretores e nota trocados
  * pelo que o teste passar (qualquer outro id recebe a gravação só com o id trocado); /trending e
  * /discover respondem as gravações da busca avançada; /collection/{id} responde a saga passada
- * (404 para as outras).
+ * (404 para as outras); /search/keyword acha as palavras-chave passadas, e /discover com
+ * with_keywords devolve os filmes delas.
  *
  * @param movies - Filmes falsos, por id.
  * @param collections - Sagas falsas, por id.
+ * @param keywords - Palavras-chave falsas, pelo nome em inglês.
  * @returns O fetch e os registros.
  */
 export function fakeTmdb(
   movies: Record<number, FakeMovie> = {},
   collections: Record<number, FakeCollection> = {},
+  keywords: Record<string, FakeKeyword> = {},
 ): FakeTmdb {
   const movieCalls: number[] = [];
   const collectionCalls: number[] = [];
@@ -78,8 +84,17 @@ export function fakeTmdb(
       listCalls.push('trending');
       return json(fixtures.trending);
     }
+    if (url.pathname === '/3/search/keyword') {
+      const query = url.searchParams.get('query') ?? '';
+      const keyword = keywords[query];
+      listCalls.push(`search/keyword?${query}`);
+      return json({ page: 1, results: keyword ? [{ id: keyword.id, name: query }] : [], total_pages: 1 });
+    }
     if (url.pathname === '/3/discover/movie') {
       listCalls.push(`discover?${url.searchParams}`);
+      const keywordId = Number(url.searchParams.get('with_keywords'));
+      const keyword = Object.values(keywords).find((candidate) => candidate.id === keywordId);
+      if (keyword) return json(discoverPage(keyword.movies));
       return json(fixtures.discover);
     }
     return new Response('{"status_message":"not found"}', { status: 404 });
@@ -121,6 +136,25 @@ function buildMovie(tmdbId: number, movie: FakeMovie): Record<string, unknown> {
       })),
     },
   };
+}
+
+/**
+ * Monta uma página do /discover com os filmes pedidos, a partir do primeiro da gravação.
+ *
+ * @param tmdbIds - Filmes da página.
+ * @returns O corpo da resposta.
+ */
+function discoverPage(tmdbIds: readonly number[]): Record<string, unknown> {
+  const page = fixtures.discover as { results: Record<string, unknown>[] };
+  const template = page.results[0] ?? {};
+  const results = tmdbIds.map((id) => ({
+    ...template,
+    id,
+    title: `Filme ${id}`,
+    original_title: `Filme ${id}`,
+    release_date: '2001-05-01',
+  }));
+  return { page: 1, results, total_pages: 1, total_results: results.length };
 }
 
 /**

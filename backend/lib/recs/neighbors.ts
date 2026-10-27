@@ -4,13 +4,13 @@ import { tagSimilarity } from './movie-features.js';
 const NEIGHBOR_COUNT = 3;
 
 /** Semelhança mínima para um filme da lista contar como vizinho. */
-const MIN_SIMILARITY = 0.08;
+export const MIN_SIMILARITY = 0.08;
 
 /** Peso máximo dos vizinhos na nota final (o resto é o modelo). */
 const NEIGHBOR_WEIGHT = 0.3;
 
 /** Semelhança média a partir da qual os vizinhos valem o peso inteiro. */
-const FULL_SIMILARITY = 0.3;
+export const FULL_SIMILARITY = 0.3;
 
 /** Um filme da lista com as marcas dele, para achar vizinhos. */
 export type ListTags = { entryId: string; position: number; tags: ReadonlyMap<string, number> };

@@ -87,6 +87,15 @@ describe('GET /api/movies/{tmdbId}?listId=', () => {
     assert.deepEqual(body.compat, { score: 81, reason: 'Motivo guardado de teste' });
   });
 
+  test('filme fora da vez na rotação: a nota e o motivo guardados em scores', async () => {
+    await seedRecs(false);
+    await dependencies.db
+      .doc(`lists/${LIST_ID}/recs/current`)
+      .update({ scores: { '2756': { score: 77, reason: 'Motivo fora da vez de teste' } } });
+    const body = (await (await getAbyss(`&listId=${LIST_ID}`)).json()) as MovieBody;
+    assert.deepEqual(body.compat, { score: 77, reason: 'Motivo fora da vez de teste' });
+  });
+
   test('quem não é da lista: 403', async () => {
     await seedRecs(false);
     const outsider = await signUp('fora@exemplo.com');

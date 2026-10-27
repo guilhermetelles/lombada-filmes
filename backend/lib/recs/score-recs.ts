@@ -3,12 +3,25 @@ import { normalizeStreamingServices } from '../discover/streaming-names.js';
 import type { DiscoverCandidate } from '../discover/tmdb-discover-client.js';
 import type { Movie } from '../types/movie.js';
 import type { RecItem, RecKind, RecSource, RecsModel } from '../types/recs.js';
-import { movieFeatures, similarityTags } from './movie-features.js';
-import { combineScores, findNeighbors, type ListTags, type Neighbor } from './neighbors.js';
+import { movieFeatures, similarityTags, tagSimilarity } from './movie-features.js';
+import {
+  combineScores,
+  FULL_SIMILARITY,
+  findNeighbors,
+  type ListTags,
+  MIN_SIMILARITY,
+  type Neighbor,
+} from './neighbors.js';
 import { modelScore } from './train-model.js';
 
 /** Quantos filmes da lista, no máximo, justificam uma sugestão (reasonFrom). */
 const MAX_REASON_FROM = 3;
+
+/** Pontos a mais para um candidato muito parecido com um filme da fila "Quero ver". */
+const QUEUE_BONUS = 8;
+
+/** Pontos a menos para um candidato muito parecido com um filme marcado como "Não quero". */
+const DISMISS_PENALTY = 15;
 
 /** Um filme da lista: a entrada, a posição no ranking (1 é o topo) e o comentário da dupla. */
 export type ListFilm = {
@@ -22,12 +35,16 @@ export type ListFilm = {
 /** Filme da lista com o documento movies/{tmdbId}. */
 export type ListFilmWithMovie = ListFilm & { movie: Movie };
 
+/** Marcas dos filmes da fila "Quero ver" e dos marcados como "Não quero". */
+export type FeedbackTags = { queued: ReadonlyMap<string, number>[]; dismissed: ReadonlyMap<string, number>[] };
+
 /** O que a pontuação precisa da lista, montado uma vez. */
 export type ListIndex = {
   size: number;
   films: ListFilmWithMovie[];
   tags: ListTags[];
   byEntryId: Map<string, ListFilmWithMovie>;
+  feedback: FeedbackTags;
 };
 
 /** Por que a sugestão é da saga ou do diretor: o filme da lista que liga as duas coisas. */
@@ -50,24 +67,49 @@ export type ScoredRec = {
 };
 
 /**
- * Monta o índice da lista para pontuar: marcas e posição de cada filme que tem documento.
+ * Monta o índice da lista para pontuar: marcas e posição de cada filme que tem documento, e as
+ * marcas dos filmes da fila e dos dispensados.
  *
  * @param films - Filmes da lista com o documento.
  * @param size - Quantos filmes a lista tem (inclusive os sem documento).
+ * @param feedback - Documentos dos filmes da fila e dos marcados como "Não quero".
  * @returns O índice.
  */
-export function buildListIndex(films: readonly ListFilmWithMovie[], size: number): ListIndex {
+export function buildListIndex(
+  films: readonly ListFilmWithMovie[],
+  size: number,
+  feedback: { queued: readonly Movie[]; dismissed: readonly Movie[] } = { queued: [], dismissed: [] },
+): ListIndex {
   return {
     size,
     films: [...films],
     tags: films.map(({ entryId, position, movie }) => ({ entryId, position, tags: similarityTags(movie) })),
     byEntryId: new Map(films.map((film) => [film.entryId, film])),
+    feedback: { queued: feedback.queued.map(similarityTags), dismissed: feedback.dismissed.map(similarityTags) },
   };
 }
 
 /**
+ * Ajuste da nota pelo que a dupla já respondeu: sobe com a semelhança com o filme mais parecido da
+ * fila e desce com a do mais parecido entre os dispensados. Semelhança abaixo da mínima dos vizinhos
+ * não conta, para gênero e década em comum não mexerem na nota.
+ *
+ * @param tags - Marcas do candidato.
+ * @param feedback - Marcas da fila e dos dispensados.
+ * @returns Pontos a somar (negativo para descer).
+ */
+export function feedbackAdjustment(tags: ReadonlyMap<string, number>, feedback: FeedbackTags): number {
+  const strength = (list: readonly ReadonlyMap<string, number>[]) => {
+    const similarity = list.reduce((max, other) => Math.max(max, tagSimilarity(tags, other)), 0);
+    return Math.min(1, Math.max(0, similarity - MIN_SIMILARITY) / (FULL_SIMILARITY - MIN_SIMILARITY));
+  };
+  return QUEUE_BONUS * strength(feedback.queued) - DISMISS_PENALTY * strength(feedback.dismissed);
+}
+
+/**
  * Pontua um filme guardado: nota do modelo somada à dos vizinhos (filmes da lista mais
- * parecidos), o agrupamento (saga, diretor, tema ou em alta) e os filmes da lista que justificam.
+ * parecidos) e ajustada pela fila e pelos dispensados, o agrupamento (saga, diretor, tema ou em
+ * alta) e os filmes da lista que justificam.
  *
  * @param model - Modelo da lista.
  * @param index - Índice da lista.
@@ -96,7 +138,9 @@ export function scoreMovie(
     tmdbId,
     source,
     kind,
-    score: combineScores(modelScore(model, features), neighbors, index.size),
+    score: clampScore(
+      combineScores(modelScore(model, features), neighbors, index.size) + feedbackAdjustment(tags, index.feedback),
+    ),
     features,
     neighbors,
     anchor,
@@ -136,6 +180,16 @@ export function scoreCandidate(model: RecsModel, candidate: DiscoverCandidate, s
     movie: undefined,
     candidate,
   };
+}
+
+/**
+ * Arredonda e limita a nota a 0–100.
+ *
+ * @param score - Nota.
+ * @returns A nota inteira entre 0 e 100.
+ */
+function clampScore(score: number): number {
+  return Math.max(0, Math.min(100, Math.round(score)));
 }
 
 /**

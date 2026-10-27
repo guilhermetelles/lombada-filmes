@@ -1,4 +1,10 @@
-import type { DocumentReference, Firestore, FirestoreDataConverter, Timestamp } from 'firebase-admin/firestore';
+import {
+  type DocumentReference,
+  type Firestore,
+  type FirestoreDataConverter,
+  type QueryDocumentSnapshot,
+  Timestamp,
+} from 'firebase-admin/firestore';
 import { listDocument } from '../lists/list-repository.js';
 import { logger } from '../logging/logger.js';
 import { RecsDocSchema } from '../schemas/recs.js';
@@ -72,24 +78,41 @@ export async function readListFilms(db: Firestore, listId: string): Promise<List
   return films;
 }
 
+/** O que a dupla já respondeu sobre filmes fora da lista, do mais recente para o mais antigo. */
+export type ListFeedback = { queued: number[]; dismissed: number[] };
+
 /**
- * Lê os filmes que não podem ser sugeridos além dos da lista: os da fila "Quero ver" e os marcados
- * como "Não quero" (o id do documento é o id do TMDb nas duas coleções).
+ * Lê a fila "Quero ver" e os filmes marcados como "Não quero" (o id do documento é o id do TMDb nas
+ * duas coleções), do mais recente para o mais antigo. Lê sem orderBy e ordena aqui, para um
+ * documento sem a data não sumir da leitura (e voltar a ser sugerido).
  *
  * @param db - Firestore.
  * @param listId - Lista.
- * @returns Os ids do TMDb.
+ * @returns Os ids do TMDb da fila e dos dispensados.
  */
-export async function readExcludedMovieIds(db: Firestore, listId: string): Promise<Set<number>> {
+export async function readListFeedback(db: Firestore, listId: string): Promise<ListFeedback> {
   const list = listDocument(db, listId);
   const [queue, dismissed] = await Promise.all([
-    list.collection('queue').select().get(),
-    list.collection('dismissed').select().get(),
+    list.collection('queue').select('createdAt').get(),
+    list.collection('dismissed').select('at').get(),
   ]);
-  const ids = new Set<number>();
-  for (const doc of [...queue.docs, ...dismissed.docs]) {
-    const tmdbId = Number(doc.id);
-    if (Number.isInteger(tmdbId) && tmdbId > 0) ids.add(tmdbId);
-  }
-  return ids;
+  return { queued: newestIds(queue.docs, 'createdAt'), dismissed: newestIds(dismissed.docs, 'at') };
+}
+
+/**
+ * Ids do TMDb dos documentos, do mais recente para o mais antigo (sem data, no fim).
+ *
+ * @param docs - Documentos cujo id é o id do TMDb.
+ * @param field - Campo com a data.
+ * @returns Os ids válidos.
+ */
+function newestIds(docs: readonly QueryDocumentSnapshot[], field: string): number[] {
+  const millis = (doc: QueryDocumentSnapshot) => {
+    const value = doc.get(field);
+    return value instanceof Timestamp ? value.toMillis() : 0;
+  };
+  return [...docs]
+    .sort((a, b) => millis(b) - millis(a))
+    .map((doc) => Number(doc.id))
+    .filter((tmdbId) => Number.isInteger(tmdbId) && tmdbId > 0);
 }
