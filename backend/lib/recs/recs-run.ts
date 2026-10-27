@@ -9,8 +9,8 @@ export type RecsLimits = {
   batchSize: number; // pedidos ao TMDb ao mesmo tempo
 };
 
-/** Limites de produção: 240 s, 80 candidatos por lista, 400 pedidos ao TMDb, 6 de cada vez. */
-export const DEFAULT_RECS_LIMITS: RecsLimits = { budgetMs: 240_000, maxCandidates: 80, tmdbCalls: 400, batchSize: 6 };
+/** Limites de produção: 240 s, 100 candidatos por lista, 400 pedidos ao TMDb, 6 de cada vez. */
+export const DEFAULT_RECS_LIMITS: RecsLimits = { budgetMs: 240_000, maxCandidates: 100, tmdbCalls: 400, batchSize: 6 };
 
 /** Uma execução: dependências, medidor que conta os pedidos ao TMDb, limites e o relógio. */
 export type RecsRun = {
