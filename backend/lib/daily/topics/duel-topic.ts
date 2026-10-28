@@ -1,19 +1,17 @@
+import { pickDuelPair } from '../../duel/pick-duel-pair.js';
 import type { DailyContent, DailyContext } from '../daily-content.js';
-import { seededFraction } from '../day-seed.js';
 
 /**
- * Duelo de revisão: duas entradas vizinhas no ranking, sorteadas no dia (as mesmas o dia todo).
+ * Duelo de revisão: duas entradas vizinhas no ranking, sorteadas no dia (as mesmas o dia todo). A
+ * rota leva o par, e o primeiro a abrir o duelo grava esse par em duels/{dia}.
  *
  * @param context - Lista e dia.
  * @returns A notificação, ou null com menos de dois filmes na lista.
  */
 async function composeDuel({ list, day }: DailyContext): Promise<DailyContent | null> {
-  const pairs = list.entries.length - 1;
-  if (pairs < 1) return null;
-  const index = Math.floor(seededFraction(`${day}:duelo:${list.listId}`) * pairs);
-  const first = list.entries[index];
-  const second = list.entries[index + 1];
-  if (!first || !second) return null;
+  const pair = pickDuelPair(list.entries, day, list.listId);
+  if (!pair) return null;
+  const [first, second] = pair;
 
   return {
     type: 'daily.duel',

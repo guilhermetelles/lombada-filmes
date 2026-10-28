@@ -4,6 +4,7 @@ import { LAUNCH_QUIZ_ID } from '../quiz/launch-event.js';
 import type { TmdbLanguage } from '../types/sources.js';
 import { BrazilDaySchema } from './dates.js';
 import { DecSchema, DurSchema, MoodSchema, ThemeSchema } from './discover.js';
+import { DuelChoiceSchema } from './duel.js';
 import { NotifyPrefsSchema } from './notify.js';
 import { QuizOptionIdSchema } from './quiz.js';
 
@@ -189,3 +190,16 @@ export const QuizAnswerParams = z.object({
 
 /** POST /api/lists/{listId}/quiz/{dia}/answer: corpo. */
 export const QuizAnswerBody = z.object({ optionId: QuizOptionIdSchema });
+
+/** GET /api/lists/{listId}/duel: caminho e o par da notificação, se veio dela. */
+export const DuelQuery = z.object({
+  listId: ListParams.shape.listId,
+  entryIdA: entryId.optional(),
+  entryIdB: entryId.optional(),
+});
+
+/** POST /api/lists/{listId}/duel/{dia}/vote: caminho. */
+export const DuelVoteParams = z.object({ listId: ListParams.shape.listId, day: BrazilDaySchema });
+
+/** POST /api/lists/{listId}/duel/{dia}/vote: corpo. */
+export const DuelVoteBody = z.object({ choice: DuelChoiceSchema });

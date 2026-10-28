@@ -19,6 +19,11 @@
       "source": "/api/lists/:listId/quiz/:day/answer",
       "destination": "/api/router?route=quiz-answer&listId=:listId&day=:day"
     },
+    { "source": "/api/lists/:listId/duel", "destination": "/api/router?route=duel&listId=:listId" },
+    {
+      "source": "/api/lists/:listId/duel/:day/vote",
+      "destination": "/api/router?route=duel-vote&listId=:listId&day=:day"
+    },
     { "source": "/api/cron/enrich", "destination": "/api/router?route=cron-enrich" },
     { "source": "/api/cron/recs", "destination": "/api/router?route=cron-recs" },
     { "source": "/api/cron/quiz-and-month", "destination": "/api/router?route=cron-quiz-and-month" },

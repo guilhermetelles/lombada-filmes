@@ -11,6 +11,8 @@ import { notify21CronRoute } from './cron/_notify-21.js';
 import { quizAndMonthCronRoute } from './cron/_quiz-and-month.js';
 import { recsCronRoute } from './cron/_recs.js';
 import { listEventsRoute } from './lists/[listId]/_events.js';
+import { getDuelRoute } from './lists/[listId]/duel/_get.js';
+import { voteDuelRoute } from './lists/[listId]/duel/_vote.js';
 import { addToQueueRoute } from './lists/[listId]/queue/_add.js';
 import { removeFromQueueRoute } from './lists/[listId]/queue/_remove.js';
 import { answerQuizRoute } from './lists/[listId]/quiz/_answer.js';
@@ -39,6 +41,8 @@ export const ROUTES: RouterEntry[] = [
   { name: 'queue-remove', path: /^\/api\/lists\/[^/]+\/queue\/[^/]+$/, methods: { DELETE: removeFromQueueRoute } },
   { name: 'list-events', path: /^\/api\/lists\/[^/]+\/events$/, methods: { POST: listEventsRoute } },
   { name: 'quiz-answer', path: /^\/api\/lists\/[^/]+\/quiz\/[^/]+\/answer$/, methods: { POST: answerQuizRoute } },
+  { name: 'duel', path: /^\/api\/lists\/[^/]+\/duel$/, methods: { GET: getDuelRoute } },
+  { name: 'duel-vote', path: /^\/api\/lists\/[^/]+\/duel\/[^/]+\/vote$/, methods: { POST: voteDuelRoute } },
   { name: 'cron-enrich', path: /^\/api\/cron\/enrich$/, methods: { GET: enrichCronRoute } },
   { name: 'cron-recs', path: /^\/api\/cron\/recs$/, methods: { GET: recsCronRoute } },
   { name: 'cron-quiz-and-month', path: /^\/api\/cron\/quiz-and-month$/, methods: { GET: quizAndMonthCronRoute } },
