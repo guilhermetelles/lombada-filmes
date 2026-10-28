@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { beforeEach, describe, test } from 'node:test';
 import { getDuelRoute } from '../../api/lists/[listId]/duel/_get.js';
 import { voteDuelRoute } from '../../api/lists/[listId]/duel/_vote.js';
+import { announceDuel } from '../../lib/duel/announce-duel.js';
 import { pickDuelPair } from '../../lib/duel/pick-duel-pair.js';
 import { DEFAULT_NOTIFY_PREFS } from '../../lib/notify/default-notify-prefs.js';
 import { deviceTokenDocument, notifyStateDocument } from '../../lib/notify/notify-repository.js';
@@ -236,5 +237,22 @@ describe('POST /api/lists/{listId}/duel/{dia}/vote', () => {
     await openFirstPair();
     assert.equal(await readErrorCode(await vote(ana, 'trocar')), 'invalid_input');
     assert.equal(await readErrorCode(await vote(outsider, 'swap')), 'forbidden');
+  });
+});
+
+describe('announceDuel (aviso avulso)', () => {
+  test('abre o duelo, avisa quem tem o duelo ligado e não grava o notifyLog', async () => {
+    await notifyStateDocument(dependencies.db, bia.uid).set({
+      prefs: { ...DEFAULT_NOTIFY_PREFS, types: { ...DEFAULT_NOTIFY_PREFS.types, duel: false } },
+    });
+    await open(ana, `?entryIdA=${ENTRY_IDS[0]}&entryIdB=${ENTRY_IDS[1]}`);
+    const report = await announceDuel(dependencies, LIST_ID);
+
+    assert.deepEqual([report.duel.entryIdA, report.pushed, report.skipped], [ENTRY_IDS[0], [ana.uid], [bia.uid]]);
+    assert.deepEqual(sentTo(ana)[0]?.notification, {
+      title: 'Duelo de revisão',
+      body: `Vocês ainda acham que ${TITLES.get(ENTRY_IDS[0] ?? '')} (#1) é melhor que ${TITLES.get(ENTRY_IDS[1] ?? '')} (#2)?`,
+    });
+    assert.equal((await dependencies.db.collection('notifyLog').get()).size, 0);
   });
 });

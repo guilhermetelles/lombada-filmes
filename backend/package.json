@@ -12,6 +12,7 @@
     "record:fixtures": "node --import tsx scripts/record-fixtures.ts",
     "migrate:member-profiles": "node --import tsx scripts/migrate-member-profiles.ts",
     "launch-event": "node --import tsx scripts/launch-event.ts",
+    "duel-push": "node --import tsx scripts/duel-push.ts",
     "lint": "biome check",
     "format": "biome check --write",
     "login-page": "python3 -m http.server 5173 --bind 127.0.0.1 --directory scripts/google-login",
