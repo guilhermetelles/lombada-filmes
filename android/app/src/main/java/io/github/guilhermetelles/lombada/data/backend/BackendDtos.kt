@@ -179,6 +179,28 @@ data class QuizAnswerResponse(
     val others: List<QuizOtherAnswer> = emptyList()
 )
 
+/** Corpo de `POST /api/lists/{id}/duel/{dia}/vote`: `keep` ou `swap`. */
+@Serializable
+data class DuelVoteRequest(val choice: String)
+
+/**
+ * Duelo do dia, como `GET /api/lists/{id}/duel` e o voto devolvem.
+ *
+ * @property day Dia `AAAA-MM-DD` em Brasília.
+ * @property entryIdA Entrada que estava na frente quando o duelo foi aberto.
+ * @property entryIdB A outra entrada.
+ * @property status `open`, `kept` ou `swapped`.
+ * @property votes Voto de cada membro (`keep` ou `swap`), por uid.
+ */
+@Serializable
+data class DuelView(
+    val day: String,
+    val entryIdA: String,
+    val entryIdB: String,
+    val status: String,
+    val votes: Map<String, String> = emptyMap()
+)
+
 /** Corpo de erro do backend: `{ "error": { "code", "message" } }`. */
 @Serializable
 data class ErrorBody(val error: ErrorDetail)

@@ -11,6 +11,7 @@ import io.github.guilhermetelles.lombada.data.auth.AuthRepository
 import io.github.guilhermetelles.lombada.data.backend.BackendClient
 import io.github.guilhermetelles.lombada.data.backend.IdTokenInterceptor
 import io.github.guilhermetelles.lombada.data.firestore.DismissedRepository
+import io.github.guilhermetelles.lombada.data.firestore.DuelRepository
 import io.github.guilhermetelles.lombada.data.firestore.EntryRepository
 import io.github.guilhermetelles.lombada.data.firestore.FeedRepository
 import io.github.guilhermetelles.lombada.data.firestore.ListRankings
@@ -99,6 +100,9 @@ class AppContainer(context: Context) {
 
     /** Quiz diário e respostas. */
     val quiz = QuizRepository(db)
+
+    /** Duelo de revisão do dia e os votos. */
+    val duels = DuelRepository(db)
 
     /** Placar mensal do quiz. */
     val scores = ScoresRepository(db)

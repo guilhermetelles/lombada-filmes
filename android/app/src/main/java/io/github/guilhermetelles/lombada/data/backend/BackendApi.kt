@@ -118,4 +118,20 @@ interface BackendApi {
         @Path("day") day: String,
         @Body body: QuizAnswerRequest
     ): QuizAnswerResponse
+
+    /** Duelo de hoje, aberto com o par da notificação quando ainda não existe. */
+    @GET("api/lists/{listId}/duel")
+    suspend fun getDuel(
+        @Path("listId") listId: String,
+        @Query("entryIdA") entryIdA: String?,
+        @Query("entryIdB") entryIdB: String?
+    ): DuelView
+
+    /** Vota no duelo do dia. */
+    @POST("api/lists/{listId}/duel/{day}/vote")
+    suspend fun voteDuel(
+        @Path("listId") listId: String,
+        @Path("day") day: String,
+        @Body body: DuelVoteRequest
+    ): DuelView
 }

@@ -252,6 +252,31 @@ class BackendClient(private val api: BackendApi) {
         call { api.answerQuiz(listId, day, QuizAnswerRequest(optionId)) }
 
     /**
+     * Abre o duelo de hoje: devolve o que já existe ou cria com o par da notificação (ou o sorteio do dia).
+     *
+     * @param listId Lista.
+     * @param entryIdA Entrada da frente, vinda da rota da notificação.
+     * @param entryIdB A outra entrada, vinda da rota da notificação.
+     * @return O duelo de hoje, com os votos.
+     * @throws BackendException `NOT_FOUND` (404) com menos de dois filmes na lista.
+     */
+    suspend fun getDuel(listId: String, entryIdA: String? = null, entryIdB: String? = null): DuelView =
+        call { api.getDuel(listId, entryIdA, entryIdB) }
+
+    /**
+     * Vota no duelo do dia. A ordem só muda quando todos votam `swap`; um `keep` fecha o duelo.
+     *
+     * @param listId Lista.
+     * @param day Dia `AAAA-MM-DD` em Brasília; precisa ser hoje.
+     * @param choice `keep` ou `swap`.
+     * @return O duelo depois do voto.
+     * @throws BackendException `CONFLICT` (409) se o duelo já fechou ou um dos filmes saiu da lista,
+     *   `NOT_TODAY` (400) se o dia virou e `NOT_FOUND` (404) sem duelo no dia.
+     */
+    suspend fun voteDuel(listId: String, day: String, choice: String): DuelView =
+        call { api.voteDuel(listId, day, DuelVoteRequest(choice)) }
+
+    /**
      * Situação do backend: última execução de cada rotina, consumo dos últimos 7 dias e a ordem dos
      * modelos do Gemini.
      *

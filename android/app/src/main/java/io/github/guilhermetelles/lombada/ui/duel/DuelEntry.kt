@@ -16,15 +16,9 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SnackbarDuration
-import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -36,12 +30,13 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import io.github.guilhermetelles.lombada.AppContainer
+import androidx.lifecycle.viewmodel.compose.viewModel
+import io.github.guilhermetelles.lombada.data.model.Duel
+import io.github.guilhermetelles.lombada.data.model.DuelChoice
+import io.github.guilhermetelles.lombada.data.model.DuelStatus
 import io.github.guilhermetelles.lombada.data.model.Entry
-import io.github.guilhermetelles.lombada.domain.BrazilDay
-import io.github.guilhermetelles.lombada.domain.DuelPair
+import io.github.guilhermetelles.lombada.data.model.MovieList
 import io.github.guilhermetelles.lombada.domain.Formatting
-import io.github.guilhermetelles.lombada.events.ListEventType
 import io.github.guilhermetelles.lombada.ui.appContainer
 import io.github.guilhermetelles.lombada.ui.components.MovieCover
 import io.github.guilhermetelles.lombada.ui.feed.EmptyState
@@ -52,127 +47,170 @@ import io.github.guilhermetelles.lombada.ui.main.MovieRoute
 import io.github.guilhermetelles.lombada.ui.main.ScreenContext
 import io.github.guilhermetelles.lombada.ui.theme.LombadaColors
 import io.github.guilhermetelles.lombada.ui.theme.RankSticker
-import kotlinx.coroutines.launch
 
 /**
- * Duelo entre duas entradas da lista. Ponto de entrada do pacote, registrado no `MainScreen`.
+ * Duelo de revisão: o par do dia, gravado pelo backend, e o voto de cada membro. A ordem só muda
+ * quando todos votam para trocar; um voto para manter fecha o duelo. Ponto de entrada do pacote,
+ * registrado no `MainScreen`.
  *
  * @param context Lista, pessoa logada e navegação.
- * @param route Argumentos da rota.
+ * @param route Argumentos da rota (o par da notificação, usado se o duelo de hoje ainda não existe).
  */
 @Composable
 fun DuelEntry(context: ScreenContext, route: DuelRoute) {
     val container = appContainer()
     val listState by context.listViewModel.state.collectAsStateWithLifecycle()
-    // O par fica fixo depois de escolhido, mesmo que a lista mude com a tela aberta.
-    var chosen by rememberSaveable { mutableStateOf<List<String>?>(null) }
-
-    LaunchedEffect(listState.loading) {
-        if (listState.loading || chosen != null) return@LaunchedEffect
-        val ranking = listState.ranking
-        val fromRoute =
-            if (route.entryIdA != null &&
-                route.entryIdB != null
-            ) {
-                DuelPair.ofIds(ranking, route.entryIdA, route.entryIdB)
-            } else {
-                null
-            }
-        val pair = fromRoute ?: DuelPair.ofDay(ranking, BrazilDay.today())
-        chosen = pair?.let { listOf(it.first.id, it.second.id) } ?: emptyList()
-    }
-
-    val ids = chosen
-    val pair = ids?.takeIf { it.size == 2 }?.let { DuelPair.ofIds(listState.ranking, it[0], it[1]) }
+    val viewModel =
+        viewModel(key = "duel-${context.list.id}") {
+            DuelViewModel(container, context.list.id, route.entryIdA, route.entryIdB)
+        }
+    val state by viewModel.state.collectAsStateWithLifecycle()
 
     ScreenColumn(title = "Duelo de revisão", onBack = context.back) {
+        val duel = state.duel
         when {
-            ids == null -> LoadingBlock()
+            state.loading || listState.loading -> LoadingBlock()
 
-            pair == null ->
+            state.loadError == DuelLoadError.NO_FILMS ->
                 EmptyState("Faltam filmes", "O duelo precisa de pelo menos dois filmes na lista.")
 
-            else -> {
-                val (top, bottom) = pair
-                Text(
-                    "Vocês ainda acham que ${Formatting.shortTitle(top.movie.title)} é melhor que " +
-                        "${Formatting.shortTitle(bottom.movie.title)}?",
-                    style = MaterialTheme.typography.headlineSmall.copy(fontSize = 24.sp, lineHeight = 30.sp),
-                    modifier = Modifier.padding(horizontal = 20.dp).semantics { heading() }
+            state.loadError != null || duel == null ->
+                EmptyState(
+                    "Não deu para abrir o duelo",
+                    if (state.loadError == DuelLoadError.NETWORK) {
+                        "Sem internet. Confira a conexão e tente de novo."
+                    } else {
+                        "Tente de novo em instantes."
+                    },
+                    actionLabel = "Tentar de novo",
+                    onAction = viewModel::open
                 )
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 20.dp)
-                ) {
-                    listOf(top, bottom).forEach { entry ->
-                        Side(entry, listState.positions[entry.id], Modifier.weight(1f)) {
-                            context.navigate(
-                                MovieRoute(entry.tmdbId, entry.movie.title, entry.movie.year, entry.movie.posterPath)
-                            )
-                        }
-                    }
+
+            else -> {
+                val first = listState.ranking.firstOrNull { it.id == duel.entryIdA }
+                val second = listState.ranking.firstOrNull { it.id == duel.entryIdB }
+                if (first == null || second == null) {
+                    EmptyState(
+                        "Um dos filmes saiu da lista",
+                        "O duelo de hoje não vale mais. Amanhã tem outro par."
+                    )
+                } else {
+                    DuelBody(context, duel, first, second, listState.positions, state.sending, viewModel::vote)
                 }
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(10.dp),
-                    modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 24.dp)
-                ) {
-                    DuelButton("Sim, manter", Icons.Filled.Check, filled = false) {
-                        context.back()
-                        message(container, "${Formatting.shortTitle(top.movie.title)} continua na frente")
-                    }
-                    DuelButton("Não, trocar a ordem", Icons.Filled.SwapVert, filled = true) {
-                        swap(container, context, listState.ranking, top, bottom, listState.positions[top.id])
-                    }
+            }
+        }
+    }
+}
+
+@Composable
+private fun DuelBody(
+    context: ScreenContext,
+    duel: Duel,
+    first: Entry,
+    second: Entry,
+    positions: Map<String, Int>,
+    sending: DuelChoice?,
+    onVote: (DuelChoice) -> Unit
+) {
+    val titleA = Formatting.shortTitle(first.movie.title)
+    val titleB = Formatting.shortTitle(second.movie.title)
+    Text(
+        "Vocês ainda acham que $titleA é melhor que $titleB?",
+        style = MaterialTheme.typography.headlineSmall.copy(fontSize = 24.sp, lineHeight = 30.sp),
+        modifier = Modifier.padding(horizontal = 20.dp).semantics { heading() }
+    )
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 20.dp)
+    ) {
+        // Na ordem atual do ranking, que depois da troca já mostra B na frente.
+        val pair = listOf(first, second).sortedBy { positions[it.id] ?: Int.MAX_VALUE }
+        pair.forEach { entry ->
+            Side(entry, positions[entry.id], Modifier.weight(1f)) {
+                context.navigate(MovieRoute(entry.tmdbId, entry.movie.title, entry.movie.year, entry.movie.posterPath))
+            }
+        }
+    }
+    Votes(context.list, context.uid, duel.votes)
+    when (duel.status) {
+        DuelStatus.OPEN -> {
+            val mine = duel.votes[context.uid]
+            Column(
+                verticalArrangement = Arrangement.spacedBy(10.dp),
+                modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 24.dp)
+            ) {
+                DuelButton("Sim, manter", Icons.Filled.Check, filled = false, enabled = sending == null) {
+                    onVote(DuelChoice.KEEP)
                 }
+                DuelButton(
+                    if (mine == DuelChoice.SWAP) "Você votou para trocar" else "Não, trocar a ordem",
+                    Icons.Filled.SwapVert,
+                    filled = true,
+                    enabled = sending == null && mine != DuelChoice.SWAP
+                ) {
+                    onVote(DuelChoice.SWAP)
+                }
+            }
+        }
+
+        DuelStatus.SWAPPED ->
+            Result(
+                positions[second.id]?.let { "Trocaram a ordem: $titleB passou para #$it" }
+                    ?: "Trocaram a ordem: $titleB passou na frente"
+            )
+
+        DuelStatus.KEPT -> Result("Ficou como está: $titleA continua na frente")
+    }
+    Text(
+        "Um par de vizinhos no ranking por dia, para revisar a lista aos poucos. A ordem só muda se " +
+            "todos votarem para trocar; um voto para manter encerra o duelo. Tocar num filme abre a página dele.",
+        style = MaterialTheme.typography.bodySmall,
+        color = LombadaColors.Paper3,
+        modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 16.dp)
+    )
+}
+
+// Cada membro e o voto dele; a pessoa logada aparece como "Você".
+@Composable
+private fun Votes(list: MovieList, uid: String, votes: Map<String, DuelChoice>) {
+    Column(
+        verticalArrangement = Arrangement.spacedBy(6.dp),
+        modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 20.dp)
+    ) {
+        list.memberUids.forEach { member ->
+            val name =
+                if (member ==
+                    uid
+                ) {
+                    "Você"
+                } else {
+                    list.memberProfiles[member]?.name?.takeIf { it.isNotBlank() } ?: "Alguém da lista"
+                }
+            val vote =
+                when (votes[member]) {
+                    DuelChoice.SWAP -> "quer trocar"
+                    DuelChoice.KEEP -> "quer manter"
+                    null -> "ainda não votou"
+                }
+            Row(modifier = Modifier.fillMaxWidth().semantics(mergeDescendants = true) {}) {
+                Text(name, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
                 Text(
-                    "Um par de vizinhos no ranking por dia, para revisar a lista aos poucos. Tocar num filme abre a página dele.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = LombadaColors.Paper3,
-                    modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 16.dp)
+                    vote,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = if (votes[member] == null) LombadaColors.Paper3 else LombadaColors.Paper
                 )
             }
         }
     }
 }
 
-// Troca as duas entradas de lugar no ranking, volta para a tela anterior e oferece "Desfazer",
-// que devolve as chaves antigas.
-private fun swap(
-    container: AppContainer,
-    context: ScreenContext,
-    ranking: List<Entry>,
-    top: Entry,
-    bottom: Entry,
-    topPosition: Int?
-) {
-    // Chaves iguais (duas adições ao mesmo tempo) não deixam pôr uma entre as outras: avisa em vez de fechar o app.
-    val keys =
-        runCatching { DuelPair.swapKeys(ranking, top.id, bottom.id) }.getOrElse {
-            message(
-                container,
-                "Não deu para trocar agora: as posições estão empatadas. Arraste um dos filmes na lista."
-            )
-            return
-        } ?: return
-    val old = ranking.filter { it.id in keys }.associate { it.id to it.rankKey }
-    keys.forEach { (id, key) ->
-        container.entries.move(context.list.id, id, key, context.uid)
-        context.listViewModel.recordEvent(ListEventType.Moved, id)
-    }
-    context.back()
-    container.appScope.launch {
-        val text =
-            topPosition?.let { "${Formatting.shortTitle(bottom.movie.title)} passou para #$it" }
-                ?: "${Formatting.shortTitle(bottom.movie.title)} passou na frente"
-        val result = container.snackbar.showSnackbar(text, actionLabel = "Desfazer", duration = SnackbarDuration.Long)
-        if (result == SnackbarResult.ActionPerformed) {
-            old.forEach { (id, key) -> container.entries.move(context.list.id, id, key, context.uid) }
-        }
-    }
-}
-
-private fun message(container: AppContainer, text: String) {
-    container.appScope.launch { container.snackbar.showSnackbar(text) }
+@Composable
+private fun Result(text: String) {
+    Text(
+        text,
+        style = MaterialTheme.typography.titleMedium,
+        modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 24.dp)
+    )
 }
 
 @Composable
@@ -219,9 +257,10 @@ private fun Side(entry: Entry, position: Int?, modifier: Modifier = Modifier, on
 }
 
 @Composable
-private fun DuelButton(text: String, icon: ImageVector, filled: Boolean, onClick: () -> Unit) {
+private fun DuelButton(text: String, icon: ImageVector, filled: Boolean, enabled: Boolean, onClick: () -> Unit) {
     Button(
         onClick = onClick,
+        enabled = enabled,
         colors =
             ButtonDefaults.buttonColors(
                 containerColor = if (filled) LombadaColors.PosterOrange else LombadaColors.Tonal,

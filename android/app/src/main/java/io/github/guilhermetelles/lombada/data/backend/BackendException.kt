@@ -8,6 +8,7 @@ enum class BackendErrorCode {
     NOT_FOUND,
     ALREADY_ANSWERED,
     NOT_TODAY,
+    CONFLICT,
     INVITE_EXPIRED,
     SOURCE_UNAVAILABLE,
     RATE_LIMITED,
