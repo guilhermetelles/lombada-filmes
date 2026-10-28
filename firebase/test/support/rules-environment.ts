@@ -43,7 +43,7 @@ export function useRulesEnvironment(): (uid: string | null) => Firestore {
 /**
  * Grava os dados de partida: a lista L1 da dona com uma integrante, uma entrada, um convite, um
  * filme, o consumo, a lista LP com memberProfiles, os documentos que o backend gera dentro de L1
- * (fila, dispensadas, sugestões, feed, quiz, respostas, gabarito, placar, retrospectiva) e os de
+ * (fila, dispensadas, sugestões, feed, quiz, respostas, gabarito, placar, retrospectiva, duelo) e os de
  * notificação.
  *
  * @param db - Firestore com as regras desligadas.
@@ -108,6 +108,13 @@ async function seedGenerated(db: Firestore): Promise<void> {
   await setDoc(doc(db, `lists/L1/quizKeys/${ANSWERED_DAY}`), { rightOptionId: 'a', explanation: 'e' });
   await setDoc(doc(db, 'lists/L1/scores/2026-09'), { points: { [OWNER]: 3, [MEMBER]: 2 }, winnerUids: [OWNER] });
   await setDoc(doc(db, 'lists/L1/retros/2026-09'), { month: '2026-09', films: 4, minutes: 400, generatedAt: PAST });
+  await setDoc(doc(db, 'lists/L1/duels/2026-09-30'), {
+    day: '2026-09-30',
+    entryIdA: 'e1',
+    entryIdB: 'e2',
+    votes: {},
+    status: 'open',
+  });
 }
 
 /**

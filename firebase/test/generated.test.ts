@@ -12,6 +12,7 @@ const generated = [
   { collectionPath: 'lists/L1/feed', id: 'f1' },
   { collectionPath: 'lists/L1/scores', id: '2026-09' },
   { collectionPath: 'lists/L1/retros', id: '2026-09' },
+  { collectionPath: 'lists/L1/duels', id: '2026-09-30' },
 ];
 
 for (const { collectionPath, id } of generated) {

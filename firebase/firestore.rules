@@ -52,7 +52,7 @@ rules_version = '2';
 //     at            timestamp: hora do servidor na criação
 //   recs/current, feed/{feedId},    membros leem; só o backend grava
 //   quizzes/{dia}, scores/{mês},
-//   retros/{mês}
+//   retros/{mês}, duels/{dia}       (duels: o voto passa por POST …/duel/{dia}/vote)
 //   quizzes/{dia}/answers/{uid}     só o backend grava (POST …/quiz/{dia}/answer). Membro lê as
 //                                   respostas do dia só depois de ter a própria.
 //   quizKeys/{dia}                  ninguém: gabarito e explicação, entregues na resposta
@@ -330,6 +330,12 @@ service cloud.firestore {
       }
 
       match /retros/{month} {
+        allow read: if isListMember(listId);
+        allow write: if false;
+      }
+
+      // Duelo do dia: membros veem os votos de todos; votar passa pelo backend, que troca a ordem.
+      match /duels/{day} {
         allow read: if isListMember(listId);
         allow write: if false;
       }
